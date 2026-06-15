@@ -1,4 +1,4 @@
-## Daily Log Lite
+## TideTrace
 
 This repository contains a small static web app for personal daily logging.
 
