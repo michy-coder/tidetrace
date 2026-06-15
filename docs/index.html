@@ -27,13 +27,13 @@
     </section>
 
     <div id="app-screen" class="hidden">
-      <section class="notice card">
-        <p>このアプリの記録は、このブラウザ内に保存されます。端末やブラウザの状態によっては消えることがあります。必要に応じてCSVまたはJSONで書き出してください。</p>
-        <p>プライベートブラウズでは、記録が保持されない場合があります。通常のブラウザ画面で使用してください。</p>
-      </section>
-
       <section class="card" aria-labelledby="input-title">
-        <h2 id="input-title">今日の入力</h2>
+        <h2 id="input-title">記録</h2>
+        <div id="medication-buttons" class="button-list"></div>
+        <label for="medication-note">薬メモ（任意）</label>
+        <textarea id="medication-note" rows="3"></textarea>
+
+        <hr>
         <div class="field-row">
           <label for="pain-score">痛みスコア</label>
           <select id="pain-score"></select>
@@ -45,11 +45,6 @@
         <label for="pain-note">痛みメモ（任意）</label>
         <textarea id="pain-note" rows="3"></textarea>
         <button id="save-pain" type="button">痛みを記録</button>
-
-        <hr>
-        <label for="medication-note">Medicationメモ（任意）</label>
-        <textarea id="medication-note" rows="3"></textarea>
-        <div id="medication-buttons" class="button-list"></div>
 
         <hr>
         <label for="standalone-note">単独メモ</label>
@@ -70,6 +65,11 @@
       <section class="card" aria-labelledby="week-title">
         <h2 id="week-title">過去7日分</h2>
         <div id="week-list"></div>
+      </section>
+
+      <section class="notice card">
+        <p>このアプリの記録は、このブラウザ内に保存されます。端末やブラウザの状態によっては消えることがあります。必要に応じてCSVまたはJSONで書き出してください。</p>
+        <p>プライベートブラウズでは、記録が保持されない場合があります。通常のブラウザ画面で使用してください。</p>
       </section>
 
       <section class="card management" aria-labelledby="manage-title">
