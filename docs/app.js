@@ -141,7 +141,8 @@ function renderEventList(container, events) {
     const button = document.createElement('button');
     button.className = 'event-delete';
     button.type = 'button';
-    button.textContent = '削除';
+    button.textContent = '×';
+    button.setAttribute('aria-label', '記録を削除');
     button.addEventListener('click', () => deleteEvent(event.id));
     item.append(meta, body, button);
     container.appendChild(item);
