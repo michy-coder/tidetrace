@@ -133,18 +133,21 @@ function renderEventList(container, events) {
   sortedEvents(events).forEach((event) => {
     const item = document.createElement('div');
     item.className = 'event';
+    const content = document.createElement('div');
+    content.className = 'event-content';
     const body = document.createElement('div');
     body.textContent = eventText(event);
     const meta = document.createElement('div');
     meta.className = 'event-meta';
     meta.textContent = event.localDate;
     const button = document.createElement('button');
-    button.className = 'event-delete';
+    button.className = 'delete-event-button';
     button.type = 'button';
     button.textContent = '×';
     button.setAttribute('aria-label', '記録を削除');
     button.addEventListener('click', () => deleteEvent(event.id));
-    item.append(meta, body, button);
+    content.append(meta, body);
+    item.append(content, button);
     container.appendChild(item);
   });
 }
