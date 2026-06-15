@@ -11,3 +11,15 @@
 - If no tests are available, explain what was checked manually.
 - Do not add new external dependencies unless necessary.
 - Ask before enabling network access or adding third-party services.
+  
+## GitHub Pages app rules
+
+- Put the static web app in `docs/`.
+- Do not put user data in the repository.
+- Do not add sample health records, real medication names, real notes, family information, school information, or company information.
+- Do not add analytics, tracking, external APIs, external libraries, or server-side code.
+- Do not send data outside the browser.
+- Do not provide medical advice or medication timing recommendations.
+- The app is for logging only.
+- Keep the app usable on an iPhone in portrait orientation.
+- Use plain HTML, CSS, and JavaScript.
