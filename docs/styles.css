@@ -1,0 +1,124 @@
+:root {
+  color-scheme: light;
+  --bg: #f7f8fa;
+  --card: #ffffff;
+  --text: #1f2933;
+  --muted: #657180;
+  --line: #dde3ea;
+  --primary: #286c87;
+  --primary-dark: #1f5267;
+  --danger: #b23b3b;
+  --danger-dark: #8d2f2f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+.app-header, main {
+  width: min(100%, 720px);
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.app-header { padding-bottom: 0; }
+
+h1, h2, h3 { margin: 0 0 10px; }
+
+p { margin: 0 0 10px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(31, 41, 51, 0.06);
+  margin: 14px 0;
+  padding: 16px;
+}
+
+.hidden { display: none; }
+
+label {
+  display: block;
+  font-weight: 700;
+  margin: 12px 0 6px;
+}
+
+input, select, textarea, button {
+  width: 100%;
+  border-radius: 12px;
+  font: inherit;
+}
+
+input, select, textarea {
+  border: 1px solid var(--line);
+  padding: 12px;
+  background: #fff;
+}
+
+button {
+  min-height: 48px;
+  border: 0;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  margin: 10px 0 0;
+  padding: 12px 14px;
+}
+
+button:active { background: var(--primary-dark); }
+
+button.danger, .event-delete { background: var(--danger); }
+button.danger:active, .event-delete:active { background: var(--danger-dark); }
+
+.field-row { margin-bottom: 8px; }
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 18px 0;
+}
+
+.notice { color: var(--muted); }
+
+.error { color: var(--danger); font-weight: 700; }
+.message { color: var(--muted); }
+
+.button-list button { margin-top: 8px; }
+
+.event {
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+}
+
+.event:first-child { border-top: 0; }
+
+.event-meta {
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin-bottom: 4px;
+}
+
+.event-delete { margin-top: 8px; }
+
+.last-medication-item, details {
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+
+.last-medication-item:first-child { border-top: 0; }
+
+summary { font-weight: 700; padding: 8px 0; }
+
+.empty { color: var(--muted); }
+
+@media (max-width: 430px) {
+  .app-header, main { padding-left: 12px; padding-right: 12px; }
+  .card { border-radius: 14px; padding: 14px; }
+}

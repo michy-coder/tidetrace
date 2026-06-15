@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "appName": "Tide Trace",
+  "settings": {
+    "painStateOptions": [
+      {
+        "id": "ps_001",
+        "label": "Sample state 1",
+        "active": true
+      }
+    ],
+    "medicationOptions": [
+      {
+        "id": "med_001",
+        "label": "Medication 1",
+        "active": true
+      },
+      {
+        "id": "med_002",
+        "label": "Medication 2",
+        "active": true
+      }
+    ]
+  },
+  "periods": [],
+  "events": []
+}
