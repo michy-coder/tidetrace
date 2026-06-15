@@ -1,0 +1,7 @@
+# Exported user data must not be committed
+*.csv
+*.json
+
+# Local notes and temporary files
+*.log
+.DS_Store
