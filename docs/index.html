@@ -28,11 +28,14 @@
     </section>
 
     <div id="app-screen" class="hidden">
+      <section class="card" aria-labelledby="last-med-title">
+        <h2 id="last-med-title">前回服薬からの時間</h2>
+        <div id="last-medication-list"></div>
+      </section>
+
       <section class="card" aria-labelledby="input-title">
         <h2 id="input-title">記録</h2>
         <div id="medication-buttons" class="button-list"></div>
-        <label for="medication-note">薬メモ（任意）</label>
-        <textarea id="medication-note" rows="3"></textarea>
 
         <hr>
         <div class="field-row">
@@ -43,19 +46,12 @@
           <label for="pain-state">痛みの状態</label>
           <select id="pain-state"></select>
         </div>
-        <label for="pain-note">痛みメモ（任意）</label>
-        <textarea id="pain-note" rows="3"></textarea>
         <button id="save-pain" type="button">痛みを記録</button>
 
         <hr>
-        <label for="standalone-note">単独メモ</label>
-        <textarea id="standalone-note" rows="4"></textarea>
-        <button id="save-note" type="button">メモを保存</button>
-      </section>
-
-      <section class="card" aria-labelledby="last-med-title">
-        <h2 id="last-med-title">最後のMedication記録</h2>
-        <div id="last-medication-list"></div>
+        <label for="shared-note">メモ</label>
+        <textarea id="shared-note" rows="4"></textarea>
+        <button id="save-note" type="button">メモのみを保存</button>
       </section>
 
       <section class="card" aria-labelledby="today-title">

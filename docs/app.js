@@ -173,7 +173,7 @@ function render() {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = option.label;
-    button.addEventListener('click', () => addEvent(createEvent({ type: 'medication', medicationOptionId: option.id, note: $('medication-note').value.trim() })));
+    button.addEventListener('click', () => saveMedication(option.id));
     $('medication-buttons').appendChild(button);
   });
 
@@ -182,7 +182,7 @@ function render() {
     const last = sortedEvents(appData.events.filter((event) => event.type === 'medication' && event.medicationOptionId === option.id)).at(-1);
     const item = document.createElement('div');
     item.className = 'last-medication-item';
-    item.textContent = last ? `${option.label} 最後の記録：${last.localTime} / 経過：${elapsedText(last.recordedAtUtc)}` : `${option.label} 最後の記録：なし`;
+    item.textContent = last ? `${option.label}：前回 ${last.localTime} / 経過 ${elapsedText(last.recordedAtUtc)}` : `${option.label}：記録なし`;
     $('last-medication-list').appendChild(item);
   });
 
@@ -258,20 +258,36 @@ function readFile(input, callback, errorElement) {
   reader.readAsText(file);
 }
 
+function sharedNoteValue() {
+  return $('shared-note').value.trim();
+}
+
+function clearSharedNote() {
+  $('shared-note').value = '';
+}
+
+function saveMedication(medicationOptionId) {
+  addEvent(createEvent({ type: 'medication', medicationOptionId, note: sharedNoteValue() }));
+  clearSharedNote();
+  $('app-message').textContent = '';
+}
+
 function wireEvents() {
   $('load-pasted-json').addEventListener('click', () => initializeFromText($('setup-json').value, $('setup-error')));
   $('load-file-json').addEventListener('click', () => readFile($('setup-file'), (text) => initializeFromText(text, $('setup-error')), $('setup-error')));
   $('save-pain').addEventListener('click', () => {
     const stateOptionId = $('pain-state').value;
     if (!stateOptionId) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }
-    addEvent(createEvent({ type: 'pain', painScore: Number($('pain-score').value), stateOptionId, note: $('pain-note').value.trim() }));
-    $('pain-note').value = '';
+    addEvent(createEvent({ type: 'pain', painScore: Number($('pain-score').value), stateOptionId, note: sharedNoteValue() }));
+    clearSharedNote();
+    $('app-message').textContent = '';
   });
   $('save-note').addEventListener('click', () => {
-    const note = $('standalone-note').value.trim();
-    if (!note) { $('app-message').textContent = 'メモを入力してください。'; return; }
+    const note = sharedNoteValue();
+    if (!note) { $('app-message').textContent = 'メモを入力すると保存できます。'; return; }
     addEvent(createEvent({ type: 'note', note }));
-    $('standalone-note').value = '';
+    clearSharedNote();
+    $('app-message').textContent = '';
   });
   $('export-csv').addEventListener('click', exportCsv);
   $('export-json').addEventListener('click', exportJson);
