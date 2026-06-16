@@ -6,6 +6,7 @@ const JSON_ERROR = 'JSONの形式を確認してください。';
 let appData = null;
 let lastSavedEventId = null;
 let saveFeedbackTimer = null;
+let elapsedRefreshTimer = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -76,12 +77,14 @@ function loadStoredData() {
 }
 
 function showSetup(message = '') {
+  stopElapsedRefresh();
   $('setup-screen').classList.remove('hidden');
   $('app-screen').classList.add('hidden');
   $('setup-error').textContent = message;
 }
 
 function showApp() {
+  startElapsedRefresh();
   $('setup-screen').classList.add('hidden');
   $('app-screen').classList.remove('hidden');
   render();
@@ -211,6 +214,31 @@ function elapsedText(iso) {
   return `${Math.floor(minutes / 60)}時間${minutes % 60}分`;
 }
 
+function renderLastMedicationList() {
+  const list = $('last-medication-list');
+  list.innerHTML = '';
+  appData.settings.medicationOptions.forEach((option) => {
+    const last = sortedEvents(appData.events.filter((event) => event.type === 'medication' && event.medicationOptionId === option.id)).at(-1);
+    const item = document.createElement('div');
+    item.className = 'last-medication-item';
+    item.textContent = last ? `${option.label}：前回 ${last.localTime} / 経過 ${elapsedText(last.recordedAtUtc)}` : `${option.label}：記録なし`;
+    list.appendChild(item);
+  });
+}
+
+function startElapsedRefresh() {
+  if (elapsedRefreshTimer) clearInterval(elapsedRefreshTimer);
+  elapsedRefreshTimer = setInterval(() => {
+    if (appData) renderLastMedicationList();
+  }, 60000);
+}
+
+function stopElapsedRefresh() {
+  if (!elapsedRefreshTimer) return;
+  clearInterval(elapsedRefreshTimer);
+  elapsedRefreshTimer = null;
+}
+
 function render() {
   const today = nowParts().localDate;
   $('pain-score').innerHTML = Array.from({ length: 11 }, (_, value) => `<option value="${value}">${value}</option>`).join('');
@@ -224,14 +252,7 @@ function render() {
     $('medication-buttons').appendChild(button);
   });
 
-  $('last-medication-list').innerHTML = '';
-  appData.settings.medicationOptions.forEach((option) => {
-    const last = sortedEvents(appData.events.filter((event) => event.type === 'medication' && event.medicationOptionId === option.id)).at(-1);
-    const item = document.createElement('div');
-    item.className = 'last-medication-item';
-    item.textContent = last ? `${option.label}：前回 ${last.localTime} / 経過 ${elapsedText(last.recordedAtUtc)}` : `${option.label}：記録なし`;
-    $('last-medication-list').appendChild(item);
-  });
+  renderLastMedicationList();
 
   renderEventList($('today-list'), appData.events.filter((event) => event.localDate === today));
   renderWeek(today);
