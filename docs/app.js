@@ -258,12 +258,18 @@ function readFile(input, callback, errorElement) {
   reader.readAsText(file);
 }
 
+function sharedNoteInput() {
+  return $('shared-note-input');
+}
+
 function sharedNoteValue() {
-  return $('shared-note').value.trim();
+  const input = sharedNoteInput();
+  return input.value.trim();
 }
 
 function clearSharedNote() {
-  $('shared-note').value = '';
+  const input = sharedNoteInput();
+  input.value = '';
 }
 
 function saveMedication(medicationOptionId) {
