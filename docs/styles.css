@@ -1,14 +1,45 @@
 :root {
   color-scheme: light;
-  --bg: #f7f8fa;
-  --card: #ffffff;
+  --bg: #f5f7f8;
+  --surface: #ffffff;
+  --surface-muted: #f0f3f4;
   --text: #1f2933;
-  --muted: #657180;
-  --line: #dde3ea;
-  --primary: #286c87;
-  --primary-dark: #1f5267;
-  --danger: #b23b3b;
-  --danger-dark: #8d2f2f;
+  --text-muted: #687582;
+  --border: #d8dee3;
+  --input-bg: #ffffff;
+  --input-border: #cfd7dd;
+  --button-bg: #2f5f66;
+  --button-active-bg: #254c52;
+  --button-text: #ffffff;
+  --danger-bg: #b63a3a;
+  --danger-active-bg: #8f3030;
+  --danger-text: #ffffff;
+  --divider: #d8dee3;
+  --focus-ring: #6fa5ad;
+  --shadow: rgba(31, 41, 51, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #101416;
+    --surface: #171d20;
+    --surface-muted: #20282c;
+    --text: #e7ecef;
+    --text-muted: #a7b0b7;
+    --border: #344047;
+    --input-bg: #111719;
+    --input-border: #3b474f;
+    --button-bg: #4f7f86;
+    --button-active-bg: #416970;
+    --button-text: #ffffff;
+    --danger-bg: #9f3a3a;
+    --danger-active-bg: #7f3030;
+    --danger-text: #ffffff;
+    --divider: #344047;
+    --focus-ring: #7da9af;
+    --shadow: rgba(0, 0, 0, 0.3);
+  }
 }
 
 * { box-sizing: border-box; }
@@ -34,10 +65,11 @@ h1, h2, h3 { margin: 0 0 10px; }
 p { margin: 0 0 10px; }
 
 .card {
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
-  box-shadow: 0 1px 4px rgba(31, 41, 51, 0.06);
+  box-shadow: 0 1px 4px var(--shadow);
+  color: var(--text);
   margin: 14px 0;
   padding: 16px;
 }
@@ -57,44 +89,54 @@ input, select, textarea, button {
 }
 
 input, select, textarea {
-  border: 1px solid var(--line);
+  border: 1px solid var(--input-border);
   padding: 12px;
-  background: #fff;
+  background: var(--input-bg);
+  color: var(--text);
+}
+
+input:focus, select:focus, textarea:focus, button:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 button {
   min-height: 48px;
   border: 0;
-  background: var(--primary);
-  color: #fff;
+  background: var(--button-bg);
+  color: var(--button-text);
   font-weight: 700;
   margin: 10px 0 0;
   padding: 12px 14px;
 }
 
-button:active { background: var(--primary-dark); }
+button:active { background: var(--button-active-bg); }
 
-button.danger { background: var(--danger); }
-button.danger:active { background: var(--danger-dark); }
+button.danger { background: var(--danger-bg); color: var(--danger-text); }
+button.danger:active { background: var(--danger-active-bg); }
 
 .field-row { margin-bottom: 8px; }
 
 hr {
   border: 0;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--divider);
   margin: 18px 0;
 }
 
-.notice { color: var(--muted); }
+.notice {
+  background: var(--surface-muted);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
 
-.error { color: var(--danger); font-weight: 700; }
-.message { color: var(--muted); }
+.error { color: var(--danger-bg); font-weight: 700; }
+.message { color: var(--text-muted); }
 
 .button-list button { margin-top: 8px; }
 
 .event {
   align-items: flex-start;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--divider);
   display: flex;
   gap: 0.75rem;
   padding: 12px 0;
@@ -108,16 +150,16 @@ hr {
 }
 
 .event-meta {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.92rem;
 }
 
 .delete-event-button {
   align-items: center;
   align-self: flex-start;
-  background: var(--danger);
+  background: var(--danger-bg);
   border-radius: 999px;
-  color: #fff;
+  color: var(--danger-text);
   display: inline-flex;
   flex: 0 0 auto;
   font-size: 1.2rem;
@@ -131,10 +173,10 @@ hr {
   width: 2rem;
 }
 
-.delete-event-button:active { background: var(--danger-dark); }
+.delete-event-button:active { background: var(--danger-active-bg); }
 
 .last-medication-item, details {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--divider);
   padding: 10px 0;
 }
 
@@ -142,7 +184,7 @@ hr {
 
 summary { font-weight: 700; padding: 8px 0; }
 
-.empty { color: var(--muted); }
+.empty { color: var(--text-muted); }
 
 @media (max-width: 430px) {
   .app-header, main { padding-left: 12px; padding-right: 12px; }
