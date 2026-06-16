@@ -4,6 +4,8 @@ const SCHEMA_ERROR = 'このJSONは読み込めません。\nsettings / periods 
 const JSON_ERROR = 'JSONの形式を確認してください。';
 
 let appData = null;
+let lastSavedEventId = null;
+let saveFeedbackTimer = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -90,6 +92,7 @@ function initializeFromText(text, errorElement) {
   if (parsed.error) { errorElement.textContent = parsed.error; return; }
   if (!validateData(parsed.data)) { errorElement.textContent = SCHEMA_ERROR; return; }
   appData = parsed.data;
+  clearSaveFeedback();
   saveData();
   errorElement.textContent = '';
   showApp();
@@ -106,9 +109,52 @@ function createEvent(base) {
   return { id, recordedAtUtc: time.iso, localDate: time.localDate, localTime: time.localTime, timezone: TIMEZONE, createdAtUtc: time.iso, updatedAtUtc: time.iso, ...base };
 }
 
-function addEvent(event) {
+function addEvent(event, feedbackMessage = '') {
   appData.events.push(event);
   saveData();
+  render();
+  if (feedbackMessage) showSaveFeedback(event.id, feedbackMessage);
+}
+
+function clearSaveFeedback() {
+  if (saveFeedbackTimer) {
+    clearTimeout(saveFeedbackTimer);
+    saveFeedbackTimer = null;
+  }
+  lastSavedEventId = null;
+  const feedback = $('save-feedback');
+  if (!feedback) return;
+  feedback.classList.add('hidden');
+  feedback.replaceChildren();
+}
+
+function showSaveFeedback(eventId, message) {
+  if (saveFeedbackTimer) clearTimeout(saveFeedbackTimer);
+  lastSavedEventId = eventId;
+  const feedback = $('save-feedback');
+  feedback.classList.remove('hidden');
+  feedback.replaceChildren();
+
+  const text = document.createElement('span');
+  text.className = 'save-feedback-message';
+  text.textContent = message;
+
+  const button = document.createElement('button');
+  button.className = 'undo-save-button';
+  button.type = 'button';
+  button.textContent = '取り消す';
+  button.addEventListener('click', undoLastSavedEvent);
+
+  feedback.append(text, button);
+  saveFeedbackTimer = setTimeout(clearSaveFeedback, 8000);
+}
+
+function undoLastSavedEvent() {
+  if (!lastSavedEventId) return;
+  const eventId = lastSavedEventId;
+  appData.events = appData.events.filter((event) => event.id !== eventId);
+  saveData();
+  clearSaveFeedback();
   render();
 }
 
@@ -155,6 +201,7 @@ function renderEventList(container, events) {
 function deleteEvent(id) {
   if (!confirm('この記録を削除しますか？')) return;
   appData.events = appData.events.filter((event) => event.id !== id);
+  if (lastSavedEventId === id) clearSaveFeedback();
   saveData();
   render();
 }
@@ -273,7 +320,8 @@ function clearSharedNote() {
 }
 
 function saveMedication(medicationOptionId) {
-  addEvent(createEvent({ type: 'medication', medicationOptionId, note: sharedNoteValue() }));
+  const label = findMedicationLabel(medicationOptionId);
+  addEvent(createEvent({ type: 'medication', medicationOptionId, note: sharedNoteValue() }), `${label}を記録しました`);
   clearSharedNote();
   $('app-message').textContent = '';
 }
@@ -284,14 +332,14 @@ function wireEvents() {
   $('save-pain').addEventListener('click', () => {
     const stateOptionId = $('pain-state').value;
     if (!stateOptionId) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }
-    addEvent(createEvent({ type: 'pain', painScore: Number($('pain-score').value), stateOptionId, note: sharedNoteValue() }));
+    addEvent(createEvent({ type: 'pain', painScore: Number($('pain-score').value), stateOptionId, note: sharedNoteValue() }), '痛みを記録しました');
     clearSharedNote();
     $('app-message').textContent = '';
   });
   $('save-note').addEventListener('click', () => {
     const note = sharedNoteValue();
     if (!note) { $('app-message').textContent = 'メモを入力すると保存できます。'; return; }
-    addEvent(createEvent({ type: 'note', note }));
+    addEvent(createEvent({ type: 'note', note }), 'メモを保存しました');
     clearSharedNote();
     $('app-message').textContent = '';
   });
