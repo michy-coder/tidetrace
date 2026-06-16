@@ -33,6 +33,15 @@ function parseJson(text) {
   catch { return { data: null, error: JSON_ERROR }; }
 }
 
+function normalizeImportedData(data) {
+  if (!data || typeof data !== 'object' || !Array.isArray(data.events)) return data;
+  data.events.forEach((event) => {
+    if (!event || typeof event !== 'object') return;
+    event.updatedAtUtc = event.updatedAtUtc || event.createdAtUtc || event.recordedAtUtc;
+  });
+  return data;
+}
+
 function validateData(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
   if (typeof data.schemaVersion !== 'number' || data.schemaVersion !== 1) return false;
@@ -85,8 +94,10 @@ function loadStoredData() {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) return null;
   const parsed = parseJson(stored);
-  if (!parsed.data || !validateData(parsed.data)) return null;
-  const supplemented = supplementSettings(parsed.data);
+  if (!parsed.data) return null;
+  const normalized = normalizeImportedData(parsed.data);
+  if (!validateData(normalized)) return null;
+  const supplemented = supplementSettings(normalized);
   if (supplemented.changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(supplemented.data));
   return supplemented.data;
 }
@@ -108,8 +119,9 @@ function showApp() {
 function initializeFromText(text, errorElement) {
   const parsed = parseJson(text);
   if (parsed.error) { errorElement.textContent = parsed.error; return; }
-  if (!validateData(parsed.data)) { errorElement.textContent = SCHEMA_ERROR; return; }
-  appData = supplementSettings(parsed.data).data;
+  const normalized = normalizeImportedData(parsed.data);
+  if (!validateData(normalized)) { errorElement.textContent = SCHEMA_ERROR; return; }
+  appData = supplementSettings(normalized).data;
   clearSaveFeedback();
   saveData();
   errorElement.textContent = '';
