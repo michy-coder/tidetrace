@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Tide Trace</title>
-  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
   <header class="app-header">
@@ -31,6 +31,17 @@
       <div id="toast-feedback" class="toast-feedback" role="status" aria-live="polite" hidden>
         <span id="toast-message"></span>
         <button id="toast-undo-button" class="toast-undo-button" type="button">取り消す</button>
+      </div>
+
+      <div id="edit-event-panel" class="edit-event-panel" role="dialog" aria-modal="true" aria-labelledby="edit-event-title" hidden>
+        <form id="edit-event-form" class="edit-event-form">
+          <h2 id="edit-event-title">内容編集</h2>
+          <div id="edit-event-fields"></div>
+          <div class="edit-event-actions">
+            <button id="save-edit-event" type="submit">保存</button>
+            <button id="cancel-edit-event" class="secondary-button" type="button">キャンセル</button>
+          </div>
+        </form>
       </div>
 
       <section class="card" aria-labelledby="last-med-title">
@@ -91,6 +102,6 @@
     </div>
   </main>
 
-  <script src="app.js?v=3" defer></script>
+  <script src="app.js?v=4" defer></script>
 </body>
 </html>

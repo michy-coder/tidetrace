@@ -7,6 +7,7 @@ let appData = null;
 let lastSavedEventId = null;
 let saveFeedbackTimer = null;
 let elapsedRefreshTimer = null;
+let editingEventId = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -147,12 +148,18 @@ function clearSaveFeedback() {
 }
 
 function showSaveFeedback(eventId, message) {
+  showToast(message, eventId);
+}
+
+function showToast(message, undoEventId = null) {
   if (saveFeedbackTimer) clearTimeout(saveFeedbackTimer);
-  lastSavedEventId = eventId;
+  lastSavedEventId = undoEventId;
   const feedback = $('toast-feedback');
   const text = $('toast-message');
-  if (!feedback || !text) return;
+  const undoButton = $('toast-undo-button');
+  if (!feedback || !text || !undoButton) return;
   text.textContent = message;
+  undoButton.hidden = !undoEventId;
   feedback.hidden = false;
   saveFeedbackTimer = setTimeout(clearSaveFeedback, 8000);
 }
@@ -198,16 +205,89 @@ function renderEventList(container, events, sortEvents = sortedEvents) {
     const meta = document.createElement('div');
     meta.className = 'event-meta';
     meta.textContent = event.localDate;
+    const actions = document.createElement('div');
+    actions.className = 'event-actions';
+    const editButton = document.createElement('button');
+    editButton.className = 'edit-event-button';
+    editButton.type = 'button';
+    editButton.textContent = '✎';
+    editButton.setAttribute('aria-label', '編集');
+    editButton.addEventListener('click', () => openEditEventPanel(event.id));
     const button = document.createElement('button');
     button.className = 'delete-event-button';
     button.type = 'button';
     button.textContent = '×';
     button.setAttribute('aria-label', '記録を削除');
     button.addEventListener('click', () => deleteEvent(event.id));
+    actions.append(editButton, button);
     content.append(meta, body);
-    item.append(content, button);
+    item.append(content, actions);
     container.appendChild(item);
   });
+}
+
+function optionHtml(options, selectedId) {
+  return options.map((option) => `<option value="${escapeHtml(option.id)}"${option.id === selectedId ? ' selected' : ''}>${escapeHtml(option.label)}</option>`).join('');
+}
+
+function editTextareaHtml(value = '') {
+  return `<label for="edit-note">メモ</label><textarea id="edit-note" rows="4">${escapeHtml(value)}</textarea>`;
+}
+
+function openEditEventPanel(id) {
+  const event = appData.events.find((item) => item.id === id);
+  if (!event) return;
+  editingEventId = id;
+  const fields = $('edit-event-fields');
+  if (event.type === 'pain') {
+    fields.innerHTML = `
+      <label for="edit-pain-score">痛みスコア</label>
+      <select id="edit-pain-score">${Array.from({ length: 11 }, (_, value) => `<option value="${value}"${value === event.painScore ? ' selected' : ''}>${value}</option>`).join('')}</select>
+      <label for="edit-pain-state">痛みの状態</label>
+      <select id="edit-pain-state">${optionHtml(activePainOptions(), event.stateOptionId)}</select>
+      ${editTextareaHtml(event.note || '')}`;
+  } else if (event.type === 'medication') {
+    fields.innerHTML = `
+      <label for="edit-medication-option">Medication</label>
+      <select id="edit-medication-option">${optionHtml(activeMedicationOptions(), event.medicationOptionId)}</select>
+      ${editTextareaHtml(event.note || '')}`;
+  } else {
+    fields.innerHTML = editTextareaHtml(event.note || '');
+  }
+  $('edit-event-panel').hidden = false;
+  const firstInput = fields.querySelector('select, textarea');
+  if (firstInput) firstInput.focus();
+}
+
+function closeEditEventPanel() {
+  editingEventId = null;
+  $('edit-event-panel').hidden = true;
+  $('edit-event-fields').innerHTML = '';
+}
+
+function saveEditedEvent() {
+  if (!editingEventId) return;
+  const event = appData.events.find((item) => item.id === editingEventId);
+  if (!event) { closeEditEventPanel(); return; }
+  if (event.type === 'pain') {
+    const stateOptionId = $('edit-pain-state').value;
+    if (!stateOptionId) return;
+    event.painScore = Number($('edit-pain-score').value);
+    event.stateOptionId = stateOptionId;
+    event.note = $('edit-note').value.trim();
+  } else if (event.type === 'medication') {
+    const medicationOptionId = $('edit-medication-option').value;
+    if (!medicationOptionId) return;
+    event.medicationOptionId = medicationOptionId;
+    event.note = $('edit-note').value.trim();
+  } else {
+    event.note = $('edit-note').value.trim();
+  }
+  event.updatedAtUtc = new Date().toISOString();
+  saveData();
+  render();
+  closeEditEventPanel();
+  showToast('編集を保存しました');
 }
 
 function deleteEvent(id) {
@@ -402,6 +482,14 @@ function wireEvents() {
   $('export-csv').addEventListener('click', exportCsv);
   $('export-json').addEventListener('click', exportJson);
   $('toast-undo-button').addEventListener('click', undoLastSavedEvent);
+  $('edit-event-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    saveEditedEvent();
+  });
+  $('cancel-edit-event').addEventListener('click', closeEditEventPanel);
+  $('edit-event-panel').addEventListener('click', (event) => {
+    if (event.target === $('edit-event-panel')) closeEditEventPanel();
+  });
   $('import-json').addEventListener('click', () => {
     if (!confirm('JSONバックアップを読み込みます。\n現在のブラウザ内の記録は、読み込むデータに置き換わります。\n必要な場合は、先に現在のデータを書き出してください。')) return;
     readFile($('import-file'), (text) => initializeFromText(text, $('app-message')), $('app-message'));
