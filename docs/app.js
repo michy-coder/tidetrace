@@ -217,7 +217,7 @@ function elapsedText(iso) {
 function renderLastMedicationList() {
   const list = $('last-medication-list');
   list.innerHTML = '';
-  appData.settings.medicationOptions.forEach((option) => {
+  activeMedicationOptions().forEach((option) => {
     const last = sortedEvents(appData.events.filter((event) => event.type === 'medication' && event.medicationOptionId === option.id)).at(-1);
     const item = document.createElement('div');
     item.className = 'last-medication-item';
