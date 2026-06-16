@@ -132,6 +132,13 @@ hr {
 .error { color: var(--danger-bg); font-weight: 700; }
 .message { color: var(--text-muted); }
 
+.export-status {
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.export-status p { margin-bottom: 4px; }
+
 .toast-feedback {
   position: fixed;
   left: 50%;

@@ -76,6 +76,10 @@
 
       <section class="card management" aria-labelledby="manage-title">
         <h2 id="manage-title">管理</h2>
+        <div class="export-status" aria-live="polite">
+          <p>最後にJSON書き出しを実行：<span id="last-json-exported-at"></span></p>
+          <p>最後にCSV書き出しを実行：<span id="last-csv-exported-at"></span></p>
+        </div>
         <button id="export-csv" type="button">CSV書き出し</button>
         <button id="export-json" type="button">JSONバックアップ書き出し</button>
         <label for="import-file">JSONインポート</label>

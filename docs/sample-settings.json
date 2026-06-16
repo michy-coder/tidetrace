@@ -20,7 +20,9 @@
         "label": "Medication 2",
         "active": true
       }
-    ]
+    ],
+    "lastJsonExportedAtUtc": null,
+    "lastCsvExportedAtUtc": null
   },
   "periods": [],
   "events": []

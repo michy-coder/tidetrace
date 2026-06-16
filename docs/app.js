@@ -69,11 +69,25 @@ function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
 }
 
+function supplementSettings(data) {
+  if (!data || !data.settings) return { data, changed: false };
+  const changed = !Object.prototype.hasOwnProperty.call(data.settings, 'lastJsonExportedAtUtc') ||
+    !Object.prototype.hasOwnProperty.call(data.settings, 'lastCsvExportedAtUtc') ||
+    data.settings.lastJsonExportedAtUtc === undefined ||
+    data.settings.lastCsvExportedAtUtc === undefined;
+  data.settings.lastJsonExportedAtUtc ??= null;
+  data.settings.lastCsvExportedAtUtc ??= null;
+  return { data, changed };
+}
+
 function loadStoredData() {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) return null;
   const parsed = parseJson(stored);
-  return parsed.data && validateData(parsed.data) ? parsed.data : null;
+  if (!parsed.data || !validateData(parsed.data)) return null;
+  const supplemented = supplementSettings(parsed.data);
+  if (supplemented.changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(supplemented.data));
+  return supplemented.data;
 }
 
 function showSetup(message = '') {
@@ -94,7 +108,7 @@ function initializeFromText(text, errorElement) {
   const parsed = parseJson(text);
   if (parsed.error) { errorElement.textContent = parsed.error; return; }
   if (!validateData(parsed.data)) { errorElement.textContent = SCHEMA_ERROR; return; }
-  appData = parsed.data;
+  appData = supplementSettings(parsed.data).data;
   clearSaveFeedback();
   saveData();
   errorElement.textContent = '';
@@ -234,6 +248,26 @@ function stopElapsedRefresh() {
   elapsedRefreshTimer = null;
 }
 
+function formatExportedAt(utcIso) {
+  if (!utcIso) return '未実行';
+  const date = new Date(utcIso);
+  if (Number.isNaN(date.getTime())) return '未実行';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TIMEZONE,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(date).reduce((acc, part) => {
+    acc[part.type] = part.value;
+    return acc;
+  }, {});
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
+}
+
+function renderExportStatus() {
+  $('last-json-exported-at').textContent = formatExportedAt(appData.settings.lastJsonExportedAtUtc);
+  $('last-csv-exported-at').textContent = formatExportedAt(appData.settings.lastCsvExportedAtUtc);
+}
+
 function render() {
   const today = nowParts().localDate;
   $('pain-score').innerHTML = Array.from({ length: 11 }, (_, value) => `<option value="${value}">${value}</option>`).join('');
@@ -248,6 +282,7 @@ function render() {
   });
 
   renderLastMedicationList();
+  renderExportStatus();
 
   renderEventList($('today-list'), appData.events.filter((event) => event.localDate === today), sortedEventsDescending);
   renderWeek(today);
@@ -305,9 +340,15 @@ function exportCsv() {
     event.note || '', event.createdAtUtc, event.updatedAtUtc, appData.schemaVersion
   ].map(csvEscape).join(','));
   download(`tide-trace-events-${nowParts().localDate}.csv`, '\uFEFF' + [headers.join(','), ...rows].join('\r\n'), 'text/csv;charset=utf-8');
+  appData.settings.lastCsvExportedAtUtc = new Date().toISOString();
+  saveData();
+  renderExportStatus();
 }
 
 function exportJson() {
+  appData.settings.lastJsonExportedAtUtc = new Date().toISOString();
+  saveData();
+  renderExportStatus();
   download(`tide-trace-backup-${nowParts().localDate}.json`, JSON.stringify(appData, null, 2), 'application/json;charset=utf-8');
 }
 
