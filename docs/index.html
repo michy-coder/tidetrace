@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Tide Trace</title>
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
   <header class="app-header">
@@ -28,6 +28,11 @@
     </section>
 
     <div id="app-screen" class="hidden">
+      <div id="toast-feedback" class="toast-feedback" role="status" aria-live="polite" hidden>
+        <span id="toast-message"></span>
+        <button id="toast-undo-button" class="toast-undo-button" type="button">取り消す</button>
+      </div>
+
       <section class="card" aria-labelledby="last-med-title">
         <h2 id="last-med-title">前回服薬からの時間</h2>
         <div id="last-medication-list"></div>
@@ -52,7 +57,6 @@
         <label for="shared-note-input">メモ</label>
         <textarea id="shared-note-input" rows="4"></textarea>
         <button id="save-note" type="button">メモのみを保存</button>
-        <div id="save-feedback" class="save-feedback hidden" role="status" aria-live="polite"></div>
       </section>
 
       <section class="card" aria-labelledby="today-title">
@@ -83,6 +87,6 @@
     </div>
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=3" defer></script>
 </body>
 </html>

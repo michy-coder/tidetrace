@@ -125,30 +125,21 @@ function clearSaveFeedback() {
     saveFeedbackTimer = null;
   }
   lastSavedEventId = null;
-  const feedback = $('save-feedback');
-  if (!feedback) return;
-  feedback.classList.add('hidden');
-  feedback.replaceChildren();
+  const feedback = $('toast-feedback');
+  const message = $('toast-message');
+  if (!feedback || !message) return;
+  feedback.hidden = true;
+  message.textContent = '';
 }
 
 function showSaveFeedback(eventId, message) {
   if (saveFeedbackTimer) clearTimeout(saveFeedbackTimer);
   lastSavedEventId = eventId;
-  const feedback = $('save-feedback');
-  feedback.classList.remove('hidden');
-  feedback.replaceChildren();
-
-  const text = document.createElement('span');
-  text.className = 'save-feedback-message';
+  const feedback = $('toast-feedback');
+  const text = $('toast-message');
+  if (!feedback || !text) return;
   text.textContent = message;
-
-  const button = document.createElement('button');
-  button.className = 'undo-save-button';
-  button.type = 'button';
-  button.textContent = '取り消す';
-  button.addEventListener('click', undoLastSavedEvent);
-
-  feedback.append(text, button);
+  feedback.hidden = false;
   saveFeedbackTimer = setTimeout(clearSaveFeedback, 8000);
 }
 
@@ -366,6 +357,7 @@ function wireEvents() {
   });
   $('export-csv').addEventListener('click', exportCsv);
   $('export-json').addEventListener('click', exportJson);
+  $('toast-undo-button').addEventListener('click', undoLastSavedEvent);
   $('import-json').addEventListener('click', () => {
     if (!confirm('JSONバックアップを読み込みます。\n現在のブラウザ内の記録は、読み込むデータに置き換わります。\n必要な場合は、先に現在のデータを書き出してください。')) return;
     readFile($('import-file'), (text) => initializeFromText(text, $('app-message')), $('app-message'));

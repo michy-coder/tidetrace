@@ -132,38 +132,40 @@ hr {
 .error { color: var(--danger-bg); font-weight: 700; }
 .message { color: var(--text-muted); }
 
-.save-feedback.hidden { display: none; }
-
-.save-feedback {
-  align-items: center;
+.toast-feedback {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: min(calc(100% - 2rem), 420px);
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
   background: var(--surface-muted);
-  border: 1px solid var(--border);
-  border-radius: 12px;
   color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.25);
   display: flex;
-  gap: 10px;
+  gap: 0.75rem;
+  align-items: center;
   justify-content: space-between;
-  margin-top: 16px;
-  padding: 10px 12px;
 }
 
-.save-feedback-message {
-  flex: 1 1 auto;
-  min-width: 0;
-}
+.toast-feedback[hidden] { display: none; }
 
-.undo-save-button {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text);
+.toast-undo-button {
   flex: 0 0 auto;
-  margin: 0;
-  min-height: 40px;
-  padding: 8px 12px;
   width: auto;
+  min-height: 40px;
+  margin: 0;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--button-bg);
+  border: 1px solid var(--button-bg);
 }
 
-.undo-save-button:active { background: var(--surface); }
+.toast-undo-button:active { background: var(--surface); }
 
 .button-list button { margin-top: 8px; }
 
