@@ -156,6 +156,10 @@ function sortedEvents(events) {
   return [...events].sort((a, b) => (a.localDate + a.localTime + a.createdAtUtc).localeCompare(b.localDate + b.localTime + b.createdAtUtc));
 }
 
+function sortedEventsDescending(events) {
+  return [...events].sort((a, b) => (b.localDate + b.localTime + b.createdAtUtc).localeCompare(a.localDate + a.localTime + a.createdAtUtc));
+}
+
 function eventText(event) {
   const parts = [`${event.localTime}`, event.type];
   if (event.type === 'pain') parts.push(`score ${event.painScore}`, findPainLabel(event.stateOptionId));
@@ -164,13 +168,13 @@ function eventText(event) {
   return parts.filter(Boolean).join(' / ');
 }
 
-function renderEventList(container, events) {
+function renderEventList(container, events, sortEvents = sortedEvents) {
   container.innerHTML = '';
   if (events.length === 0) {
     container.innerHTML = '<p class="empty">記録はありません。</p>';
     return;
   }
-  sortedEvents(events).forEach((event) => {
+  sortEvents(events).forEach((event) => {
     const item = document.createElement('div');
     item.className = 'event';
     const content = document.createElement('div');
@@ -245,7 +249,7 @@ function render() {
 
   renderLastMedicationList();
 
-  renderEventList($('today-list'), appData.events.filter((event) => event.localDate === today));
+  renderEventList($('today-list'), appData.events.filter((event) => event.localDate === today), sortedEventsDescending);
   renderWeek(today);
 }
 
@@ -254,7 +258,7 @@ function renderWeek(today) {
   list.innerHTML = '';
   const dates = [];
   const base = new Date(`${today}T00:00:00+09:00`);
-  for (let i = 0; i < 7; i += 1) {
+  for (let i = 1; i <= 7; i += 1) {
     const d = new Date(base.getTime() - i * 86400000);
     dates.push(new Intl.DateTimeFormat('en-CA', { timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d));
   }
@@ -262,7 +266,6 @@ function renderWeek(today) {
     const events = appData.events.filter((event) => event.localDate === date);
     if (events.length === 0) return;
     const details = document.createElement('details');
-    details.open = date === today;
     const summary = document.createElement('summary');
     summary.textContent = `${date}：${events.length}件`;
     const body = document.createElement('div');
