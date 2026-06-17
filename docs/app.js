@@ -676,9 +676,9 @@ function exportJson() {
   download(`tide-trace-backup-${nowParts().localDate}.json`, JSON.stringify(appData, null, 2), 'application/json;charset=utf-8');
 }
 
-function readFile(input, callback, errorElement) {
+function readFile(input, callback, errorElement, missingFileMessage = 'JSONファイルを選択してください。') {
   const file = input.files[0];
-  if (!file) { errorElement.textContent = 'JSONファイルを選択してください。'; return; }
+  if (!file) { errorElement.textContent = missingFileMessage; return; }
   const reader = new FileReader();
   reader.onload = () => callback(String(reader.result));
   reader.onerror = () => { errorElement.textContent = JSON_ERROR; };
@@ -743,11 +743,11 @@ function wireEvents() {
     if (event.target === $('edit-event-panel')) closeEditEventPanel();
   });
   $('import-json').addEventListener('click', () => {
-    if (!confirm('JSONバックアップを読み込みます。\n現在のブラウザ内の記録は、読み込むデータに置き換わります。\n必要な場合は、先に現在のデータを書き出してください。')) return;
-    readFile($('import-file'), (text) => initializeFromText(text, $('app-message')), $('app-message'));
+    if (!confirm('バックアップを読み込みます。\n現在のブラウザ内の記録は、読み込むデータに置き換わります。\n必要な場合は、先に現在のデータをバックアップしてください。')) return;
+    readFile($('import-file'), (text) => initializeFromText(text, $('app-message')), $('app-message'), 'バックアップファイルを選択してください。');
   });
   $('delete-all').addEventListener('click', () => {
-    if (!confirm('全データを削除します。\n必要な場合は、先にJSONバックアップまたはCSVを書き出してください。')) return;
+    if (!confirm('全データを削除します。\n必要な場合は、先に現在のデータをバックアップしてください。')) return;
     localStorage.removeItem(STORAGE_KEY);
     appData = null;
     showSetup();
