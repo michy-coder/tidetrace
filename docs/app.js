@@ -8,6 +8,7 @@ let lastSavedEventId = null;
 let saveFeedbackTimer = null;
 let elapsedRefreshTimer = null;
 let editingEventId = null;
+let editingPeriodId = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -34,12 +35,50 @@ function parseJson(text) {
 }
 
 function normalizeImportedData(data) {
-  if (!data || typeof data !== 'object' || !Array.isArray(data.events)) return data;
+  if (!data || typeof data !== 'object') return data;
+  data.periods = Array.isArray(data.periods) ? data.periods : [];
+  data.periods.forEach((period) => {
+    if (!period || typeof period !== 'object') return;
+    period.note = typeof period.note === 'string' ? period.note : '';
+  });
+  if (!Array.isArray(data.events)) return data;
   data.events.forEach((event) => {
     if (!event || typeof event !== 'object') return;
     event.updatedAtUtc = event.updatedAtUtc || event.createdAtUtc || event.recordedAtUtc;
   });
   return data;
+}
+
+function isDateString(value) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function sortedPeriods(periods = appData.periods) {
+  return [...periods].sort((a, b) => a.startDate.localeCompare(b.startDate));
+}
+
+function findOverlappingPeriod(candidate, ignoredId = null) {
+  return appData.periods.find((period) => period.id !== ignoredId && period.startDate <= candidate.endDate && candidate.startDate <= period.endDate);
+}
+
+function validatePeriods(periods) {
+  if (!Array.isArray(periods)) return false;
+  for (const period of periods) {
+    if (!period || typeof period !== 'object') return false;
+    if (typeof period.id !== 'string') return false;
+    if (typeof period.label !== 'string') return false;
+    if (!isDateString(period.startDate) || !isDateString(period.endDate)) return false;
+    if (period.note !== undefined && typeof period.note !== 'string') return false;
+    if (period.startDate > period.endDate) return false;
+  }
+  for (let i = 0; i < periods.length; i += 1) {
+    for (let j = i + 1; j < periods.length; j += 1) {
+      const a = periods[i];
+      const b = periods[j];
+      if (a.startDate <= b.endDate && b.startDate <= a.endDate) return false;
+    }
+  }
+  return true;
 }
 
 function validateData(data) {
@@ -49,6 +88,7 @@ function validateData(data) {
   if (!data.settings || typeof data.settings !== 'object' || Array.isArray(data.settings)) return false;
   if (!Array.isArray(data.settings.painStateOptions) || !Array.isArray(data.settings.medicationOptions)) return false;
   if (!Array.isArray(data.periods) || !Array.isArray(data.events)) return false;
+  if (!validatePeriods(data.periods)) return false;
 
   const validOption = (option) => option && typeof option.id === 'string' && typeof option.label === 'string' && typeof option.active === 'boolean';
   if (!data.settings.painStateOptions.every(validOption)) return false;
@@ -315,6 +355,139 @@ function elapsedText(iso) {
   return `${Math.floor(minutes / 60)}時間${minutes % 60}分`;
 }
 
+function addDays(dateText, days) {
+  const date = new Date(`${dateText}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function nextPeriodStartSuggestion() {
+  if (!appData.periods.length) return '';
+  const latest = [...appData.periods].sort((a, b) => b.endDate.localeCompare(a.endDate))[0];
+  return addDays(latest.endDate, 1);
+}
+
+function resetPeriodForm() {
+  editingPeriodId = null;
+  $('comparison-period-form').reset();
+  $('comparison-period-start').value = nextPeriodStartSuggestion();
+  $('comparison-period-form').querySelector('button[type="submit"]').textContent = '体調比較用期間を追加';
+  $('cancel-comparison-period-edit').hidden = true;
+}
+
+function periodFormValue() {
+  return {
+    label: $('comparison-period-label').value.trim(),
+    startDate: $('comparison-period-start').value,
+    endDate: $('comparison-period-end').value,
+    note: $('comparison-period-note').value.trim()
+  };
+}
+
+function setPeriodMessage(message, isError = false) {
+  const element = $('comparison-period-message');
+  element.textContent = message;
+  element.classList.toggle('error', isError);
+}
+
+function validatePeriodFormValue(value, ignoredId = null) {
+  if (!value.label) return '期間名を入力してください。';
+  if (!value.startDate) return '開始日を入力してください。';
+  if (!value.endDate) return '終了日を入力してください。';
+  if (!isDateString(value.startDate) || !isDateString(value.endDate)) return '日付はYYYY-MM-DD形式で入力してください。';
+  if (value.startDate > value.endDate) return '開始日は終了日以前の日付にしてください。';
+  const overlap = findOverlappingPeriod(value, ignoredId);
+  if (overlap) return `既存の体調比較用期間「${overlap.label}」と日付が重なっています。
+開始日または終了日を変更してください。`;
+  return '';
+}
+
+function createPeriod(value) {
+  const id = crypto.randomUUID ? crypto.randomUUID() : `period_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  return { id, ...value };
+}
+
+function savePeriodFromForm() {
+  const value = periodFormValue();
+  const validationMessage = validatePeriodFormValue(value, editingPeriodId);
+  if (validationMessage) { setPeriodMessage(validationMessage, true); return; }
+  if (editingPeriodId) {
+    const period = appData.periods.find((item) => item.id === editingPeriodId);
+    if (!period) { resetPeriodForm(); return; }
+    Object.assign(period, value);
+    saveData();
+    render();
+    resetPeriodForm();
+    showToast('体調比較用期間を更新しました');
+    setPeriodMessage('体調比較用期間を更新しました');
+    return;
+  }
+  appData.periods.push(createPeriod(value));
+  saveData();
+  render();
+  resetPeriodForm();
+  showToast('体調比較用期間を追加しました');
+  setPeriodMessage('体調比較用期間を追加しました');
+}
+
+function editPeriod(id) {
+  const period = appData.periods.find((item) => item.id === id);
+  if (!period) return;
+  editingPeriodId = id;
+  $('comparison-period-label').value = period.label;
+  $('comparison-period-start').value = period.startDate;
+  $('comparison-period-end').value = period.endDate;
+  $('comparison-period-note').value = period.note || '';
+  $('comparison-period-form').querySelector('button[type="submit"]').textContent = '体調比較用期間を更新';
+  $('cancel-comparison-period-edit').hidden = false;
+  setPeriodMessage('');
+  $('comparison-period-label').focus();
+}
+
+function deletePeriod(id) {
+  if (!confirm('この体調比較用期間を削除します。\n記録自体は削除されません。')) return;
+  appData.periods = appData.periods.filter((period) => period.id !== id);
+  if (editingPeriodId === id) resetPeriodForm();
+  saveData();
+  render();
+  resetPeriodForm();
+  showToast('体調比較用期間を削除しました');
+  setPeriodMessage('体調比較用期間を削除しました');
+}
+
+function renderPeriodList() {
+  const list = $('comparison-period-list');
+  list.innerHTML = '';
+  if (!appData.periods.length) {
+    list.innerHTML = '<p class="empty">登録済みの体調比較用期間はありません。</p>';
+    return;
+  }
+  sortedPeriods().forEach((period) => {
+    const item = document.createElement('div');
+    item.className = 'comparison-period-item';
+    const content = document.createElement('div');
+    content.className = 'comparison-period-content';
+    content.textContent = `${period.startDate}〜${period.endDate}　${period.label}`;
+    const actions = document.createElement('div');
+    actions.className = 'event-actions';
+    const editButton = document.createElement('button');
+    editButton.className = 'edit-event-button';
+    editButton.type = 'button';
+    editButton.textContent = '✎';
+    editButton.setAttribute('aria-label', '体調比較用期間を編集');
+    editButton.addEventListener('click', () => editPeriod(period.id));
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'delete-event-button';
+    deleteButton.type = 'button';
+    deleteButton.textContent = '×';
+    deleteButton.setAttribute('aria-label', '体調比較用期間を削除');
+    deleteButton.addEventListener('click', () => deletePeriod(period.id));
+    actions.append(editButton, deleteButton);
+    item.append(content, actions);
+    list.appendChild(item);
+  });
+}
+
 function renderLastMedicationList() {
   const list = $('last-medication-list');
   list.innerHTML = '';
@@ -375,6 +548,8 @@ function render() {
 
   renderLastMedicationList();
   renderExportStatus();
+  renderPeriodList();
+  if (!editingPeriodId && !$('comparison-period-start').value) $('comparison-period-start').value = nextPeriodStartSuggestion();
 
   renderEventList($('today-list'), appData.events.filter((event) => event.localDate === today), sortedEventsDescending);
   renderWeek(today);
@@ -547,6 +722,14 @@ function wireEvents() {
     addEvent(createEvent({ type: 'note', note }), 'メモを保存しました');
     clearSharedNote();
     $('app-message').textContent = '';
+  });
+  $('comparison-period-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    savePeriodFromForm();
+  });
+  $('cancel-comparison-period-edit').addEventListener('click', () => {
+    resetPeriodForm();
+    setPeriodMessage('');
   });
   $('export-csv').addEventListener('click', exportCsv);
   $('export-json').addEventListener('click', exportJson);

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Tide Trace</title>
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
   <header class="app-header">
@@ -87,6 +87,28 @@
 
       <section class="card management" aria-labelledby="manage-title">
         <h2 id="manage-title">管理</h2>
+
+        <section class="comparison-period-settings" aria-labelledby="comparison-period-title">
+          <h3 id="comparison-period-title">体調比較用期間の設定</h3>
+          <form id="comparison-period-form">
+            <label for="comparison-period-label">期間名</label>
+            <input id="comparison-period-label" type="text" autocomplete="off">
+            <label for="comparison-period-start">開始日</label>
+            <input id="comparison-period-start" type="date">
+            <label for="comparison-period-end">終了日</label>
+            <input id="comparison-period-end" type="date">
+            <label for="comparison-period-note">メモ</label>
+            <textarea id="comparison-period-note" rows="3"></textarea>
+            <div class="comparison-period-form-actions">
+              <button type="submit">体調比較用期間を追加</button>
+              <button id="cancel-comparison-period-edit" class="secondary-button" type="button" hidden>キャンセル</button>
+            </div>
+          </form>
+          <p id="comparison-period-message" class="message" role="status"></p>
+          <h3>登録済みの体調比較用期間</h3>
+          <div id="comparison-period-list"></div>
+        </section>
+        <hr>
         <div class="export-status" aria-live="polite">
           <p>最後にJSON書き出しを実行：<span id="last-json-exported-at"></span></p>
           <p>最後にCSV書き出しを実行：<span id="last-csv-exported-at"></span></p>
@@ -111,6 +133,6 @@
     </div>
   </main>
 
-  <script src="app.js?v=5" defer></script>
+  <script src="app.js?v=6" defer></script>
 </body>
 </html>
