@@ -89,6 +89,9 @@ input, select, textarea, button {
 }
 
 input, select, textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
   border: 1px solid var(--input-border);
   padding: 12px;
   background: var(--input-bg);

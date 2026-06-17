@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Tide Trace</title>
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
   <header class="app-header">
@@ -81,13 +81,38 @@
       </section>
 
       <section class="notice card">
-        <p>このアプリの記録は、このブラウザ内に保存されます。端末やブラウザの状態によっては消えることがあります。必要に応じてCSVまたはJSONで書き出してください。</p>
-        <p>プライベートブラウズでは、記録が保持されない場合があります。通常のブラウザ画面で使用してください。</p>
+        <p>このアプリの記録は、このブラウザ内に保存されます。</p>
+        <p>端末やブラウザの状態によっては消えることがあります。</p>
+        <p>必要に応じてバックアップしてください。</p>
+        <p>プライベートブラウズでは、記録が保持されない場合があります。</p>
+        <p>通常のブラウザ画面で使用してください。</p>
       </section>
 
       <section class="card management" aria-labelledby="manage-title">
         <h2 id="manage-title">管理</h2>
 
+        <div class="export-status" aria-live="polite">
+          <p>最後にバックアップ書き出しを実行：<span id="last-json-exported-at"></span></p>
+        </div>
+        <button id="export-json" type="button">バックアップを書き出し</button>
+        <label for="import-file">バックアップから読み込み</label>
+        <input id="import-file" type="file" accept="application/json,.json">
+        <button id="import-json" type="button">バックアップから読み込み</button>
+        <hr>
+        <div class="export-status" aria-live="polite">
+          <p>最後にCSV書き出しを実行：<span id="last-csv-exported-at"></span></p>
+        </div>
+        <div class="field-row">
+          <label for="csv-export-type">CSV書き出し</label>
+          <select id="csv-export-type">
+            <option value="all">全記録</option>
+            <option value="pain">痛みのみ</option>
+            <option value="medication">服薬のみ</option>
+            <option value="note">メモのみ</option>
+          </select>
+        </div>
+        <button id="export-csv" type="button">CSVを書き出す</button>
+        <hr>
         <section class="comparison-period-settings" aria-labelledby="comparison-period-title">
           <h3 id="comparison-period-title">体調比較用期間の設定</h3>
           <form id="comparison-period-form">
@@ -109,30 +134,12 @@
           <div id="comparison-period-list"></div>
         </section>
         <hr>
-        <div class="export-status" aria-live="polite">
-          <p>最後にJSON書き出しを実行：<span id="last-json-exported-at"></span></p>
-          <p>最後にCSV書き出しを実行：<span id="last-csv-exported-at"></span></p>
-        </div>
-        <div class="field-row">
-          <label for="csv-export-type">CSV書き出し</label>
-          <select id="csv-export-type">
-            <option value="all">全記録</option>
-            <option value="pain">痛みのみ</option>
-            <option value="medication">服薬のみ</option>
-            <option value="note">メモのみ</option>
-          </select>
-        </div>
-        <button id="export-csv" type="button">CSVを書き出す</button>
-        <button id="export-json" type="button">JSONバックアップ書き出し</button>
-        <label for="import-file">JSONインポート</label>
-        <input id="import-file" type="file" accept="application/json,.json">
-        <button id="import-json" type="button">JSONバックアップを読み込む</button>
         <button id="delete-all" class="danger" type="button">全データ削除</button>
         <p id="app-message" class="message" role="status"></p>
       </section>
     </div>
   </main>
 
-  <script src="app.js?v=6" defer></script>
+  <script src="app.js?v=7" defer></script>
 </body>
 </html>
