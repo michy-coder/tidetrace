@@ -90,12 +90,37 @@ input, select, textarea, button {
 
 input, select, textarea {
   box-sizing: border-box;
+  display: block;
   max-width: 100%;
   min-width: 0;
   border: 1px solid var(--input-border);
   padding: 12px;
   background: var(--input-bg);
   color: var(--text);
+}
+
+.form-control {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+input[type="date"].form-control {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
 }
 
 input:focus, select:focus, textarea:focus, button:focus-visible {
