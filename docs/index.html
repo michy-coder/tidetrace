@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Tide Trace</title>
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
   <header class="app-header">
@@ -91,7 +91,16 @@
           <p>最後にJSON書き出しを実行：<span id="last-json-exported-at"></span></p>
           <p>最後にCSV書き出しを実行：<span id="last-csv-exported-at"></span></p>
         </div>
-        <button id="export-csv" type="button">CSV書き出し</button>
+        <div class="field-row">
+          <label for="csv-export-type">CSV書き出し</label>
+          <select id="csv-export-type">
+            <option value="all">全記録</option>
+            <option value="pain">痛みのみ</option>
+            <option value="medication">服薬のみ</option>
+            <option value="note">メモのみ</option>
+          </select>
+        </div>
+        <button id="export-csv" type="button">CSVを書き出す</button>
         <button id="export-json" type="button">JSONバックアップ書き出し</button>
         <label for="import-file">JSONインポート</label>
         <input id="import-file" type="file" accept="application/json,.json">
@@ -102,6 +111,6 @@
     </div>
   </main>
 
-  <script src="app.js?v=4" defer></script>
+  <script src="app.js?v=5" defer></script>
 </body>
 </html>

@@ -422,16 +422,73 @@ function download(filename, content, type) {
   URL.revokeObjectURL(url);
 }
 
+const CSV_EXPORT_TYPES = {
+  all: {
+    filenamePart: 'all',
+    headers: ['id','local_date','local_time','recorded_at_utc','timezone','type','pain_score','state_option_label','medication_option_label','note','created_at_utc','updated_at_utc','schema_version']
+  },
+  pain: {
+    filenamePart: 'pain',
+    headers: ['id','local_date','local_time','recorded_at_utc','timezone','pain_score','state_option_label','note','created_at_utc','updated_at_utc','schema_version']
+  },
+  medication: {
+    filenamePart: 'medication',
+    headers: ['id','local_date','local_time','recorded_at_utc','timezone','medication_option_label','note','created_at_utc','updated_at_utc','schema_version']
+  },
+  note: {
+    filenamePart: 'notes',
+    headers: ['id','local_date','local_time','recorded_at_utc','timezone','note','created_at_utc','updated_at_utc','schema_version']
+  }
+};
+
+function getCsvExportType() {
+  const selectedType = $('csv-export-type').value;
+  return Object.prototype.hasOwnProperty.call(CSV_EXPORT_TYPES, selectedType) ? selectedType : 'all';
+}
+
+function filterEventsForCsv(type) {
+  const events = type === 'all' ? appData.events : appData.events.filter((event) => event.type === type);
+  return sortedEvents(events);
+}
+
+function csvValueForHeader(event, header) {
+  if (header === 'id') return event.id;
+  if (header === 'local_date') return event.localDate;
+  if (header === 'local_time') return event.localTime;
+  if (header === 'recorded_at_utc') return event.recordedAtUtc;
+  if (header === 'timezone') return event.timezone;
+  if (header === 'type') return event.type;
+  if (header === 'pain_score') return event.type === 'pain' ? event.painScore : '';
+  if (header === 'state_option_label') return event.type === 'pain' ? findPainLabel(event.stateOptionId) : '';
+  if (header === 'medication_option_label') return event.type === 'medication' ? findMedicationLabel(event.medicationOptionId) : '';
+  if (header === 'note') return event.note || '';
+  if (header === 'created_at_utc') return event.createdAtUtc;
+  if (header === 'updated_at_utc') return event.updatedAtUtc;
+  if (header === 'schema_version') return appData.schemaVersion;
+  return '';
+}
+
+function buildCsvRows(events, type) {
+  const headers = CSV_EXPORT_TYPES[type].headers;
+  return events.map((event) => headers.map((header) => csvEscape(csvValueForHeader(event, header))).join(','));
+}
+
+function csvTimestampForFilename() {
+  const time = nowParts();
+  return `${time.localDate.replace(/-/g, '')}-${time.localTime.replace(':', '')}`;
+}
+
+function downloadCsv(csvText, filename) {
+  download(filename, '\uFEFF' + csvText, 'text/csv;charset=utf-8');
+}
+
 function exportCsv() {
-  const headers = ['id','local_date','local_time','recorded_at_utc','timezone','type','pain_score','state_option_label','medication_option_label','note','created_at_utc','updated_at_utc','schema_version'];
-  const rows = sortedEvents(appData.events).map((event) => [
-    event.id, event.localDate, event.localTime, event.recordedAtUtc, event.timezone, event.type,
-    event.type === 'pain' ? event.painScore : '',
-    event.type === 'pain' ? findPainLabel(event.stateOptionId) : '',
-    event.type === 'medication' ? findMedicationLabel(event.medicationOptionId) : '',
-    event.note || '', event.createdAtUtc, event.updatedAtUtc, appData.schemaVersion
-  ].map(csvEscape).join(','));
-  download(`tide-trace-events-${nowParts().localDate}.csv`, '\uFEFF' + [headers.join(','), ...rows].join('\r\n'), 'text/csv;charset=utf-8');
+  const type = getCsvExportType();
+  const config = CSV_EXPORT_TYPES[type];
+  const events = filterEventsForCsv(type);
+  const rows = buildCsvRows(events, type);
+  const csvText = [config.headers.join(','), ...rows].join('\r\n');
+  downloadCsv(csvText, `tide-trace-${config.filenamePart}-${csvTimestampForFilename()}.csv`);
   appData.settings.lastCsvExportedAtUtc = new Date().toISOString();
   saveData();
   renderExportStatus();
