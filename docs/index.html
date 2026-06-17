@@ -9,8 +9,30 @@
 </head>
 <body>
   <header class="app-header">
-    <h1>Tide Trace</h1>
-    <p>Local-first logging app for browser-only records.</p>
+    <div class="brand-logo" aria-hidden="true">
+      <svg class="brand-logo-mark" viewBox="0 0 72 72" focusable="false" role="img">
+        <defs>
+          <linearGradient id="brand-logo-gradient" x1="12" y1="8" x2="62" y2="66" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#9fe3df"></stop>
+            <stop offset="0.55" stop-color="#66b8d4"></stop>
+            <stop offset="1" stop-color="#477fb8"></stop>
+          </linearGradient>
+          <filter id="brand-logo-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#1f5265" flood-opacity="0.4"></feDropShadow>
+          </filter>
+        </defs>
+        <circle cx="36" cy="36" r="34" fill="url(#brand-logo-gradient)"></circle>
+        <path class="brand-logo-wave" d="M10 48 C20 40 30 40 40 48 S60 56 68 46 L68 72 L10 72 Z"></path>
+        <g class="brand-logo-letters" filter="url(#brand-logo-shadow)">
+          <text x="22" y="42">T</text>
+          <text x="34" y="48">T</text>
+        </g>
+      </svg>
+    </div>
+    <div class="brand-copy">
+      <h1>Tide Trace</h1>
+      <p>Local-first pain and medication log</p>
+    </div>
   </header>
 
   <main>
