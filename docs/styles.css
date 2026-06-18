@@ -217,6 +217,14 @@ hr {
   color: var(--text-muted);
 }
 
+.notice p {
+  margin: 0 0 0.75rem;
+}
+
+.notice p:last-child {
+  margin-bottom: 0;
+}
+
 .error { color: var(--danger-bg); font-weight: 700; }
 .message { color: var(--text-muted); }
 
