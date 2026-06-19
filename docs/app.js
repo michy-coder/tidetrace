@@ -36,6 +36,25 @@ function parseJson(text) {
 
 function normalizeImportedData(data) {
   if (!data || typeof data !== 'object') return data;
+  if (data.settings && Array.isArray(data.settings.medicationOptions)) {
+    const usedIds = new Set();
+    data.settings.medicationOptions = data.settings.medicationOptions.map((option, index) => {
+      const source = option && typeof option === 'object' ? option : {};
+      const { isActive: _legacyIsActive, ...normalizedSource } = source;
+      let id = typeof source.id === 'string' && source.id ? source.id : `med_imported_${index + 1}`;
+      while (usedIds.has(id)) id = `${id}_${index + 1}`;
+      usedIds.add(id);
+      return {
+        ...normalizedSource,
+        id,
+        label: typeof source.label === 'string' && source.label ? source.label : `Medication ${index + 1}`,
+        defaultAmount: source.defaultAmount ?? 1,
+        unit: typeof source.unit === 'string' ? source.unit : '',
+        active: source.active ?? source.isActive ?? true,
+        sortOrder: source.sortOrder ?? index + 1
+      };
+    });
+  }
   data.periods = Array.isArray(data.periods) ? data.periods : [];
   data.periods.forEach((period) => {
     if (!period || typeof period !== 'object') return;
@@ -91,11 +110,14 @@ function validateData(data) {
   if (!validatePeriods(data.periods)) return false;
 
   const validOption = (option) => option && typeof option.id === 'string' && typeof option.label === 'string' && typeof option.active === 'boolean';
+  const validMedicationOption = (option) => validOption(option) &&
+    typeof option.defaultAmount === 'number' && Number.isFinite(option.defaultAmount) &&
+    typeof option.unit === 'string' &&
+    typeof option.sortOrder === 'number' && Number.isFinite(option.sortOrder);
   if (!data.settings.painStateOptions.every(validOption)) return false;
-  if (!data.settings.medicationOptions.every(validOption)) return false;
+  if (!data.settings.medicationOptions.every(validMedicationOption)) return false;
 
   const painIds = new Set(data.settings.painStateOptions.map((option) => option.id));
-  const medicationIds = new Set(data.settings.medicationOptions.map((option) => option.id));
   return data.events.every((event) => {
     if (!event || typeof event !== 'object') return false;
     if (typeof event.id !== 'string') return false;
@@ -109,7 +131,10 @@ function validateData(data) {
         typeof event.stateOptionId === 'string' && painIds.has(event.stateOptionId);
     }
     if (event.type === 'medication') {
-      return typeof event.medicationOptionId === 'string' && medicationIds.has(event.medicationOptionId);
+      return typeof event.medicationOptionId === 'string' &&
+        (event.medicationLabel === undefined || typeof event.medicationLabel === 'string') &&
+        (event.amount === undefined || (typeof event.amount === 'number' && Number.isFinite(event.amount))) &&
+        (event.unit === undefined || typeof event.unit === 'string');
     }
     return typeof event.note === 'string';
   });
@@ -169,9 +194,19 @@ function initializeFromText(text, errorElement) {
 }
 
 function activePainOptions() { return appData.settings.painStateOptions.filter((option) => option.active); }
-function activeMedicationOptions() { return appData.settings.medicationOptions.filter((option) => option.active); }
+function sortedMedicationOptions(options) {
+  return [...options].sort((a, b) =>
+    a.sortOrder - b.sortOrder ||
+    a.label.localeCompare(b.label, 'ja') ||
+    a.id.localeCompare(b.id)
+  );
+}
+function activeMedicationOptions() {
+  return sortedMedicationOptions(appData.settings.medicationOptions.filter((option) => option.active));
+}
 function findPainLabel(id) { return (appData.settings.painStateOptions.find((option) => option.id === id) || {}).label || ''; }
 function findMedicationLabel(id) { return (appData.settings.medicationOptions.find((option) => option.id === id) || {}).label || ''; }
+function medicationEventLabel(event) { return event.medicationLabel || findMedicationLabel(event.medicationOptionId); }
 
 function createEvent(base) {
   const time = nowParts();
@@ -236,7 +271,10 @@ function sortedEventsDescending(events) {
 function eventText(event) {
   const parts = [`${event.localTime}`, event.type];
   if (event.type === 'pain') parts.push(`score ${event.painScore}`, findPainLabel(event.stateOptionId));
-  if (event.type === 'medication') parts.push(findMedicationLabel(event.medicationOptionId));
+  if (event.type === 'medication') {
+    parts.push(medicationEventLabel(event) || '不明な薬');
+    if (event.amount !== undefined || event.unit) parts.push(`${event.amount ?? ''}${event.unit || ''}`);
+  }
   if (event.note) parts.push(event.note);
   return parts.filter(Boolean).join(' / ');
 }
@@ -279,7 +317,22 @@ function renderEventList(container, events, sortEvents = sortedEvents) {
 }
 
 function optionHtml(options, selectedId) {
-  return options.map((option) => `<option value="${escapeHtml(option.id)}"${option.id === selectedId ? ' selected' : ''}>${escapeHtml(option.label)}</option>`).join('');
+  return options.map((option) => `<option value="${escapeHtml(option.id)}"${option.id === selectedId ? ' selected' : ''}>${escapeHtml(option.displayLabel || option.label)}</option>`).join('');
+}
+
+function medicationEditOptions(event) {
+  const options = activeMedicationOptions();
+  const current = appData.settings.medicationOptions.find((option) => option.id === event.medicationOptionId);
+  if (current && !current.active) {
+    options.push({ ...current, displayLabel: `${current.label}（非表示）` });
+  } else if (!current) {
+    options.push({
+      id: event.medicationOptionId,
+      label: event.medicationLabel || '不明な薬',
+      displayLabel: `${event.medicationLabel || '不明な薬'}（設定なし）`
+    });
+  }
+  return options;
 }
 
 function editTextareaHtml(value = '') {
@@ -301,7 +354,7 @@ function openEditEventPanel(id) {
   } else if (event.type === 'medication') {
     fields.innerHTML = `
       <label for="edit-medication-option">Medication</label>
-      <select id="edit-medication-option">${optionHtml(activeMedicationOptions(), event.medicationOptionId)}</select>
+      <select id="edit-medication-option">${optionHtml(medicationEditOptions(event), event.medicationOptionId)}</select>
       ${editTextareaHtml(event.note || '')}`;
   } else {
     fields.innerHTML = editTextareaHtml(event.note || '');
@@ -330,7 +383,14 @@ function saveEditedEvent() {
   } else if (event.type === 'medication') {
     const medicationOptionId = $('edit-medication-option').value;
     if (!medicationOptionId) return;
-    event.medicationOptionId = medicationOptionId;
+    if (medicationOptionId !== event.medicationOptionId) {
+      const option = appData.settings.medicationOptions.find((item) => item.id === medicationOptionId);
+      if (!option) return;
+      event.medicationOptionId = option.id;
+      event.medicationLabel = option.label;
+      event.amount = option.defaultAmount;
+      event.unit = option.unit;
+    }
     event.note = $('edit-note').value.trim();
   } else {
     event.note = $('edit-note').value.trim();
@@ -538,13 +598,17 @@ function render() {
   $('pain-score').innerHTML = Array.from({ length: 11 }, (_, value) => `<option value="${value}">${value}</option>`).join('');
   $('pain-state').innerHTML = activePainOptions().map((option) => `<option value="${option.id}">${escapeHtml(option.label)}</option>`).join('');
   $('medication-buttons').innerHTML = '';
-  activeMedicationOptions().forEach((option) => {
+  const medicationOptions = activeMedicationOptions();
+  medicationOptions.forEach((option) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = option.label;
     button.addEventListener('click', () => saveMedication(option.id));
     $('medication-buttons').appendChild(button);
   });
+  if (medicationOptions.length === 0) {
+    $('medication-buttons').innerHTML = '<p class="empty">有効な薬ボタンがありません。</p>';
+  }
 
   renderLastMedicationList();
   renderExportStatus();
@@ -635,7 +699,7 @@ function csvValueForHeader(event, header) {
   if (header === 'type') return event.type;
   if (header === 'pain_score') return event.type === 'pain' ? event.painScore : '';
   if (header === 'state_option_label') return event.type === 'pain' ? findPainLabel(event.stateOptionId) : '';
-  if (header === 'medication_option_label') return event.type === 'medication' ? findMedicationLabel(event.medicationOptionId) : '';
+  if (header === 'medication_option_label') return event.type === 'medication' ? medicationEventLabel(event) : '';
   if (header === 'note') return event.note || '';
   if (header === 'created_at_utc') return event.createdAtUtc;
   if (header === 'updated_at_utc') return event.updatedAtUtc;
@@ -700,8 +764,16 @@ function clearSharedNote() {
 }
 
 function saveMedication(medicationOptionId) {
-  const label = findMedicationLabel(medicationOptionId);
-  addEvent(createEvent({ type: 'medication', medicationOptionId, note: sharedNoteValue() }), `${label}を記録しました`);
+  const option = appData.settings.medicationOptions.find((item) => item.id === medicationOptionId && item.active);
+  if (!option) return;
+  addEvent(createEvent({
+    type: 'medication',
+    medicationOptionId: option.id,
+    medicationLabel: option.label,
+    amount: option.defaultAmount,
+    unit: option.unit,
+    note: sharedNoteValue()
+  }), `${option.label}を記録しました`);
   clearSharedNote();
   $('app-message').textContent = '';
 }
