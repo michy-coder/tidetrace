@@ -375,12 +375,27 @@ hr {
 
 .edit-event-actions button { margin-top: 0.5rem; }
 
-.last-medication-item {
-  border-top: 1px solid var(--divider);
-  padding: 10px 0;
+.last-medication-card {
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 
-.last-medication-item:first-child { border-top: 0; }
+.last-medication-card h2 {
+  margin-bottom: 6px;
+  font-size: 1.15rem;
+}
+
+.last-medication-item {
+  border-top: 1px solid var(--divider);
+  padding: 6px 0;
+}
+
+.last-medication-item:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.last-medication-item:last-child { padding-bottom: 0; }
 
 summary { font-weight: 700; padding: 8px 0; }
 
