@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Tide Trace</title>
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
   <header class="app-header">
@@ -131,6 +131,34 @@
         </div>
         <button id="export-csv" type="button">CSVを書き出す</button>
         <hr>
+        <section class="medication-settings" aria-labelledby="medication-settings-title">
+          <h3 id="medication-settings-title">薬設定</h3>
+          <p class="message">薬ボタンの表示名、よく使う量、単位、表示順を設定します。<br>非表示にした薬は新規記録ボタンには出ませんが、過去記録は残ります。</p>
+          <p class="notice-text">別の薬に変える場合は、名前を上書きせず、元の薬を非表示にして新しい薬を追加してください。非表示にしても過去記録は残り、再開時には表示に戻せます。</p>
+          <form id="medication-option-form">
+            <input id="medication-option-id" type="hidden">
+            <label for="medication-label">薬名</label>
+            <input id="medication-label" class="form-control" type="text" autocomplete="off" required>
+            <label for="medication-default-amount">よく使う量</label>
+            <input id="medication-default-amount" class="form-control" type="number" inputmode="decimal" step="any" value="1" required>
+            <label for="medication-unit">単位</label>
+            <input id="medication-unit" class="form-control" type="text" autocomplete="off" placeholder="例：錠、包、回">
+            <label for="medication-sort-order">表示順</label>
+            <input id="medication-sort-order" class="form-control" type="number" inputmode="decimal" step="any" required>
+            <label class="checkbox-row" for="medication-active">
+              <input id="medication-active" type="checkbox" checked>
+              <span>表示中</span>
+            </label>
+            <div class="medication-form-actions">
+              <button id="save-medication-option" type="submit">薬を追加</button>
+              <button id="cancel-medication-edit" class="secondary-button" type="button" hidden>キャンセル</button>
+            </div>
+          </form>
+          <p id="medication-settings-message" class="message" role="status"></p>
+          <h3>登録済みの薬</h3>
+          <div id="medication-settings-list"></div>
+        </section>
+        <hr>
         <section class="comparison-period-settings" aria-labelledby="comparison-period-title">
           <h3 id="comparison-period-title">体調比較用期間の設定</h3>
           <form id="comparison-period-form">
@@ -158,6 +186,6 @@
     </div>
   </main>
 
-  <script src="app.js?v=8" defer></script>
+  <script src="app.js?v=9" defer></script>
 </body>
 </html>

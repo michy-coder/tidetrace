@@ -9,6 +9,7 @@ let saveFeedbackTimer = null;
 let elapsedRefreshTimer = null;
 let editingEventId = null;
 let editingPeriodId = null;
+let editingMedicationOptionId = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -204,6 +205,22 @@ function sortedMedicationOptions(options) {
 }
 function activeMedicationOptions() {
   return sortedMedicationOptions(appData.settings.medicationOptions.filter((option) => option.active));
+}
+function allMedicationOptions() {
+  return sortedMedicationOptions(appData.settings.medicationOptions);
+}
+function nextMedicationSortOrder() {
+  const orders = appData.settings.medicationOptions.map((option) => Number(option.sortOrder)).filter(Number.isFinite);
+  return orders.length ? Math.max(...orders) + 1 : 1;
+}
+function createMedicationOptionId() {
+  const time = nowParts();
+  const stamp = `${time.localDate.replace(/-/g, '')}_${time.localTime.replace(':', '')}`;
+  let id = `med_${stamp}_${Math.random().toString(36).slice(2, 7)}`;
+  while (appData.settings.medicationOptions.some((option) => option.id === id)) {
+    id = `med_${stamp}_${Math.random().toString(36).slice(2, 7)}`;
+  }
+  return id;
 }
 function findPainLabel(id) { return (appData.settings.painStateOptions.find((option) => option.id === id) || {}).label || ''; }
 function findMedicationLabel(id) { return (appData.settings.medicationOptions.find((option) => option.id === id) || {}).label || ''; }
@@ -549,6 +566,134 @@ function renderPeriodList() {
   });
 }
 
+
+function resetMedicationOptionForm() {
+  editingMedicationOptionId = null;
+  $('medication-option-form').reset();
+  $('medication-option-id').value = '';
+  $('medication-default-amount').value = '1';
+  $('medication-sort-order').value = nextMedicationSortOrder();
+  $('medication-active').checked = true;
+  $('save-medication-option').textContent = '薬を追加';
+  $('cancel-medication-edit').hidden = true;
+}
+
+function setMedicationSettingsMessage(message, isError = false) {
+  const element = $('medication-settings-message');
+  element.textContent = message;
+  element.classList.toggle('error', isError);
+}
+
+function medicationOptionFormValue() {
+  return {
+    label: $('medication-label').value.trim(),
+    defaultAmountText: $('medication-default-amount').value.trim(),
+    unit: $('medication-unit').value.trim(),
+    sortOrderText: $('medication-sort-order').value.trim(),
+    active: $('medication-active').checked
+  };
+}
+
+function validateMedicationOptionFormValue(value) {
+  if (!value.label) return '薬名を入力してください。';
+  if (!value.defaultAmountText) return 'よく使う量を入力してください。';
+  const defaultAmount = Number(value.defaultAmountText);
+  if (!Number.isFinite(defaultAmount)) return 'よく使う量は数値で入力してください。';
+  if (!value.sortOrderText) return '表示順を入力してください。';
+  const sortOrder = Number(value.sortOrderText);
+  if (!Number.isFinite(sortOrder)) return '表示順は数値で入力してください。';
+  return '';
+}
+
+function saveMedicationOptionFromForm() {
+  const value = medicationOptionFormValue();
+  const validationMessage = validateMedicationOptionFormValue(value);
+  if (validationMessage) { setMedicationSettingsMessage(validationMessage, true); return; }
+  const normalizedValue = {
+    label: value.label,
+    defaultAmount: Number(value.defaultAmountText),
+    unit: value.unit,
+    sortOrder: Number(value.sortOrderText),
+    active: value.active
+  };
+  if (editingMedicationOptionId) {
+    const option = appData.settings.medicationOptions.find((item) => item.id === editingMedicationOptionId);
+    if (!option) { resetMedicationOptionForm(); return; }
+    Object.assign(option, normalizedValue);
+    saveData();
+    render();
+    resetMedicationOptionForm();
+    showToast('薬設定を更新しました。');
+    setMedicationSettingsMessage('薬設定を更新しました。');
+    return;
+  }
+  appData.settings.medicationOptions.push({ id: createMedicationOptionId(), ...normalizedValue });
+  saveData();
+  render();
+  resetMedicationOptionForm();
+  showToast('薬を追加しました。');
+  setMedicationSettingsMessage('薬を追加しました。');
+}
+
+function editMedicationOption(id) {
+  const option = appData.settings.medicationOptions.find((item) => item.id === id);
+  if (!option) return;
+  editingMedicationOptionId = id;
+  $('medication-option-id').value = option.id;
+  $('medication-label').value = option.label;
+  $('medication-default-amount').value = option.defaultAmount;
+  $('medication-unit').value = option.unit || '';
+  $('medication-sort-order').value = option.sortOrder;
+  $('medication-active').checked = option.active;
+  $('save-medication-option').textContent = '薬設定を更新';
+  $('cancel-medication-edit').hidden = false;
+  setMedicationSettingsMessage('');
+  $('medication-label').focus();
+}
+
+function toggleMedicationOptionActive(id) {
+  const option = appData.settings.medicationOptions.find((item) => item.id === id);
+  if (!option) return;
+  option.active = !option.active;
+  saveData();
+  render();
+  showToast(option.active ? '薬設定を更新しました。' : '薬設定を更新しました。');
+  setMedicationSettingsMessage('薬設定を更新しました。');
+}
+
+function renderMedicationSettingsList() {
+  const list = $('medication-settings-list');
+  list.innerHTML = '';
+  if (!appData.settings.medicationOptions.length) {
+    list.innerHTML = '<p class="empty">登録済みの薬はありません。</p>';
+    return;
+  }
+  allMedicationOptions().forEach((option) => {
+    const item = document.createElement('div');
+    item.className = 'medication-settings-item';
+    const content = document.createElement('div');
+    content.className = 'medication-settings-content';
+    const status = option.active ? '表示中' : '非表示';
+    content.textContent = `${option.label} / ${option.defaultAmount}${option.unit || ''} / 表示順 ${option.sortOrder} / ${status}`;
+    const actions = document.createElement('div');
+    actions.className = 'medication-settings-actions';
+    const editButton = document.createElement('button');
+    editButton.className = 'edit-event-button';
+    editButton.type = 'button';
+    editButton.textContent = '✎';
+    editButton.setAttribute('aria-label', '薬設定を編集');
+    editButton.addEventListener('click', () => editMedicationOption(option.id));
+    const toggleButton = document.createElement('button');
+    toggleButton.className = 'secondary-button medication-toggle-button';
+    toggleButton.type = 'button';
+    toggleButton.textContent = option.active ? '非表示' : '表示';
+    toggleButton.addEventListener('click', () => toggleMedicationOptionActive(option.id));
+    actions.append(editButton, toggleButton);
+    item.append(content, actions);
+    list.appendChild(item);
+  });
+}
+
 function renderLastMedicationList() {
   const list = $('last-medication-list');
   list.innerHTML = '';
@@ -613,6 +758,8 @@ function render() {
 
   renderLastMedicationList();
   renderExportStatus();
+  renderMedicationSettingsList();
+  if (!editingMedicationOptionId && !$('medication-sort-order').value) $('medication-sort-order').value = nextMedicationSortOrder();
   renderPeriodList();
   if (!editingPeriodId && !$('comparison-period-start').value) $('comparison-period-start').value = nextPeriodStartSuggestion();
 
@@ -848,6 +995,14 @@ function wireEvents() {
     addEvent(createEvent({ type: 'note', note }), 'メモを保存しました');
     clearSharedNote();
     $('app-message').textContent = '';
+  });
+  $('medication-option-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    saveMedicationOptionFromForm();
+  });
+  $('cancel-medication-edit').addEventListener('click', () => {
+    resetMedicationOptionForm();
+    setMedicationSettingsMessage('');
   });
   $('comparison-period-form').addEventListener('submit', (event) => {
     event.preventDefault();
