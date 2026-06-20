@@ -428,9 +428,26 @@ function deleteEvent(id) {
   render();
 }
 
+function elapsedMinutes(iso) {
+  return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+}
+
 function elapsedText(iso) {
-  const minutes = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+  const minutes = elapsedMinutes(iso);
   return `${Math.floor(minutes / 60)}時間${minutes % 60}分`;
+}
+
+function formatShortDate(dateText) {
+  const [, month, day] = dateText.split('-');
+  return `${Number(month)}/${Number(day)}`;
+}
+
+function lastMedicationText(option, last) {
+  if (!last) return `${option.label}：記録なし`;
+  if (elapsedMinutes(last.recordedAtUtc) >= 1440) {
+    return `${option.label}：前回 ${formatShortDate(last.localDate)} / 1日以上`;
+  }
+  return `${option.label}：前回 ${last.localTime} / 経過 ${elapsedText(last.recordedAtUtc)}`;
 }
 
 function addDays(dateText, days) {
@@ -708,11 +725,11 @@ function renderMedicationSettingsList() {
 function renderLastMedicationList() {
   const list = $('last-medication-list');
   list.innerHTML = '';
-  appData.settings.medicationOptions.forEach((option) => {
+  activeMedicationOptions().forEach((option) => {
     const last = sortedEvents(appData.events.filter((event) => event.type === 'medication' && event.medicationOptionId === option.id)).at(-1);
     const item = document.createElement('div');
     item.className = 'last-medication-item';
-    item.textContent = last ? `${option.label}：前回 ${last.localTime} / 経過 ${elapsedText(last.recordedAtUtc)}` : `${option.label}：記録なし`;
+    item.textContent = lastMedicationText(option, last);
     list.appendChild(item);
   });
 }

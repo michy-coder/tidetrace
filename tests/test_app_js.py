@@ -230,6 +230,53 @@ def test_backup_import_request_ok_reads_already_selected_file() -> None:
     )
 
 
+
+def test_last_medication_list_uses_active_sorted_options_and_compact_elapsed_text() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const RealDate = Date;
+        const fixedNow = new RealDate('2026-06-20T12:00:00.000Z').getTime();
+        global.Date = class extends RealDate {
+          constructor(...args) { super(...args); }
+          static now() { return fixedNow; }
+        };
+        const list = {
+          children: [],
+          innerHTML: '',
+          appendChild(item) { this.children.push(item); }
+        };
+        global.document = {
+          getElementById(id) { return id === 'last-medication-list' ? list : null; },
+          createElement() { return { className: '', textContent: '' }; }
+        };
+        appData = {
+          settings: {
+            medicationOptions: [
+              { id: 'hidden', label: 'Hidden', active: false, sortOrder: 1 },
+              { id: 'active-b', label: 'B', active: true, sortOrder: 2 },
+              { id: 'active-a', label: 'A', active: true, sortOrder: 1 },
+              { id: 'active-none', label: 'No record', active: true, sortOrder: 3 }
+            ]
+          },
+          events: [
+            { type: 'medication', medicationOptionId: 'hidden', recordedAtUtc: '2026-06-20T11:55:00.000Z', localDate: '2026-06-20', localTime: '20:55' },
+            { type: 'medication', medicationOptionId: 'active-b', recordedAtUtc: '2026-06-20T06:35:00.000Z', localDate: '2026-06-20', localTime: '15:35' },
+            { type: 'medication', medicationOptionId: 'active-a', recordedAtUtc: '2026-06-18T22:00:00.000Z', localDate: '2026-06-19', localTime: '07:00' }
+          ]
+        };
+
+        renderLastMedicationList();
+
+        assert.deepEqual(list.children.map((item) => item.textContent), [
+          'A：前回 6/19 / 1日以上',
+          'B：前回 15:35 / 経過 5時間25分',
+          'No record：記録なし'
+        ]);
+        global.Date = RealDate;
+        """
+    )
+
 def test_management_disclosure_summaries_show_counts() -> None:
     run_app_js(
         """
