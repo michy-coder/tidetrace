@@ -375,7 +375,7 @@ hr {
 
 .edit-event-actions button { margin-top: 0.5rem; }
 
-.last-medication-item, details {
+.last-medication-item {
   border-top: 1px solid var(--divider);
   padding: 10px 0;
 }
@@ -384,15 +384,35 @@ hr {
 
 summary { font-weight: 700; padding: 8px 0; }
 
+.settings-disclosure {
+  margin-bottom: 14px;
+}
+
+.settings-disclosure summary {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  line-height: 1.35;
+  padding: 12px;
+  overflow-wrap: anywhere;
+}
+
+.settings-disclosure summary:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.settings-disclosure[open] summary {
+  margin-bottom: 14px;
+}
+
 .empty { color: var(--text-muted); }
 
 @media (max-width: 430px) {
   .app-header, main { padding-left: 12px; padding-right: 12px; }
   .card { border-radius: 14px; padding: 14px; }
-}
-
-.comparison-period-settings {
-  margin-bottom: 14px;
 }
 
 .comparison-period-settings h3 {
@@ -441,10 +461,6 @@ summary { font-weight: 700; padding: 8px 0; }
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
-}
-
-.medication-settings {
-  margin-bottom: 14px;
 }
 
 .medication-settings h3 {
