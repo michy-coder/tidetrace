@@ -567,6 +567,17 @@ function renderPeriodList() {
 }
 
 
+function renderMedicationSettingsSummary() {
+  const options = appData.settings.medicationOptions;
+  const visibleCount = options.filter((option) => option.active).length;
+  const hiddenCount = options.length - visibleCount;
+  $('medication-settings-summary').textContent = `薬設定　表示中${visibleCount}件 / 非表示${hiddenCount}件`;
+}
+
+function renderComparisonPeriodSummary() {
+  $('comparison-period-summary').textContent = `体調比較用期間の設定　登録済み${appData.periods.length}件`;
+}
+
 function resetMedicationOptionForm() {
   editingMedicationOptionId = null;
   $('medication-option-form').reset();
@@ -758,8 +769,10 @@ function render() {
 
   renderLastMedicationList();
   renderExportStatus();
+  renderMedicationSettingsSummary();
   renderMedicationSettingsList();
   if (!editingMedicationOptionId && !$('medication-sort-order').value) $('medication-sort-order').value = nextMedicationSortOrder();
+  renderComparisonPeriodSummary();
   renderPeriodList();
   if (!editingPeriodId && !$('comparison-period-start').value) $('comparison-period-start').value = nextPeriodStartSuggestion();
 

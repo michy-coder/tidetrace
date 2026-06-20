@@ -228,3 +228,36 @@ def test_backup_import_request_ok_reads_already_selected_file() -> None:
         assert.equal(selectedFile, input.files[0]);
         """
     )
+
+
+def test_management_disclosure_summaries_show_counts() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const elements = {
+          'medication-settings-summary': { textContent: '' },
+          'comparison-period-summary': { textContent: '' }
+        };
+        global.document = { getElementById(id) { return elements[id]; } };
+        appData = {
+          settings: {
+            medicationOptions: [
+              { id: 'visible-a', active: true },
+              { id: 'hidden', active: false },
+              { id: 'visible-b', active: true }
+            ]
+          },
+          periods: [
+            { id: 'period-a' },
+            { id: 'period-b' }
+          ],
+          events: []
+        };
+
+        renderMedicationSettingsSummary();
+        renderComparisonPeriodSummary();
+
+        assert.equal(elements['medication-settings-summary'].textContent, '薬設定　表示中2件 / 非表示1件');
+        assert.equal(elements['comparison-period-summary'].textContent, '体調比較用期間の設定　登録済み2件');
+        """
+    )
