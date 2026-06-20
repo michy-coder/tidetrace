@@ -550,3 +550,69 @@ summary { font-weight: 700; padding: 8px 0; }
   padding: 0.2rem 0.55rem;
   width: auto;
 }
+
+.visit-summary-card details > summary {
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.summary-presets {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 6px 0 10px;
+}
+
+.summary-presets button {
+  margin-top: 0;
+}
+
+.summary-end-mode {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin: 12px 0 8px;
+  padding: 8px 12px 10px;
+}
+
+.summary-end-mode legend {
+  font-weight: 700;
+  padding: 0 4px;
+}
+
+.radio-row {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.5rem;
+  margin: 8px 12px 0 0;
+}
+
+.radio-row input {
+  flex: 0 0 auto;
+  margin: 0;
+  width: auto;
+}
+
+.visit-summary-result-block {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.visit-summary-result-block h3 {
+  margin-top: 10px;
+}
+
+.visit-summary-medication-item {
+  border-top: 1px solid var(--divider);
+  padding: 10px 0;
+}
+
+.visit-summary-medication-item:last-child {
+  padding-bottom: 0;
+}
+
+@media (max-width: 430px) {
+  .summary-presets { grid-template-columns: 1fr; }
+}

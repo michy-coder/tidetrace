@@ -132,7 +132,7 @@ function validateData(data) {
         typeof event.stateOptionId === 'string' && painIds.has(event.stateOptionId);
     }
     if (event.type === 'medication') {
-      return typeof event.medicationOptionId === 'string' &&
+      return (event.medicationOptionId === undefined || typeof event.medicationOptionId === 'string') &&
         (event.medicationLabel === undefined || typeof event.medicationLabel === 'string') &&
         (event.amount === undefined || (typeof event.amount === 'number' && Number.isFinite(event.amount))) &&
         (event.unit === undefined || typeof event.unit === 'string');
@@ -454,6 +454,160 @@ function addDays(dateText, days) {
   const date = new Date(`${dateText}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
+}
+
+function isValidDateString(value) {
+  if (!isDateString(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function inclusiveDays(startDate, endDate) {
+  return Math.floor((new Date(`${endDate}T00:00:00Z`) - new Date(`${startDate}T00:00:00Z`)) / 86400000) + 1;
+}
+
+function setSummaryRangeForRecentDays(days) {
+  const endDate = nowParts().localDate;
+  $('summary-start-date').value = addDays(endDate, -(days - 1));
+  $('summary-end-date').value = endDate;
+  $('summary-end-today').checked = true;
+  updateSummaryEndDateMode();
+}
+
+function ensureSummaryDefaults() {
+  if (!$('summary-start-date').value) setSummaryRangeForRecentDays(30);
+  renderSummaryPeriodPicker();
+}
+
+function updateSummaryEndDateMode() {
+  const useToday = $('summary-end-today').checked;
+  $('summary-end-date').disabled = useToday;
+  if (useToday) $('summary-end-date').value = nowParts().localDate;
+}
+
+function renderSummaryPeriodPicker() {
+  const container = $('summary-period-picker');
+  container.innerHTML = '';
+  if (!appData.periods.length) return;
+  const label = document.createElement('label');
+  label.setAttribute('for', 'summary-period-select');
+  label.textContent = '体調比較用期間から選択';
+  const select = document.createElement('select');
+  select.id = 'summary-period-select';
+  select.className = 'form-control';
+  select.innerHTML = '<option value="">選択してください</option>' + sortedPeriods().map((period) =>
+    `<option value="${escapeHtml(period.id)}">${escapeHtml(period.label)}（${escapeHtml(period.startDate)}〜${escapeHtml(period.endDate)}）</option>`
+  ).join('');
+  select.addEventListener('change', () => {
+    const period = appData.periods.find((item) => item.id === select.value);
+    if (!period) return;
+    $('summary-start-date').value = period.startDate;
+    $('summary-end-date').value = period.endDate;
+    $('summary-end-custom').checked = true;
+    updateSummaryEndDateMode();
+  });
+  container.append(label, select);
+}
+
+function summaryValidationMessage(startDate, endDate) {
+  if (!startDate) return '集計開始日を入力してください。';
+  if (!endDate) return '集計終了日を入力してください。';
+  if (!isValidDateString(startDate) || !isValidDateString(endDate)) return '日付はYYYY-MM-DD形式で入力してください。';
+  if (startDate > endDate) return '集計開始日は集計終了日以前の日付にしてください。';
+  return '';
+}
+
+function medicationSummaryKey(event, option) {
+  const medicationKey = event.medicationOptionId ? `id:${event.medicationOptionId}` : `label:${event.medicationLabel || '不明な薬'}`;
+  const unit = typeof event.unit === 'string' ? event.unit : (option && option.unit) || '';
+  return `${medicationKey}|unit:${unit}`;
+}
+
+function amountForSummary(event) {
+  return typeof event.amount === 'number' && Number.isFinite(event.amount) ? event.amount : 1;
+}
+
+function buildMedicationSummary(startDate, endDate) {
+  const optionById = new Map(appData.settings.medicationOptions.map((option) => [option.id, option]));
+  const rows = new Map();
+  const ensureRow = (key, base) => {
+    if (!rows.has(key)) rows.set(key, { ...base, total: 0, dates: new Set(), latestLabelDate: '' });
+    return rows.get(key);
+  };
+
+  appData.settings.medicationOptions.filter((option) => option.active).forEach((option) => {
+    const key = `id:${option.id}|unit:${option.unit || ''}`;
+    ensureRow(key, { medicationSortOrder: option.sortOrder, medicationId: option.id, label: option.label || '不明な薬', unit: option.unit || '' });
+  });
+
+  appData.events.filter((event) => event.type === 'medication' && event.localDate >= startDate && event.localDate <= endDate).forEach((event) => {
+    const option = event.medicationOptionId ? optionById.get(event.medicationOptionId) : null;
+    const key = medicationSummaryKey(event, option);
+    const label = event.medicationLabel || (option && option.label) || event.medicationLabel || '不明な薬';
+    const unit = typeof event.unit === 'string' ? event.unit : (option && option.unit) || '';
+    const row = ensureRow(key, {
+      medicationSortOrder: option ? option.sortOrder : Number.MAX_SAFE_INTEGER,
+      medicationId: event.medicationOptionId || '',
+      label,
+      unit
+    });
+    const amount = amountForSummary(event);
+    row.total += amount;
+    if (amount > 0) row.dates.add(event.localDate);
+    if (event.medicationLabel && event.localDate >= row.latestLabelDate) {
+      row.label = event.medicationLabel;
+      row.latestLabelDate = event.localDate;
+    }
+  });
+
+  return [...rows.values()].sort((a, b) =>
+    a.medicationSortOrder - b.medicationSortOrder ||
+    a.label.localeCompare(b.label, 'ja') ||
+    a.unit.localeCompare(b.unit, 'ja') ||
+    a.medicationId.localeCompare(b.medicationId)
+  );
+}
+
+function amountText(value, unit) {
+  const text = Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
+  return unit ? `${text}${unit}` : text;
+}
+
+function renderVisitSummaryResult(startDate, endDate, days, rows) {
+  const result = $('visit-summary-result');
+  result.innerHTML = '';
+  const block = document.createElement('div');
+  block.className = 'visit-summary-result-block';
+  block.innerHTML = `<p><strong>集計期間：</strong>${escapeHtml(startDate)}〜${escapeHtml(endDate)}</p><p><strong>日数：</strong>${days}日</p><h3>服薬</h3>`;
+  if (!rows.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty';
+    empty.textContent = '服薬記録はありません。';
+    block.appendChild(empty);
+  } else {
+    rows.forEach((row) => {
+      const item = document.createElement('div');
+      item.className = 'visit-summary-medication-item';
+      const average = row.total / days;
+      item.innerHTML = `<strong>${escapeHtml(row.label)}</strong><br>合計 ${escapeHtml(amountText(row.total, row.unit))} / 1日平均 ${escapeHtml(average.toFixed(2) + row.unit)} / 服薬日数 ${row.dates.size}日`;
+      block.appendChild(item);
+    });
+  }
+  result.appendChild(block);
+}
+
+function runVisitSummary() {
+  updateSummaryEndDateMode();
+  const startDate = $('summary-start-date').value;
+  const endDate = $('summary-end-today').checked ? nowParts().localDate : $('summary-end-date').value;
+  const message = summaryValidationMessage(startDate, endDate);
+  $('visit-summary-message').textContent = message;
+  $('visit-summary-message').classList.toggle('error', Boolean(message));
+  $('visit-summary-result').innerHTML = '';
+  if (message) return;
+  const days = inclusiveDays(startDate, endDate);
+  const rows = buildMedicationSummary(startDate, endDate);
+  renderVisitSummaryResult(startDate, endDate, days, rows);
 }
 
 function nextPeriodStartSuggestion() {
@@ -784,6 +938,7 @@ function render() {
     $('medication-buttons').innerHTML = '<p class="empty">有効な薬ボタンがありません。</p>';
   }
 
+  ensureSummaryDefaults();
   renderLastMedicationList();
   renderExportStatus();
   renderMedicationSettingsSummary();
@@ -1030,6 +1185,12 @@ function wireEvents() {
     event.preventDefault();
     saveMedicationOptionFromForm();
   });
+  document.querySelectorAll('.summary-preset').forEach((button) => {
+    button.addEventListener('click', () => setSummaryRangeForRecentDays(Number(button.dataset.days)));
+  });
+  $('summary-end-today').addEventListener('change', updateSummaryEndDateMode);
+  $('summary-end-custom').addEventListener('change', updateSummaryEndDateMode);
+  $('run-visit-summary').addEventListener('click', runVisitSummary);
   $('cancel-medication-edit').addEventListener('click', () => {
     resetMedicationOptionForm();
     setMedicationSettingsMessage('');
