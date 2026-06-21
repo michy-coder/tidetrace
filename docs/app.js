@@ -1110,7 +1110,7 @@ function renderWeek(today) {
     const summary = document.createElement('summary');
     summary.textContent = `${date}：${events.length}件`;
     const body = document.createElement('div');
-    renderEventList(body, events);
+    renderEventList(body, events, sortedEvents, { showDate: false });
     details.append(summary, body);
     list.appendChild(details);
   });
