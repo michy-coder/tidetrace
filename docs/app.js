@@ -578,7 +578,132 @@ function amountText(value, unit) {
   return unit ? `${text}${unit}` : text;
 }
 
-function renderVisitSummaryResult(startDate, endDate, days, rows) {
+function dateRange(startDate, endDate) {
+  const dates = [];
+  for (let date = startDate; date <= endDate; date = addDays(date, 1)) dates.push(date);
+  return dates;
+}
+
+function buildDailyPainSummary(startDate, endDate) {
+  const daily = new Map();
+  appData.events.filter((event) => event.type === 'pain' && event.localDate >= startDate && event.localDate <= endDate).forEach((event) => {
+    if (typeof event.painScore !== 'number' || !Number.isFinite(event.painScore)) return;
+    if (!daily.has(event.localDate)) daily.set(event.localDate, { max: event.painScore, total: 0, count: 0 });
+    const day = daily.get(event.localDate);
+    day.max = Math.max(day.max, event.painScore);
+    day.total += event.painScore;
+    day.count += 1;
+    day.average = day.total / day.count;
+  });
+  return daily;
+}
+
+function buildDosePainSummary(startDate, endDate) {
+  const dates = dateRange(startDate, endDate);
+  const optionById = new Map(appData.settings.medicationOptions.map((option) => [option.id, option]));
+  const dailyPain = buildDailyPainSummary(startDate, endDate);
+  const rows = new Map();
+  const ensureRow = (key, base) => {
+    if (!rows.has(key)) rows.set(key, { ...base, dailyAmounts: new Map() });
+    return rows.get(key);
+  };
+
+  appData.settings.medicationOptions.filter((option) => option.active).forEach((option) => {
+    const unit = option.unit || '';
+    const key = `id:${option.id}|unit:${unit}`;
+    ensureRow(key, { medicationSortOrder: option.sortOrder, medicationId: option.id, label: option.label || '不明な薬', unit, latestLabelDate: '' });
+  });
+
+  appData.events.filter((event) => event.type === 'medication' && event.localDate >= startDate && event.localDate <= endDate).forEach((event) => {
+    const option = event.medicationOptionId ? optionById.get(event.medicationOptionId) : null;
+    const key = medicationSummaryKey(event, option);
+    const label = event.medicationLabel || (option && option.label) || '不明な薬';
+    const unit = medicationSummaryUnit(event, option);
+    const row = ensureRow(key, {
+      medicationSortOrder: option ? option.sortOrder : Number.MAX_SAFE_INTEGER,
+      medicationId: event.medicationOptionId || '',
+      label,
+      unit,
+      latestLabelDate: ''
+    });
+    row.dailyAmounts.set(event.localDate, (row.dailyAmounts.get(event.localDate) || 0) + amountForSummary(event));
+    if (event.medicationLabel && event.localDate >= row.latestLabelDate) {
+      row.label = event.medicationLabel;
+      row.latestLabelDate = event.localDate;
+    }
+  });
+
+  return [...rows.values()].map((row) => {
+    const doseGroups = new Map();
+    dates.forEach((date) => {
+      const amount = row.dailyAmounts.get(date) || 0;
+      if (!doseGroups.has(amount)) doseGroups.set(amount, { amount, targetDays: 0, painDays: 0, maxPain: null, averagePainTotal: 0 });
+      const group = doseGroups.get(amount);
+      group.targetDays += 1;
+      const pain = dailyPain.get(date);
+      if (!pain) return;
+      group.painDays += 1;
+      group.maxPain = group.maxPain === null ? pain.max : Math.max(group.maxPain, pain.max);
+      group.averagePainTotal += pain.average;
+    });
+    return {
+      ...row,
+      doseGroups: [...doseGroups.values()].sort((a, b) => b.amount - a.amount)
+    };
+  }).sort((a, b) =>
+    a.medicationSortOrder - b.medicationSortOrder ||
+    a.label.localeCompare(b.label, 'ja') ||
+    a.unit.localeCompare(b.unit, 'ja') ||
+    a.medicationId.localeCompare(b.medicationId)
+  );
+}
+
+function formatPainValue(value) {
+  return value === null ? '—' : String(value);
+}
+
+function formatAveragePain(group) {
+  return group.painDays ? (group.averagePainTotal / group.painDays).toFixed(1) : '—';
+}
+
+function renderDosePainSummary(block, dosePainRows) {
+  const heading = document.createElement('h3');
+  heading.textContent = '痛み：薬量別';
+  block.appendChild(heading);
+
+  const notice = document.createElement('p');
+  notice.className = 'visit-summary-notice';
+  notice.textContent = '薬ごとに日単位で集計しています。他の薬との併用条件は分けていません。';
+  block.appendChild(notice);
+
+  if (!dosePainRows.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty';
+    empty.textContent = '服薬記録がないため、薬量別の痛みサマリーはありません。';
+    block.appendChild(empty);
+    return;
+  }
+
+  dosePainRows.forEach((row) => {
+    const details = document.createElement('details');
+    details.className = 'visit-summary-dose-pain-item';
+    details.open = true;
+    const summary = document.createElement('summary');
+    summary.textContent = row.unit ? `${row.label}（${row.unit}）` : row.label;
+    const body = document.createElement('div');
+    row.doseGroups.forEach((group) => {
+      const item = document.createElement('div');
+      item.className = 'visit-summary-dose-pain-row';
+      const doseLabel = `${amountText(group.amount, row.unit)}の日`;
+      item.innerHTML = `<strong>${escapeHtml(doseLabel)}</strong><br>対象 ${group.targetDays}日 / 痛み記録あり ${group.painDays}日<br>最大痛み ${escapeHtml(formatPainValue(group.maxPain))} / 平均痛み ${escapeHtml(formatAveragePain(group))}`;
+      body.appendChild(item);
+    });
+    details.append(summary, body);
+    block.appendChild(details);
+  });
+}
+
+function renderVisitSummaryResult(startDate, endDate, days, rows, dosePainRows) {
   const result = $('visit-summary-result');
   result.innerHTML = '';
   const block = document.createElement('div');
@@ -598,6 +723,7 @@ function renderVisitSummaryResult(startDate, endDate, days, rows) {
       block.appendChild(item);
     });
   }
+  renderDosePainSummary(block, dosePainRows);
   result.appendChild(block);
 }
 
@@ -612,7 +738,8 @@ function runVisitSummary() {
   if (message) return;
   const days = inclusiveDays(startDate, endDate);
   const rows = buildMedicationSummary(startDate, endDate);
-  renderVisitSummaryResult(startDate, endDate, days, rows);
+  const dosePainRows = buildDosePainSummary(startDate, endDate);
+  renderVisitSummaryResult(startDate, endDate, days, rows, dosePainRows);
 }
 
 function nextPeriodStartSuggestion() {
