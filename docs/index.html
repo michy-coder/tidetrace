@@ -172,7 +172,8 @@
             <label for="medication-default-amount">よく使う量</label>
             <input id="medication-default-amount" class="form-control" type="number" inputmode="decimal" step="any" value="1" required>
             <label for="medication-unit">単位</label>
-            <input id="medication-unit" class="form-control" type="text" autocomplete="off" placeholder="例：錠、包、回">
+            <input id="medication-unit" class="form-control" type="text" autocomplete="off" placeholder="例：錠、包、回" aria-describedby="medication-unit-help">
+            <p id="medication-unit-help" class="field-help">単位が違う記録は、診察用サマリーで別に集計されます。</p>
             <label for="medication-sort-order">表示順</label>
             <input id="medication-sort-order" class="form-control" type="number" inputmode="decimal" step="any" required>
             <label class="checkbox-row" for="medication-active">
