@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Tide Trace</title>
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
   <header class="app-header">
@@ -184,6 +184,30 @@
           <div id="medication-settings-list"></div>
         </details>
         <hr>
+        <details class="pain-state-settings settings-disclosure">
+          <summary id="pain-state-settings-title"><span id="pain-state-settings-summary">痛み状態設定</span></summary>
+          <p class="message">痛み記録で選ぶ状態名と表示順を設定します。<br>非表示にした状態は新規記録の選択肢には出ませんが、過去記録は残ります。</p>
+          <p class="notice-text">別の状態に変える場合は、名前を上書きせず、元の状態を非表示にして新しい状態を追加してください。名前を上書きすると、過去記録や診察用サマリーの状態別集計が分かりにくくなることがあります。非表示にしても過去記録は残り、再度表示に戻せます。</p>
+          <form id="pain-state-option-form">
+            <input id="pain-state-option-id" type="hidden">
+            <label for="pain-state-label">状態名</label>
+            <input id="pain-state-label" class="form-control" type="text" autocomplete="off" required>
+            <label for="pain-state-sort-order">表示順</label>
+            <input id="pain-state-sort-order" class="form-control" type="number" inputmode="decimal" step="any" required>
+            <label class="checkbox-row" for="pain-state-active">
+              <input id="pain-state-active" type="checkbox" checked>
+              <span>表示中</span>
+            </label>
+            <div class="pain-state-form-actions">
+              <button id="save-pain-state-option" type="submit">状態を追加</button>
+              <button id="cancel-pain-state-edit" class="secondary-button" type="button" hidden>キャンセル</button>
+            </div>
+          </form>
+          <p id="pain-state-settings-message" class="message" role="status"></p>
+          <h3>登録済みの痛み状態</h3>
+          <div id="pain-state-settings-list"></div>
+        </details>
+        <hr>
         <details class="comparison-period-settings settings-disclosure">
           <summary id="comparison-period-title"><span id="comparison-period-summary">体調比較用期間の設定</span></summary>
           <form id="comparison-period-form">
@@ -211,6 +235,6 @@
     </div>
   </main>
 
-  <script src="app.js?v=11" defer></script>
+  <script src="app.js?v=12" defer></script>
 </body>
 </html>

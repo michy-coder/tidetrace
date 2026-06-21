@@ -6,7 +6,8 @@
       {
         "id": "ps_001",
         "label": "Sample state 1",
-        "active": true
+        "active": true,
+        "sortOrder": 1
       }
     ],
     "medicationOptions": [
