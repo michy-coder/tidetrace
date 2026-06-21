@@ -281,6 +281,44 @@ def test_visit_summary_keeps_multiple_non_empty_medication_units_separate() -> N
         """
     )
 
+
+def test_visit_summary_medication_display_omits_medication_days_but_keeps_average() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const elements = {
+          'visit-summary-result': {
+            innerHTML: '',
+            children: [],
+            appendChild(item) { this.children.push(item); }
+          }
+        };
+        global.document = {
+          getElementById(id) { return elements[id]; },
+          createElement(tag) {
+            return {
+              tag,
+              className: '',
+              innerHTML: '',
+              textContent: '',
+              children: [],
+              appendChild(item) { this.children.push(item); },
+              append(...items) { this.children.push(...items); }
+            };
+          }
+        };
+
+        renderVisitSummaryResult('2026-06-01', '2026-06-07', 7, [
+          { label: 'Medication A', total: 14, unit: 'tablet', dates: new Set(['2026-06-01', '2026-06-02']) }
+        ], []);
+
+        const block = elements['visit-summary-result'].children[0];
+        const medicationItem = block.children.find((child) => child.className === 'visit-summary-medication-item');
+        assert.match(medicationItem.innerHTML, /合計 14tablet \\/ 1日平均 2\\.00tablet/);
+        assert.doesNotMatch(medicationItem.innerHTML, /服薬日数/);
+        """
+    )
+
 def test_last_medication_list_uses_active_sorted_options_and_compact_elapsed_text() -> None:
     run_app_js(
         """

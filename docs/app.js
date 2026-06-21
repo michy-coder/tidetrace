@@ -792,7 +792,7 @@ function renderVisitSummaryResult(startDate, endDate, days, rows, dosePainRows) 
       const item = document.createElement('div');
       item.className = 'visit-summary-medication-item';
       const average = row.total / days;
-      item.innerHTML = `<strong>${escapeHtml(row.label)}</strong><br>合計 ${escapeHtml(amountText(row.total, row.unit))} / 1日平均 ${escapeHtml(average.toFixed(2) + row.unit)} / 服薬日数 ${row.dates.size}日`;
+      item.innerHTML = `<strong>${escapeHtml(row.label)}</strong><br>合計 ${escapeHtml(amountText(row.total, row.unit))} / 1日平均 ${escapeHtml(average.toFixed(2) + row.unit)}`;
       block.appendChild(item);
     });
   }
