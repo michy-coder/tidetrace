@@ -442,6 +442,10 @@ function formatShortDate(dateText) {
   return `${Number(month)}/${Number(day)}`;
 }
 
+function formatFullDate(dateText) {
+  return dateText.replaceAll('-', '/');
+}
+
 function lastMedicationText(option, last) {
   if (!last) return `${option.label}：記録なし`;
   if (elapsedMinutes(last.recordedAtUtc) >= 1440) {
@@ -466,23 +470,26 @@ function inclusiveDays(startDate, endDate) {
   return Math.floor((new Date(`${endDate}T00:00:00Z`) - new Date(`${startDate}T00:00:00Z`)) / 86400000) + 1;
 }
 
-function setSummaryRangeForRecentDays(days) {
+function setDefaultSummaryRange() {
   const endDate = nowParts().localDate;
-  $('summary-start-date').value = addDays(endDate, -(days - 1));
+  $('summary-start-date').value = addDays(endDate, -29);
   $('summary-end-date').value = endDate;
   $('summary-end-today').checked = true;
   updateSummaryEndDateMode();
 }
 
 function ensureSummaryDefaults() {
-  if (!$('summary-start-date').value) setSummaryRangeForRecentDays(30);
+  if (!$('summary-start-date').value) setDefaultSummaryRange();
   renderSummaryPeriodPicker();
 }
 
 function updateSummaryEndDateMode() {
+  const today = nowParts().localDate;
   const useToday = $('summary-end-today').checked;
+  $('summary-end-today-label').textContent = `今日（${formatFullDate(today)}）`;
   $('summary-end-date').disabled = useToday;
-  if (useToday) $('summary-end-date').value = nowParts().localDate;
+  $('summary-end-date').hidden = useToday;
+  if (useToday) $('summary-end-date').value = today;
 }
 
 function renderSummaryPeriodPicker() {
@@ -503,6 +510,7 @@ function renderSummaryPeriodPicker() {
     if (!period) return;
     $('summary-start-date').value = period.startDate;
     $('summary-end-date').value = period.endDate;
+    $('summary-end-today').checked = false;
     $('summary-end-custom').checked = true;
     updateSummaryEndDateMode();
   });
@@ -1316,9 +1324,6 @@ function wireEvents() {
   $('medication-option-form').addEventListener('submit', (event) => {
     event.preventDefault();
     saveMedicationOptionFromForm();
-  });
-  document.querySelectorAll('.summary-preset').forEach((button) => {
-    button.addEventListener('click', () => setSummaryRangeForRecentDays(Number(button.dataset.days)));
   });
   $('summary-end-today').addEventListener('change', updateSummaryEndDateMode);
   $('summary-end-custom').addEventListener('change', updateSummaryEndDateMode);

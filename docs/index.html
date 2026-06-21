@@ -105,12 +105,6 @@
       <section class="card visit-summary-card" aria-labelledby="visit-summary-title">
         <details id="visit-summary-details">
           <summary id="visit-summary-title">診察用サマリー</summary>
-          <div class="summary-presets" aria-label="集計期間プリセット">
-            <button type="button" class="secondary-button summary-preset" data-days="7">直近7日</button>
-            <button type="button" class="secondary-button summary-preset" data-days="30">直近30日</button>
-            <button type="button" class="secondary-button summary-preset" data-days="60">直近60日</button>
-            <button type="button" class="secondary-button summary-preset" data-days="120">直近120日</button>
-          </div>
           <div id="summary-period-picker"></div>
           <label for="summary-start-date">集計開始日</label>
           <input id="summary-start-date" class="form-control" type="date">
@@ -118,14 +112,14 @@
             <legend>集計終了日</legend>
             <label class="radio-row" for="summary-end-today">
               <input id="summary-end-today" name="summary-end-mode" type="radio" value="today" checked>
-              <span>今日</span>
+              <span id="summary-end-today-label">今日</span>
             </label>
             <label class="radio-row" for="summary-end-custom">
               <input id="summary-end-custom" name="summary-end-mode" type="radio" value="custom">
               <span>任意の日付</span>
             </label>
           </fieldset>
-          <input id="summary-end-date" class="form-control" type="date" disabled>
+          <input id="summary-end-date" class="form-control" type="date" disabled hidden>
           <button id="run-visit-summary" type="button">集計する</button>
           <p id="visit-summary-message" class="message" role="alert"></p>
           <div id="visit-summary-result"></div>
