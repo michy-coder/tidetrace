@@ -231,6 +231,56 @@ def test_backup_import_request_ok_reads_already_selected_file() -> None:
 
 
 
+
+def test_visit_summary_fills_blank_medication_units_from_current_settings() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: {
+            medicationOptions: [
+              { id: 'med_001', label: 'Medication A', defaultAmount: 1, unit: 'tablet', active: true, sortOrder: 1 }
+            ]
+          },
+          events: [
+            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: 'Medication A', amount: 1, unit: '', localDate: '2026-06-20' },
+            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: 'Medication A', amount: 1, unit: 'tablet', localDate: '2026-06-20' }
+          ]
+        };
+
+        const rows = buildMedicationSummary('2026-06-20', '2026-06-20').filter((row) => row.total > 0);
+
+        assert.equal(rows.length, 1);
+        assert.equal(rows[0].label, 'Medication A');
+        assert.equal(rows[0].unit, 'tablet');
+        assert.equal(rows[0].total, 2);
+        assert.equal(rows[0].dates.size, 1);
+        """
+    )
+
+
+def test_visit_summary_keeps_multiple_non_empty_medication_units_separate() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: {
+            medicationOptions: [
+              { id: 'med_001', label: 'Medication A', defaultAmount: 1, unit: 'tablet', active: true, sortOrder: 1 }
+            ]
+          },
+          events: [
+            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: 'Medication A', amount: 1, unit: 'tablet', localDate: '2026-06-20' },
+            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: 'Medication A', amount: 1, unit: 'packet', localDate: '2026-06-20' }
+          ]
+        };
+
+        const rows = buildMedicationSummary('2026-06-20', '2026-06-20').filter((row) => row.total > 0);
+
+        assert.deepEqual(rows.map((row) => [row.unit, row.total]), [['packet', 1], ['tablet', 1]]);
+        """
+    )
+
 def test_last_medication_list_uses_active_sorted_options_and_compact_elapsed_text() -> None:
     run_app_js(
         """

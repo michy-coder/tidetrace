@@ -517,9 +517,14 @@ function summaryValidationMessage(startDate, endDate) {
   return '';
 }
 
+function medicationSummaryUnit(event, option) {
+  if (typeof event.unit === 'string' && event.unit) return event.unit;
+  return (option && option.unit) || '';
+}
+
 function medicationSummaryKey(event, option) {
   const medicationKey = event.medicationOptionId ? `id:${event.medicationOptionId}` : `label:${event.medicationLabel || '不明な薬'}`;
-  const unit = typeof event.unit === 'string' ? event.unit : (option && option.unit) || '';
+  const unit = medicationSummaryUnit(event, option);
   return `${medicationKey}|unit:${unit}`;
 }
 
@@ -544,7 +549,7 @@ function buildMedicationSummary(startDate, endDate) {
     const option = event.medicationOptionId ? optionById.get(event.medicationOptionId) : null;
     const key = medicationSummaryKey(event, option);
     const label = event.medicationLabel || (option && option.label) || event.medicationLabel || '不明な薬';
-    const unit = typeof event.unit === 'string' ? event.unit : (option && option.unit) || '';
+    const unit = medicationSummaryUnit(event, option);
     const row = ensureRow(key, {
       medicationSortOrder: option ? option.sortOrder : Number.MAX_SAFE_INTEGER,
       medicationId: event.medicationOptionId || '',
