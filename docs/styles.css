@@ -282,6 +282,15 @@ hr {
 
 .event:first-child { border-top: 0; }
 
+#today-list .event {
+  gap: 0.6rem;
+  padding: 8px 0;
+}
+
+#today-list .event-actions {
+  gap: 0.3rem;
+}
+
 .event-content {
   flex: 1 1 auto;
   min-width: 0;

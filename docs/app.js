@@ -297,12 +297,13 @@ function eventText(event) {
   return parts.filter(Boolean).join(' / ');
 }
 
-function renderEventList(container, events, sortEvents = sortedEvents) {
+function renderEventList(container, events, sortEvents = sortedEvents, options = {}) {
   container.innerHTML = '';
   if (events.length === 0) {
     container.innerHTML = '<p class="empty">記録はありません。</p>';
     return;
   }
+  const showDate = options.showDate !== false;
   sortEvents(events).forEach((event) => {
     const item = document.createElement('div');
     item.className = 'event';
@@ -328,7 +329,8 @@ function renderEventList(container, events, sortEvents = sortedEvents) {
     button.setAttribute('aria-label', '記録を削除');
     button.addEventListener('click', () => deleteEvent(event.id));
     actions.append(editButton, button);
-    content.append(meta, body);
+    if (showDate) content.append(meta);
+    content.append(body);
     item.append(content, actions);
     container.appendChild(item);
   });
@@ -1088,7 +1090,7 @@ function render() {
   renderPeriodList();
   if (!editingPeriodId && !$('comparison-period-start').value) $('comparison-period-start').value = nextPeriodStartSuggestion();
 
-  renderEventList($('today-list'), appData.events.filter((event) => event.localDate === today), sortedEventsDescending);
+  renderEventList($('today-list'), appData.events.filter((event) => event.localDate === today), sortedEventsDescending, { showDate: false });
   renderWeek(today);
 }
 
