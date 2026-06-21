@@ -358,3 +358,78 @@ def test_management_disclosure_summaries_show_counts() -> None:
         assert.equal(elements['comparison-period-summary'].textContent, '体調比較用期間の設定　登録済み2件');
         """
     )
+
+def test_visit_summary_default_range_is_recent_30_days_with_today_end_mode() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        nowParts = () => ({ iso: '2026-06-21T00:00:00.000Z', localDate: '2026-06-21', localTime: '09:00' });
+        const elements = {
+          'summary-start-date': { value: '' },
+          'summary-end-date': { value: '', disabled: false, hidden: false },
+          'summary-end-today': { checked: false },
+          'summary-end-today-label': { textContent: '' },
+          'summary-period-picker': { innerHTML: '', append() {} }
+        };
+        global.document = { getElementById(id) { return elements[id]; } };
+        appData = { periods: [] };
+
+        ensureSummaryDefaults();
+
+        assert.equal(elements['summary-start-date'].value, '2026-05-23');
+        assert.equal(elements['summary-end-date'].value, '2026-06-21');
+        assert.equal(elements['summary-end-today'].checked, true);
+        assert.equal(elements['summary-end-date'].disabled, true);
+        assert.equal(elements['summary-end-date'].hidden, true);
+        assert.equal(elements['summary-end-today-label'].textContent, '今日（2026/06/21）');
+        """
+    )
+
+
+def test_visit_summary_period_picker_copies_range_as_custom_end_date() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        nowParts = () => ({ iso: '2026-06-21T00:00:00.000Z', localDate: '2026-06-21', localTime: '09:00' });
+        const elements = {
+          'summary-period-picker': { innerHTML: '', children: [], append(...items) { this.children.push(...items); } },
+          'summary-start-date': { value: '' },
+          'summary-end-date': { value: '', disabled: true, hidden: true },
+          'summary-end-custom': { checked: false },
+          'summary-end-today': { checked: true },
+          'summary-end-today-label': { textContent: '' }
+        };
+        global.document = {
+          getElementById(id) { return elements[id]; },
+          createElement(tag) {
+            return {
+              tag,
+              id: '',
+              className: '',
+              textContent: '',
+              innerHTML: '',
+              value: '',
+              listeners: {},
+              setAttribute(name, value) { this[name] = value; },
+              addEventListener(type, listener) { this.listeners[type] = listener; }
+            };
+          }
+        };
+        appData = {
+          periods: [
+            { id: 'period-1', label: 'Compare', startDate: '2026-06-01', endDate: '2026-06-07' }
+          ]
+        };
+
+        renderSummaryPeriodPicker();
+        const select = elements['summary-period-picker'].children[1];
+        select.value = 'period-1';
+        select.listeners.change();
+
+        assert.equal(elements['summary-start-date'].value, '2026-06-01');
+        assert.equal(elements['summary-end-date'].value, '2026-06-07');
+        assert.equal(elements['summary-end-custom'].checked, true);
+        assert.equal(elements['summary-end-date'].disabled, false);
+        assert.equal(elements['summary-end-date'].hidden, false);
+        """
+    )
