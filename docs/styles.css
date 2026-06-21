@@ -478,11 +478,13 @@ summary { font-weight: 700; padding: 8px 0; }
   border: 0;
 }
 
-.medication-settings h3 {
+.medication-settings h3,
+.pain-state-settings h3 {
   margin-top: 14px;
 }
 
-.medication-settings h3:first-child {
+.medication-settings h3:first-child,
+.pain-state-settings h3:first-child {
   margin-top: 0;
 }
 
@@ -515,17 +517,20 @@ summary { font-weight: 700; padding: 8px 0; }
   width: auto;
 }
 
-.medication-form-actions {
+.medication-form-actions,
+.pain-state-form-actions {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: 1fr;
 }
 
-.medication-form-actions button[hidden] {
+.medication-form-actions button[hidden],
+.pain-state-form-actions button[hidden] {
   display: none;
 }
 
-.medication-settings-item {
+.medication-settings-item,
+.pain-state-settings-item {
   align-items: flex-start;
   border-top: 1px solid var(--divider);
   display: flex;
@@ -533,24 +538,28 @@ summary { font-weight: 700; padding: 8px 0; }
   padding: 12px 0;
 }
 
-.medication-settings-item:first-child {
+.medication-settings-item:first-child,
+.pain-state-settings-item:first-child {
   border-top: 0;
 }
 
-.medication-settings-content {
+.medication-settings-content,
+.pain-state-settings-content {
   flex: 1 1 auto;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.medication-settings-actions {
+.medication-settings-actions,
+.pain-state-settings-actions {
   align-self: flex-start;
   display: inline-flex;
   flex: 0 0 auto;
   gap: 0.35rem;
 }
 
-.medication-toggle-button {
+.medication-toggle-button,
+.pain-state-toggle-button {
   align-self: flex-start;
   margin: 0;
   min-height: 2rem;

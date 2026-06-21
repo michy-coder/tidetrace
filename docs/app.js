@@ -10,6 +10,7 @@ let elapsedRefreshTimer = null;
 let editingEventId = null;
 let editingPeriodId = null;
 let editingMedicationOptionId = null;
+let editingPainStateOptionId = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -37,6 +38,23 @@ function parseJson(text) {
 
 function normalizeImportedData(data) {
   if (!data || typeof data !== 'object') return data;
+  if (data.settings && Array.isArray(data.settings.painStateOptions)) {
+    const usedPainIds = new Set();
+    data.settings.painStateOptions = data.settings.painStateOptions.map((option, index) => {
+      const source = option && typeof option === 'object' ? option : {};
+      const { isActive: _legacyIsActive, ...normalizedSource } = source;
+      let id = typeof source.id === 'string' && source.id ? source.id : `ps_imported_${index + 1}`;
+      while (usedPainIds.has(id)) id = `${id}_${index + 1}`;
+      usedPainIds.add(id);
+      return {
+        ...normalizedSource,
+        id,
+        label: typeof source.label === 'string' && source.label.trim() ? source.label : `状態 ${index + 1}`,
+        active: source.active ?? source.isActive ?? true,
+        sortOrder: Number.isFinite(Number(source.sortOrder)) ? Number(source.sortOrder) : index + 1
+      };
+    });
+  }
   if (data.settings && Array.isArray(data.settings.medicationOptions)) {
     const usedIds = new Set();
     data.settings.medicationOptions = data.settings.medicationOptions.map((option, index) => {
@@ -111,14 +129,14 @@ function validateData(data) {
   if (!validatePeriods(data.periods)) return false;
 
   const validOption = (option) => option && typeof option.id === 'string' && typeof option.label === 'string' && typeof option.active === 'boolean';
+  const validPainOption = (option) => validOption(option) && typeof option.sortOrder === 'number' && Number.isFinite(option.sortOrder);
   const validMedicationOption = (option) => validOption(option) &&
     typeof option.defaultAmount === 'number' && Number.isFinite(option.defaultAmount) &&
     typeof option.unit === 'string' &&
     typeof option.sortOrder === 'number' && Number.isFinite(option.sortOrder);
-  if (!data.settings.painStateOptions.every(validOption)) return false;
+  if (!data.settings.painStateOptions.every(validPainOption)) return false;
   if (!data.settings.medicationOptions.every(validMedicationOption)) return false;
 
-  const painIds = new Set(data.settings.painStateOptions.map((option) => option.id));
   return data.events.every((event) => {
     if (!event || typeof event !== 'object') return false;
     if (typeof event.id !== 'string') return false;
@@ -129,7 +147,8 @@ function validateData(data) {
     if (event.note !== undefined && typeof event.note !== 'string') return false;
     if (event.type === 'pain') {
       return typeof event.painScore === 'number' && event.painScore >= 0 && event.painScore <= 10 &&
-        typeof event.stateOptionId === 'string' && painIds.has(event.stateOptionId);
+        typeof event.stateOptionId === 'string' &&
+        (event.stateLabel === undefined || typeof event.stateLabel === 'string');
     }
     if (event.type === 'medication') {
       return (event.medicationOptionId === undefined || typeof event.medicationOptionId === 'string') &&
@@ -195,7 +214,28 @@ function initializeFromText(text, errorElement) {
   return true;
 }
 
-function activePainOptions() { return appData.settings.painStateOptions.filter((option) => option.active); }
+function sortedPainOptions(options) {
+  return [...options].sort((a, b) =>
+    a.sortOrder - b.sortOrder ||
+    a.label.localeCompare(b.label, 'ja') ||
+    a.id.localeCompare(b.id)
+  );
+}
+function activePainOptions() { return sortedPainOptions(appData.settings.painStateOptions.filter((option) => option.active)); }
+function allPainOptions() { return sortedPainOptions(appData.settings.painStateOptions); }
+function nextPainSortOrder() {
+  const orders = appData.settings.painStateOptions.map((option) => Number(option.sortOrder)).filter(Number.isFinite);
+  return orders.length ? Math.max(...orders) + 1 : 1;
+}
+function createPainStateOptionId() {
+  const time = nowParts();
+  const stamp = `${time.localDate.replace(/-/g, '')}_${time.localTime.replace(':', '')}`;
+  let id = `ps_${stamp}_${Math.random().toString(36).slice(2, 7)}`;
+  while (appData.settings.painStateOptions.some((option) => option.id === id)) {
+    id = `ps_${stamp}_${Math.random().toString(36).slice(2, 7)}`;
+  }
+  return id;
+}
 function sortedMedicationOptions(options) {
   return [...options].sort((a, b) =>
     a.sortOrder - b.sortOrder ||
@@ -223,6 +263,7 @@ function createMedicationOptionId() {
   return id;
 }
 function findPainLabel(id) { return (appData.settings.painStateOptions.find((option) => option.id === id) || {}).label || ''; }
+function painEventLabel(event) { return event.stateLabel || findPainLabel(event.stateOptionId) || '不明な状態'; }
 function findMedicationLabel(id) { return (appData.settings.medicationOptions.find((option) => option.id === id) || {}).label || ''; }
 function medicationEventLabel(event) { return event.medicationLabel || findMedicationLabel(event.medicationOptionId); }
 
@@ -288,7 +329,7 @@ function sortedEventsDescending(events) {
 
 function eventText(event) {
   const parts = [`${event.localTime}`, event.type];
-  if (event.type === 'pain') parts.push(`score ${event.painScore}`, findPainLabel(event.stateOptionId));
+  if (event.type === 'pain') parts.push(`score ${event.painScore}`, painEventLabel(event));
   if (event.type === 'medication') {
     parts.push(medicationEventLabel(event) || '不明な薬');
     if (event.amount !== undefined || event.unit) parts.push(`${event.amount ?? ''}${event.unit || ''}`);
@@ -340,6 +381,23 @@ function optionHtml(options, selectedId) {
   return options.map((option) => `<option value="${escapeHtml(option.id)}"${option.id === selectedId ? ' selected' : ''}>${escapeHtml(option.displayLabel || option.label)}</option>`).join('');
 }
 
+function painEditOptions(event) {
+  const options = activePainOptions();
+  const current = appData.settings.painStateOptions.find((option) => option.id === event.stateOptionId);
+  if (current && !current.active) {
+    options.push({ ...current, displayLabel: `${event.stateLabel || current.label}（非表示）` });
+  } else if (current && event.stateLabel) {
+    return options.map((option) => option.id === event.stateOptionId ? { ...option, displayLabel: event.stateLabel } : option);
+  } else if (!current) {
+    options.push({
+      id: event.stateOptionId,
+      label: event.stateLabel || '不明な状態',
+      displayLabel: `${event.stateLabel || '不明な状態'}（設定なし）`
+    });
+  }
+  return options;
+}
+
 function medicationEditOptions(event) {
   const options = activeMedicationOptions();
   const current = appData.settings.medicationOptions.find((option) => option.id === event.medicationOptionId);
@@ -369,7 +427,7 @@ function openEditEventPanel(id) {
       <label for="edit-pain-score">痛みスコア</label>
       <select id="edit-pain-score">${Array.from({ length: 11 }, (_, value) => `<option value="${value}"${value === event.painScore ? ' selected' : ''}>${value}</option>`).join('')}</select>
       <label for="edit-pain-state">痛みの状態</label>
-      <select id="edit-pain-state">${optionHtml(activePainOptions(), event.stateOptionId)}</select>
+      <select id="edit-pain-state">${optionHtml(painEditOptions(event), event.stateOptionId)}</select>
       ${editTextareaHtml(event.note || '')}`;
   } else if (event.type === 'medication') {
     fields.innerHTML = `
@@ -398,7 +456,12 @@ function saveEditedEvent() {
     const stateOptionId = $('edit-pain-state').value;
     if (!stateOptionId) return;
     event.painScore = Number($('edit-pain-score').value);
-    event.stateOptionId = stateOptionId;
+    if (stateOptionId !== event.stateOptionId) {
+      const option = appData.settings.painStateOptions.find((item) => item.id === stateOptionId);
+      if (!option) return;
+      event.stateOptionId = option.id;
+      event.stateLabel = option.label;
+    }
     event.note = $('edit-note').value.trim();
   } else if (event.type === 'medication') {
     const medicationOptionId = $('edit-medication-option').value;
@@ -880,6 +943,126 @@ function renderPeriodList() {
 }
 
 
+function renderPainStateSettingsSummary() {
+  const options = appData.settings.painStateOptions;
+  const visibleCount = options.filter((option) => option.active).length;
+  const hiddenCount = options.length - visibleCount;
+  $('pain-state-settings-summary').textContent = `痛み状態設定　表示中${visibleCount}件 / 非表示${hiddenCount}件`;
+}
+
+function resetPainStateOptionForm() {
+  editingPainStateOptionId = null;
+  $('pain-state-option-form').reset();
+  $('pain-state-option-id').value = '';
+  $('pain-state-label').value = '';
+  $('pain-state-sort-order').value = nextPainSortOrder();
+  $('pain-state-active').checked = true;
+  $('save-pain-state-option').textContent = '状態を追加';
+  $('cancel-pain-state-edit').hidden = true;
+}
+
+function setPainStateSettingsMessage(message, isError = false) {
+  const element = $('pain-state-settings-message');
+  element.textContent = message;
+  element.classList.toggle('error', isError);
+}
+
+function painStateOptionFormValue() {
+  return {
+    label: $('pain-state-label').value.trim(),
+    sortOrderText: $('pain-state-sort-order').value.trim(),
+    active: $('pain-state-active').checked
+  };
+}
+
+function validatePainStateOptionFormValue(value) {
+  if (!value.label) return '状態名を入力してください。';
+  if (!value.sortOrderText) return '表示順を入力してください。';
+  if (!Number.isFinite(Number(value.sortOrderText))) return '表示順は数値で入力してください。';
+  return '';
+}
+
+function savePainStateOptionFromForm() {
+  const value = painStateOptionFormValue();
+  const validationMessage = validatePainStateOptionFormValue(value);
+  if (validationMessage) { setPainStateSettingsMessage(validationMessage, true); return; }
+  const normalizedValue = { label: value.label, sortOrder: Number(value.sortOrderText), active: value.active };
+  if (editingPainStateOptionId) {
+    const option = appData.settings.painStateOptions.find((item) => item.id === editingPainStateOptionId);
+    if (!option) { resetPainStateOptionForm(); return; }
+    Object.assign(option, normalizedValue);
+    saveData();
+    render();
+    resetPainStateOptionForm();
+    showToast('痛み状態設定を更新しました。');
+    setPainStateSettingsMessage('痛み状態設定を更新しました。');
+    return;
+  }
+  appData.settings.painStateOptions.push({ id: createPainStateOptionId(), ...normalizedValue });
+  saveData();
+  render();
+  resetPainStateOptionForm();
+  showToast('状態を追加しました。');
+  setPainStateSettingsMessage('状態を追加しました。');
+}
+
+function editPainStateOption(id) {
+  const option = appData.settings.painStateOptions.find((item) => item.id === id);
+  if (!option) return;
+  editingPainStateOptionId = id;
+  $('pain-state-option-id').value = option.id;
+  $('pain-state-label').value = option.label;
+  $('pain-state-sort-order').value = option.sortOrder;
+  $('pain-state-active').checked = option.active;
+  $('save-pain-state-option').textContent = '痛み状態設定を更新';
+  $('cancel-pain-state-edit').hidden = false;
+  setPainStateSettingsMessage('');
+  $('pain-state-label').focus();
+}
+
+function togglePainStateOptionActive(id) {
+  const option = appData.settings.painStateOptions.find((item) => item.id === id);
+  if (!option) return;
+  option.active = !option.active;
+  saveData();
+  render();
+  showToast('痛み状態設定を更新しました。');
+  setPainStateSettingsMessage('痛み状態設定を更新しました。');
+}
+
+function renderPainStateSettingsList() {
+  const list = $('pain-state-settings-list');
+  list.innerHTML = '';
+  if (!appData.settings.painStateOptions.length) {
+    list.innerHTML = '<p class="empty">登録済みの痛み状態はありません。</p>';
+    return;
+  }
+  allPainOptions().forEach((option) => {
+    const item = document.createElement('div');
+    item.className = 'pain-state-settings-item';
+    const content = document.createElement('div');
+    content.className = 'pain-state-settings-content';
+    const status = option.active ? '表示中' : '非表示';
+    content.textContent = `${option.label} / 表示順 ${option.sortOrder} / ${status}`;
+    const actions = document.createElement('div');
+    actions.className = 'pain-state-settings-actions';
+    const editButton = document.createElement('button');
+    editButton.className = 'edit-event-button';
+    editButton.type = 'button';
+    editButton.textContent = '✎';
+    editButton.setAttribute('aria-label', '痛み状態設定を編集');
+    editButton.addEventListener('click', () => editPainStateOption(option.id));
+    const toggleButton = document.createElement('button');
+    toggleButton.className = 'secondary-button pain-state-toggle-button';
+    toggleButton.type = 'button';
+    toggleButton.textContent = option.active ? '非表示' : '表示';
+    toggleButton.addEventListener('click', () => togglePainStateOptionActive(option.id));
+    actions.append(editButton, toggleButton);
+    item.append(content, actions);
+    list.appendChild(item);
+  });
+}
+
 function renderMedicationSettingsSummary() {
   const options = appData.settings.medicationOptions;
   const visibleCount = options.filter((option) => option.active).length;
@@ -1085,7 +1268,10 @@ function render() {
   renderExportStatus();
   renderMedicationSettingsSummary();
   renderMedicationSettingsList();
+  renderPainStateSettingsSummary();
+  renderPainStateSettingsList();
   if (!editingMedicationOptionId && !$('medication-sort-order').value) $('medication-sort-order').value = nextMedicationSortOrder();
+  if (!editingPainStateOptionId && !$('pain-state-sort-order').value) $('pain-state-sort-order').value = nextPainSortOrder();
   renderComparisonPeriodSummary();
   renderPeriodList();
   if (!editingPeriodId && !$('comparison-period-start').value) $('comparison-period-start').value = nextPeriodStartSuggestion();
@@ -1173,7 +1359,7 @@ function csvValueForHeader(event, header) {
   if (header === 'timezone') return event.timezone;
   if (header === 'type') return event.type;
   if (header === 'pain_score') return event.type === 'pain' ? event.painScore : '';
-  if (header === 'state_option_label') return event.type === 'pain' ? findPainLabel(event.stateOptionId) : '';
+  if (header === 'state_option_label') return event.type === 'pain' ? painEventLabel(event) : '';
   if (header === 'medication_option_label') return event.type === 'medication' ? medicationEventLabel(event) : '';
   if (header === 'note') return event.note || '';
   if (header === 'created_at_utc') return event.createdAtUtc;
@@ -1312,7 +1498,9 @@ function wireEvents() {
   $('save-pain').addEventListener('click', () => {
     const stateOptionId = $('pain-state').value;
     if (!stateOptionId) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }
-    addEvent(createEvent({ type: 'pain', painScore: Number($('pain-score').value), stateOptionId, note: sharedNoteValue() }), '痛みを記録しました');
+    const option = appData.settings.painStateOptions.find((item) => item.id === stateOptionId && item.active);
+    if (!option) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }
+    addEvent(createEvent({ type: 'pain', painScore: Number($('pain-score').value), stateOptionId: option.id, stateLabel: option.label, note: sharedNoteValue() }), '痛みを記録しました');
     clearSharedNote();
     $('app-message').textContent = '';
   });
@@ -1327,12 +1515,20 @@ function wireEvents() {
     event.preventDefault();
     saveMedicationOptionFromForm();
   });
+  $('pain-state-option-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    savePainStateOptionFromForm();
+  });
   $('summary-end-today').addEventListener('change', updateSummaryEndDateMode);
   $('summary-end-custom').addEventListener('change', updateSummaryEndDateMode);
   $('run-visit-summary').addEventListener('click', runVisitSummary);
   $('cancel-medication-edit').addEventListener('click', () => {
     resetMedicationOptionForm();
     setMedicationSettingsMessage('');
+  });
+  $('cancel-pain-state-edit').addEventListener('click', () => {
+    resetPainStateOptionForm();
+    setPainStateSettingsMessage('');
   });
   $('comparison-period-form').addEventListener('submit', (event) => {
     event.preventDefault();
