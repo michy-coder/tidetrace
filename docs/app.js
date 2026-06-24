@@ -710,11 +710,6 @@ function renderStatePainSummary(block, statePainRows) {
   heading.textContent = '状態別の痛み';
   block.appendChild(heading);
 
-  const notice = document.createElement('p');
-  notice.className = 'visit-summary-notice';
-  notice.textContent = '同じ日・同じ状態の痛みを日単位でまとめてから、状態ごとに集計しています。服薬前後や他の薬との併用条件は分けていません。';
-  block.appendChild(notice);
-
   if (!statePainRows.length) {
     const empty = document.createElement('p');
     empty.className = 'empty';
@@ -729,6 +724,11 @@ function renderStatePainSummary(block, statePainRows) {
     item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：記録日数 ${row.recordDays}日 / 最大痛み ${escapeHtml(formatPainValue(row.maxPain))} / 平均痛み ${escapeHtml(row.averagePain.toFixed(1))}`;
     block.appendChild(item);
   });
+
+  const notice = document.createElement('p');
+  notice.className = 'visit-summary-notice';
+  notice.textContent = '同じ日・同じ状態の痛みを日単位でまとめてから、状態ごとに集計しています。服薬前後や他の薬との併用条件は分けていません。';
+  block.appendChild(notice);
 }
 
 function buildDosePainSummary(startDate, endDate) {
@@ -801,13 +801,8 @@ function formatAveragePain(group) {
 
 function renderDosePainSummary(block, dosePainRows) {
   const heading = document.createElement('h3');
-  heading.textContent = '痛み：薬量別';
+  heading.textContent = '薬量別の痛み';
   block.appendChild(heading);
-
-  const notice = document.createElement('p');
-  notice.className = 'visit-summary-notice';
-  notice.textContent = '薬ごとに日単位で集計しています。他の薬との併用条件は分けていません。';
-  block.appendChild(notice);
 
   if (!dosePainRows.length) {
     const empty = document.createElement('p');
@@ -834,6 +829,11 @@ function renderDosePainSummary(block, dosePainRows) {
     details.append(summary, body);
     block.appendChild(details);
   });
+
+  const notice = document.createElement('p');
+  notice.className = 'visit-summary-notice';
+  notice.textContent = '薬ごとに日単位で集計しています。他の薬との併用条件は分けていません。';
+  block.appendChild(notice);
 }
 
 function renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows, dosePainRows) {
