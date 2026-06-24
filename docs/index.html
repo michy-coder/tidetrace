@@ -111,15 +111,15 @@
           <fieldset class="summary-end-mode">
             <legend>集計終了日</legend>
             <label class="radio-row" for="summary-end-today">
-              <input id="summary-end-today" name="summary-end-mode" type="radio" value="today" checked>
+              <input id="summary-end-today" name="summary-end-mode" type="radio" value="today">
               <span id="summary-end-today-label">今日</span>
             </label>
             <label class="radio-row" for="summary-end-custom">
-              <input id="summary-end-custom" name="summary-end-mode" type="radio" value="custom">
+              <input id="summary-end-custom" name="summary-end-mode" type="radio" value="custom" checked>
               <span>任意の日付</span>
             </label>
           </fieldset>
-          <input id="summary-end-date" class="form-control" type="date" disabled hidden>
+          <input id="summary-end-date" class="form-control" type="date">
           <button id="run-visit-summary" type="button">集計する</button>
           <p id="visit-summary-message" class="message" role="alert"></p>
           <div id="visit-summary-result"></div>
