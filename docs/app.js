@@ -536,10 +536,11 @@ function inclusiveDays(startDate, endDate) {
 }
 
 function setDefaultSummaryRange() {
-  const endDate = nowParts().localDate;
+  const endDate = addDays(nowParts().localDate, -1);
   $('summary-start-date').value = addDays(endDate, -29);
   $('summary-end-date').value = endDate;
-  $('summary-end-today').checked = true;
+  $('summary-end-today').checked = false;
+  $('summary-end-custom').checked = true;
   updateSummaryEndDateMode();
 }
 
