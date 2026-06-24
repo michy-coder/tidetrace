@@ -310,12 +310,47 @@ def test_visit_summary_medication_display_omits_medication_days_but_keeps_averag
 
         renderVisitSummaryResult('2026-06-01', '2026-06-07', 7, [
           { label: 'Medication A', total: 14, unit: 'tablet', dates: new Set(['2026-06-01', '2026-06-02']) }
-        ], []);
+        ], [], []);
 
         const block = elements['visit-summary-result'].children[0];
         const medicationItem = block.children.find((child) => child.className === 'visit-summary-medication-item');
         assert.match(medicationItem.innerHTML, /合計 14tablet \\/ 1日平均 2\\.00tablet/);
         assert.doesNotMatch(medicationItem.innerHTML, /服薬日数/);
+        """
+    )
+
+
+def test_visit_summary_state_pain_groups_daily_by_resolved_state_label() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: {
+            painStateOptions: [
+              { id: 'standing', label: 'Standing current', active: true },
+              { id: 'sitting', label: 'Sitting current', active: false },
+              { id: 'unused', label: 'Unused active', active: true }
+            ]
+          },
+          events: [
+            { type: 'pain', localDate: '2026-07-01', painScore: 4, stateOptionId: 'standing', stateLabel: '立位' },
+            { type: 'pain', localDate: '2026-07-01', painScore: 8, stateOptionId: 'standing', stateLabel: '立位' },
+            { type: 'pain', localDate: '2026-07-02', painScore: 6, stateOptionId: 'standing', stateLabel: '立位' },
+            { type: 'pain', localDate: '2026-07-02', painScore: 3, stateOptionId: 'sitting' },
+            { type: 'pain', localDate: '2026-07-03', painScore: 9, stateOptionId: 'missing' },
+            { type: 'pain', localDate: '2026-07-04', painScore: 10, stateOptionId: 'standing', stateLabel: '範囲外' }
+          ]
+        };
+
+        const rows = buildStatePainSummary('2026-07-01', '2026-07-03');
+
+        assert.deepEqual(rows.map((row) => [row.label, row.recordDays, row.maxPain, row.averagePain.toFixed(1)]), [
+          ['不明な状態', 1, 9, '9.0'],
+          ['立位', 2, 8, '6.0'],
+          ['Sitting current', 1, 3, '3.0']
+        ]);
+        assert.equal(rows.some((row) => row.label === 'Unused active'), false);
+        assert.equal(rows.some((row) => row.label === '範囲外'), false);
         """
     )
 
