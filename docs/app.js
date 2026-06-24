@@ -539,8 +539,8 @@ function setDefaultSummaryRange() {
   const endDate = addDays(nowParts().localDate, -1);
   $('summary-start-date').value = addDays(endDate, -29);
   $('summary-end-date').value = endDate;
-  $('summary-end-today').checked = false;
-  $('summary-end-custom').checked = true;
+  $('summary-end-yesterday').checked = true;
+  $('summary-end-custom').checked = false;
   updateSummaryEndDateMode();
 }
 
@@ -550,12 +550,12 @@ function ensureSummaryDefaults() {
 }
 
 function updateSummaryEndDateMode() {
-  const today = nowParts().localDate;
-  const useToday = $('summary-end-today').checked;
-  $('summary-end-today-label').textContent = `今日（${formatFullDate(today)}）`;
-  $('summary-end-date').disabled = useToday;
-  $('summary-end-date').hidden = useToday;
-  if (useToday) $('summary-end-date').value = today;
+  const yesterday = addDays(nowParts().localDate, -1);
+  const useYesterday = $('summary-end-yesterday').checked;
+  $('summary-end-yesterday-label').textContent = `昨日（${formatFullDate(yesterday)}）`;
+  $('summary-end-date').disabled = useYesterday;
+  $('summary-end-date').hidden = useYesterday;
+  if (useYesterday) $('summary-end-date').value = yesterday;
 }
 
 function renderSummaryPeriodPicker() {
@@ -576,7 +576,7 @@ function renderSummaryPeriodPicker() {
     if (!period) return;
     $('summary-start-date').value = period.startDate;
     $('summary-end-date').value = period.endDate;
-    $('summary-end-today').checked = false;
+    $('summary-end-yesterday').checked = false;
     $('summary-end-custom').checked = true;
     updateSummaryEndDateMode();
   });
@@ -864,7 +864,7 @@ function renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows,
 function runVisitSummary() {
   updateSummaryEndDateMode();
   const startDate = $('summary-start-date').value;
-  const endDate = $('summary-end-today').checked ? nowParts().localDate : $('summary-end-date').value;
+  const endDate = $('summary-end-yesterday').checked ? addDays(nowParts().localDate, -1) : $('summary-end-date').value;
   const message = summaryValidationMessage(startDate, endDate);
   $('visit-summary-message').textContent = message;
   $('visit-summary-message').classList.toggle('error', Boolean(message));
@@ -1581,7 +1581,7 @@ function wireEvents() {
     event.preventDefault();
     savePainStateOptionFromForm();
   });
-  $('summary-end-today').addEventListener('change', updateSummaryEndDateMode);
+  $('summary-end-yesterday').addEventListener('change', updateSummaryEndDateMode);
   $('summary-end-custom').addEventListener('change', updateSummaryEndDateMode);
   $('run-visit-summary').addEventListener('click', runVisitSummary);
   $('cancel-medication-edit').addEventListener('click', () => {

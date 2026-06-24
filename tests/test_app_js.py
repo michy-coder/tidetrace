@@ -432,7 +432,7 @@ def test_management_disclosure_summaries_show_counts() -> None:
         """
     )
 
-def test_visit_summary_default_range_is_recent_30_days_ending_yesterday_with_custom_end_mode() -> None:
+def test_visit_summary_default_range_is_recent_30_days_ending_yesterday_with_yesterday_end_mode() -> None:
     run_app_js(
         """
         const assert = require('node:assert/strict');
@@ -440,9 +440,9 @@ def test_visit_summary_default_range_is_recent_30_days_ending_yesterday_with_cus
         const elements = {
           'summary-start-date': { value: '' },
           'summary-end-date': { value: '', disabled: false, hidden: false },
-          'summary-end-today': { checked: false },
+          'summary-end-yesterday': { checked: false },
           'summary-end-custom': { checked: false },
-          'summary-end-today-label': { textContent: '' },
+          'summary-end-yesterday-label': { textContent: '' },
           'summary-period-picker': { innerHTML: '', append() {} }
         };
         global.document = { getElementById(id) { return elements[id]; } };
@@ -452,33 +452,33 @@ def test_visit_summary_default_range_is_recent_30_days_ending_yesterday_with_cus
 
         assert.equal(elements['summary-start-date'].value, '2026-05-22');
         assert.equal(elements['summary-end-date'].value, '2026-06-20');
-        assert.equal(elements['summary-end-today'].checked, false);
-        assert.equal(elements['summary-end-custom'].checked, true);
-        assert.equal(elements['summary-end-date'].disabled, false);
-        assert.equal(elements['summary-end-date'].hidden, false);
-        assert.equal(elements['summary-end-today-label'].textContent, '今日（2026/06/21）');
+        assert.equal(elements['summary-end-yesterday'].checked, true);
+        assert.equal(elements['summary-end-custom'].checked, false);
+        assert.equal(elements['summary-end-date'].disabled, true);
+        assert.equal(elements['summary-end-date'].hidden, true);
+        assert.equal(elements['summary-end-yesterday-label'].textContent, '昨日（2026/06/20）');
         """
     )
 
 
-def test_visit_summary_today_end_mode_still_sets_end_date_to_today() -> None:
+def test_visit_summary_yesterday_end_mode_sets_end_date_to_yesterday() -> None:
     run_app_js(
         """
         const assert = require('node:assert/strict');
         nowParts = () => ({ iso: '2026-06-21T00:00:00.000Z', localDate: '2026-06-21', localTime: '09:00' });
         const elements = {
           'summary-end-date': { value: '2026-06-20', disabled: false, hidden: false },
-          'summary-end-today': { checked: true },
-          'summary-end-today-label': { textContent: '' }
+          'summary-end-yesterday': { checked: true },
+          'summary-end-yesterday-label': { textContent: '' }
         };
         global.document = { getElementById(id) { return elements[id]; } };
 
         updateSummaryEndDateMode();
 
-        assert.equal(elements['summary-end-date'].value, '2026-06-21');
+        assert.equal(elements['summary-end-date'].value, '2026-06-20');
         assert.equal(elements['summary-end-date'].disabled, true);
         assert.equal(elements['summary-end-date'].hidden, true);
-        assert.equal(elements['summary-end-today-label'].textContent, '今日（2026/06/21）');
+        assert.equal(elements['summary-end-yesterday-label'].textContent, '昨日（2026/06/20）');
         """
     )
 
@@ -493,8 +493,8 @@ def test_visit_summary_period_picker_copies_range_as_custom_end_date() -> None:
           'summary-start-date': { value: '' },
           'summary-end-date': { value: '', disabled: true, hidden: true },
           'summary-end-custom': { checked: false },
-          'summary-end-today': { checked: true },
-          'summary-end-today-label': { textContent: '' }
+          'summary-end-yesterday': { checked: true },
+          'summary-end-yesterday-label': { textContent: '' }
         };
         global.document = {
           getElementById(id) { return elements[id]; },
