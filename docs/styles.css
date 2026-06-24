@@ -624,6 +624,7 @@ summary { font-weight: 700; padding: 8px 0; }
   margin: 4px 0 8px;
 }
 
+.visit-summary-state-pain-item,
 .visit-summary-dose-pain-item {
   border-top: 1px solid var(--divider);
   padding: 8px 0;
