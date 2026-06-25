@@ -823,7 +823,7 @@ function renderDosePainSummary(block, dosePainRows) {
       const item = document.createElement('div');
       item.className = 'visit-summary-dose-pain-row';
       const doseLabel = `${amountText(group.amount, row.unit)}の日`;
-      item.innerHTML = `<strong>${escapeHtml(doseLabel)}</strong><br>対象 ${group.targetDays}日 / 痛み記録あり ${group.painDays}日<br>最大痛み ${escapeHtml(formatPainValue(group.maxPain))} / 平均痛み ${escapeHtml(formatAveragePain(group))}`;
+      item.innerHTML = `<strong>${escapeHtml(doseLabel)}</strong><br>対象 ${group.targetDays}日 / 痛み記録あり ${group.painDays}日<br>最大 ${escapeHtml(formatPainValue(group.maxPain))} / 平均 ${escapeHtml(formatAveragePain(group))}`;
       body.appendChild(item);
     });
     details.append(summary, body);

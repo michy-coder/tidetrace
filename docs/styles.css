@@ -606,7 +606,9 @@ summary { font-weight: 700; padding: 8px 0; }
 }
 
 .visit-summary-result-block h3 {
-  margin-top: 10px;
+  border-top: 1px solid var(--divider);
+  margin: 10px 0 0;
+  padding-top: 10px;
 }
 
 .visit-summary-medication-item {
@@ -629,7 +631,6 @@ summary { font-weight: 700; padding: 8px 0; }
 }
 
 .visit-summary-dose-pain-item {
-  border-top: 1px solid var(--divider);
   padding: 8px 0;
 }
 
