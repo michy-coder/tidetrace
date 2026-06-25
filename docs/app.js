@@ -721,13 +721,13 @@ function renderStatePainSummary(block, statePainRows) {
   statePainRows.forEach((row) => {
     const item = document.createElement('div');
     item.className = 'visit-summary-state-pain-item';
-    item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：記録日数 ${row.recordDays}日 / 最大痛み ${escapeHtml(formatPainValue(row.maxPain))} / 平均痛み ${escapeHtml(row.averagePain.toFixed(1))}`;
+    item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：記録日数 ${row.recordDays}日 / 最大 ${escapeHtml(formatPainValue(row.maxPain))} / 平均 ${escapeHtml(row.averagePain.toFixed(1))}`;
     block.appendChild(item);
   });
 
   const notice = document.createElement('p');
   notice.className = 'visit-summary-notice';
-  notice.textContent = '同じ日・同じ状態の痛みを日単位でまとめてから、状態ごとに集計しています。服薬前後や他の薬との併用条件は分けていません。';
+  notice.textContent = '同じ日・同じ状態の痛みを日単位で集計しています。服薬前後や他の薬との併用条件は分けていません。';
   block.appendChild(notice);
 }
 

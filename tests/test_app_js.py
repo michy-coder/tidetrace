@@ -354,6 +354,39 @@ def test_visit_summary_state_pain_groups_daily_by_resolved_state_label() -> None
         """
     )
 
+
+def test_visit_summary_state_pain_display_uses_compact_labels_and_notice() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const block = { children: [], appendChild(item) { this.children.push(item); } };
+        global.document = {
+          createElement(tag) {
+            return {
+              tag,
+              className: '',
+              innerHTML: '',
+              textContent: '',
+              children: [],
+              appendChild(item) { this.children.push(item); },
+              append(...items) { this.children.push(...items); }
+            };
+          }
+        };
+
+        renderStatePainSummary(block, [
+          { label: '排便後', recordDays: 6, maxPain: 9, averagePain: 7.6 }
+        ]);
+
+        const stateItem = block.children.find((child) => child.className === 'visit-summary-state-pain-item');
+        const notice = block.children.at(-1);
+        assert.match(stateItem.innerHTML, /排便後<\\/strong>：記録日数 6日 \\/ 最大 9 \\/ 平均 7\\.6/);
+        assert.doesNotMatch(stateItem.innerHTML, /最大痛み|平均痛み/);
+        assert.equal(notice.className, 'visit-summary-notice');
+        assert.equal(notice.textContent, '同じ日・同じ状態の痛みを日単位で集計しています。服薬前後や他の薬との併用条件は分けていません。');
+        """
+    )
+
 def test_last_medication_list_uses_active_sorted_options_and_compact_elapsed_text() -> None:
     run_app_js(
         """
