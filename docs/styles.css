@@ -610,8 +610,7 @@ summary { font-weight: 700; padding: 8px 0; }
 }
 
 .visit-summary-medication-item {
-  border-top: 1px solid var(--divider);
-  padding: 10px 0;
+  padding: 8px 0;
 }
 
 .visit-summary-medication-item:last-child {
@@ -622,10 +621,13 @@ summary { font-weight: 700; padding: 8px 0; }
   color: var(--muted);
   font-size: 0.88rem;
   line-height: 1.45;
-  margin: 4px 0 2px;
+  margin: 3px 0 2px;
 }
 
-.visit-summary-state-pain-item,
+.visit-summary-state-pain-item {
+  padding: 6px 0;
+}
+
 .visit-summary-dose-pain-item {
   border-top: 1px solid var(--divider);
   padding: 8px 0;
