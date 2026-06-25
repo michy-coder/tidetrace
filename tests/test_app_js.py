@@ -387,6 +387,47 @@ def test_visit_summary_state_pain_display_uses_compact_labels_and_notice() -> No
         """
     )
 
+
+def test_visit_summary_dose_pain_display_uses_compact_pain_labels_and_notice() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const block = { children: [], appendChild(item) { this.children.push(item); } };
+        global.document = {
+          createElement(tag) {
+            return {
+              tag,
+              className: '',
+              innerHTML: '',
+              textContent: '',
+              open: false,
+              children: [],
+              appendChild(item) { this.children.push(item); },
+              append(...items) { this.children.push(...items); }
+            };
+          }
+        };
+
+        renderDosePainSummary(block, [
+          {
+            label: '薬A',
+            unit: '錠',
+            doseGroups: [
+              { amount: 2, targetDays: 7, painDays: 5, maxPain: 9, averagePainTotal: 27 }
+            ]
+          }
+        ]);
+
+        const doseItem = block.children.find((child) => child.className === 'visit-summary-dose-pain-item');
+        const doseRow = doseItem.children[1].children[0];
+        const notice = block.children.at(-1);
+        assert.match(doseRow.innerHTML, /対象 7日 \\/ 痛み記録あり 5日<br>最大 9 \\/ 平均 5\\.4/);
+        assert.doesNotMatch(doseRow.innerHTML, /最大痛み|平均痛み/);
+        assert.equal(notice.className, 'visit-summary-notice');
+        assert.equal(notice.textContent, '薬ごとに日単位で集計しています。他の薬との併用条件は分けていません。');
+        """
+    )
+
 def test_last_medication_list_uses_active_sorted_options_and_compact_elapsed_text() -> None:
     run_app_js(
         """
