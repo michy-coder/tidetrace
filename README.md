@@ -28,3 +28,7 @@ Actual log data is stored in the user’s browser and should be exported manuall
 
 This app is for recording only.  
 It does not provide medical advice, medication timing advice, or emergency guidance.
+
+## License
+
+The source code is licensed under the MIT License. See [LICENSE](LICENSE) for details.
