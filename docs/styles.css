@@ -194,9 +194,22 @@ p { margin: 0 0 10px; }
   border: 0;
 }
 
+.setup-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.setup-actions button {
+  margin-top: 0;
+}
+
 .setup-start-button {
   min-height: 54px;
-  margin-top: 4px;
+}
+
+.setup-restore-button {
+  min-height: 50px;
 }
 
 label {
