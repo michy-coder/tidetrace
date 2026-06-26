@@ -235,20 +235,89 @@ function showApp() {
 function renderInitialSetupOptions() {
   const medicationList = $('setup-medication-list');
   const painStateList = $('setup-pain-state-list');
-  if (medicationList) {
+  if (medicationList && !medicationList.dataset.rendered) {
     medicationList.innerHTML = INITIAL_MEDICATION_OPTIONS
-      .map((option) => `<li>${escapeHtml(option.label)} / ${escapeHtml(option.defaultAmount)} / ${escapeHtml(option.unit)}</li>`)
+      .map((option, index) => `
+        <li class="setup-medication-item">
+          <label for="setup-medication-label-${index}">薬名</label>
+          <input id="setup-medication-label-${index}" class="setup-medication-label" type="text" value="${escapeHtml(option.label)}" autocomplete="off">
+          <label for="setup-medication-amount-${index}">量</label>
+          <input id="setup-medication-amount-${index}" class="setup-medication-amount" type="number" inputmode="decimal" min="0.01" step="any" value="${escapeHtml(option.defaultAmount)}">
+          <label for="setup-medication-unit-${index}">単位</label>
+          <input id="setup-medication-unit-${index}" class="setup-medication-unit" type="text" value="${escapeHtml(option.unit)}" autocomplete="off">
+        </li>`)
       .join('');
+    medicationList.dataset.rendered = 'true';
   }
-  if (painStateList) {
+  if (painStateList && !painStateList.dataset.rendered) {
     painStateList.innerHTML = INITIAL_PAIN_STATE_OPTIONS
-      .map((option) => `<li>${escapeHtml(option.label)}</li>`)
+      .map((option, index) => `
+        <li>
+          <label class="visually-hidden" for="setup-pain-state-label-${index}">痛み状態 ${index + 1}</label>
+          <input id="setup-pain-state-label-${index}" class="setup-pain-state-label" type="text" value="${escapeHtml(option.label)}" autocomplete="off">
+        </li>`)
       .join('');
+    painStateList.dataset.rendered = 'true';
   }
 }
 
+function buildInitialSetupSettings(medicationValues, painStateValues) {
+  const medicationOptions = [];
+  for (const value of medicationValues) {
+    const label = value.label.trim();
+    if (!label) continue;
+    const amountText = value.amount.trim();
+    const defaultAmount = amountText ? Number(amountText) : 1;
+    if (!Number.isFinite(defaultAmount) || defaultAmount <= 0) {
+      return { error: '薬の量は1以上の数値で入力してください。' };
+    }
+    medicationOptions.push({
+      id: `med_${String(medicationOptions.length + 1).padStart(3, '0')}`,
+      label,
+      active: true,
+      defaultAmount,
+      unit: value.unit.trim() || '錠',
+      sortOrder: medicationOptions.length + 1
+    });
+  }
+  if (!medicationOptions.length) return { error: '薬ボタンを1つ以上入力してください。' };
+
+  const painStateOptions = painStateValues
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .map((label, index) => ({
+      id: `ps_${String(index + 1).padStart(3, '0')}`,
+      label,
+      active: true,
+      sortOrder: index + 1
+    }));
+  if (!painStateOptions.length) return { error: '痛み状態を1つ以上入力してください。' };
+
+  return { medicationOptions, painStateOptions, error: '' };
+}
+
+function readInitialSetupValues() {
+  const medicationItems = Array.from(document.querySelectorAll('#setup-medication-list li'));
+  const medicationValues = medicationItems.map((item) => ({
+    label: item.querySelector('.setup-medication-label')?.value || '',
+    amount: item.querySelector('.setup-medication-amount')?.value || '',
+    unit: item.querySelector('.setup-medication-unit')?.value || ''
+  }));
+  const painStateValues = Array.from(document.querySelectorAll('.setup-pain-state-label')).map((input) => input.value || '');
+  return { medicationValues, painStateValues };
+}
+
 function completeInitialSetup() {
+  const { medicationValues, painStateValues } = readInitialSetupValues();
+  const setupSettings = buildInitialSetupSettings(medicationValues, painStateValues);
+  if (setupSettings.error) {
+    $('setup-error').textContent = setupSettings.error;
+    return;
+  }
   appData = createInitialAppData();
+  appData.settings.medicationOptions = setupSettings.medicationOptions;
+  appData.settings.painStateOptions = setupSettings.painStateOptions;
+  appData.settings.setupCompletedAtUtc = new Date().toISOString();
   clearSaveFeedback();
   saveData();
   showApp();

@@ -604,3 +604,52 @@ def test_visit_summary_period_picker_copies_range_as_custom_end_date() -> None:
         assert.equal(elements['summary-end-date'].hidden, false);
         """
     )
+
+def test_initial_setup_settings_filters_defaults_and_orders() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const result = buildInitialSetupSettings(
+          [
+            { label: '  Custom A  ', amount: '2.5', unit: ' 包 ' },
+            { label: '   ', amount: 'bad', unit: '回' },
+            { label: 'Custom B', amount: '', unit: '' }
+          ],
+          [' 安静 ', ' ', '歩行']
+        );
+
+        assert.equal(result.error, '');
+        assert.deepEqual(result.medicationOptions, [
+          { id: 'med_001', label: 'Custom A', active: true, defaultAmount: 2.5, unit: '包', sortOrder: 1 },
+          { id: 'med_002', label: 'Custom B', active: true, defaultAmount: 1, unit: '錠', sortOrder: 2 }
+        ]);
+        assert.deepEqual(result.painStateOptions, [
+          { id: 'ps_001', label: '安静', active: true, sortOrder: 1 },
+          { id: 'ps_002', label: '歩行', active: true, sortOrder: 2 }
+        ]);
+        """
+    )
+
+
+def test_initial_setup_settings_validation_messages() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        assert.equal(
+          buildInitialSetupSettings([{ label: '', amount: '1', unit: '錠' }], ['安静時']).error,
+          '薬ボタンを1つ以上入力してください。'
+        );
+        assert.equal(
+          buildInitialSetupSettings([{ label: '薬', amount: 'abc', unit: '錠' }], ['安静時']).error,
+          '薬の量は1以上の数値で入力してください。'
+        );
+        assert.equal(
+          buildInitialSetupSettings([{ label: '薬', amount: '0', unit: '錠' }], ['安静時']).error,
+          '薬の量は1以上の数値で入力してください。'
+        );
+        assert.equal(
+          buildInitialSetupSettings([{ label: '薬', amount: '1', unit: '錠' }], [' ']).error,
+          '痛み状態を1つ以上入力してください。'
+        );
+        """
+    )
