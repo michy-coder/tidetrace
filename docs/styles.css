@@ -748,3 +748,47 @@ summary { font-weight: 700; padding: 8px 0; }
 .visit-summary-dose-pain-row {
   padding: 8px 0 8px 12px;
 }
+
+.week-day-summary {
+  border-top: 1px solid var(--divider);
+  padding: 14px 0;
+}
+
+.week-day-summary:first-child {
+  border-top: 0;
+  padding-top: 2px;
+}
+
+.week-day-summary:last-child {
+  padding-bottom: 0;
+}
+
+.week-day-header {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.week-day-title {
+  font-size: 1.05rem;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.week-detail-button {
+  flex: 0 0 auto;
+  margin: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  width: auto;
+}
+
+.week-summary-row {
+  margin: 4px 0;
+}
+
+.week-day-detail {
+  margin-top: 10px;
+}
