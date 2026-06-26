@@ -10,6 +10,12 @@ TideTrace does not provide medical advice, diagnosis, medication timing advice, 
 
 The app is published from the `docs/` folder using GitHub Pages.
 
+## Why structured records matter
+
+Pain communication can be affected by memory, time pressure, communication style, and bias. TideTrace does not attempt to diagnose, interpret, or treat pain. Instead, it helps users keep a structured record of pain, medication, and context over time.
+
+The goal is to make it easier for users to review their own observations and, when appropriate, share clearer summaries with healthcare professionals.
+
 ## Privacy rules
 
 - Do not commit real health records.
