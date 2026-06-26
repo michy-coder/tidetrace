@@ -336,6 +336,58 @@ function initializeFromText(text, errorElement) {
   return true;
 }
 
+
+function importInitialBackupText(text) {
+  const succeeded = initializeFromText(text, $('setup-error'));
+  if (succeeded) {
+    showToast('バックアップを復元しました');
+    return true;
+  }
+  console.error('Initial backup restore failed', new Error($('setup-error').textContent || 'Invalid backup data'));
+  showSetup('バックアップを復元できませんでした。JSONバックアップを確認してください。');
+  return false;
+}
+
+function handleInitialBackupFileSelected(event) {
+  const input = event.target;
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      importInitialBackupText(String(reader.result));
+    } catch (error) {
+      console.error('Initial backup restore failed', error);
+      showSetup('バックアップを復元できませんでした。JSONバックアップを確認してください。');
+    } finally {
+      input.value = '';
+    }
+  };
+  reader.onerror = () => {
+    console.error('Initial backup restore failed', reader.error);
+    showSetup('バックアップを復元できませんでした。JSONバックアップを確認してください。');
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function requestInitialBackupRestore() {
+  $('setup-error').textContent = 'Tide TraceのJSONバックアップを選択してください。';
+  const input = $('setup-import-file');
+  if (!input) {
+    console.error('Initial backup restore failed', new Error('Initial backup file input was not found'));
+    showSetup('復元できませんでした。画面を再読み込みしてから再度お試しください。');
+    return;
+  }
+  if (input.files && input.files[0]) {
+    handleInitialBackupFileSelected({ target: input });
+    return;
+  }
+  input.value = '';
+  input.click();
+}
+
 function sortedPainOptions(options) {
   return [...options].sort((a, b) =>
     a.sortOrder - b.sortOrder ||
@@ -1678,6 +1730,8 @@ function saveMedication(medicationOptionId) {
 
 function wireEvents() {
   $('complete-initial-setup').addEventListener('click', completeInitialSetup);
+  $('restore-initial-backup').addEventListener('click', requestInitialBackupRestore);
+  $('setup-import-file').addEventListener('change', handleInitialBackupFileSelected);
   $('save-pain').addEventListener('click', () => {
     const stateOptionId = $('pain-state').value;
     if (!stateOptionId) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }

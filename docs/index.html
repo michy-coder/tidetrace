@@ -51,7 +51,11 @@
         <ul id="setup-pain-state-list" class="setup-option-list"></ul>
       </section>
 
-      <button id="complete-initial-setup" class="setup-start-button" type="button">この設定ではじめる</button>
+      <div class="setup-actions" aria-label="初回設定の操作">
+        <button id="complete-initial-setup" class="setup-start-button" type="button">この設定ではじめる</button>
+        <input id="setup-import-file" class="visually-hidden-file-input" type="file" accept="application/json,.json" aria-label="Tide TraceのJSONバックアップを選択" tabindex="-1">
+        <button id="restore-initial-backup" class="secondary-button setup-restore-button" type="button">バックアップから復元</button>
+      </div>
       <p id="setup-error" class="error" role="alert"></p>
     </section>
 
