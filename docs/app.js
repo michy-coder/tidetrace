@@ -14,6 +14,20 @@ let editingPainStateOptionId = null;
 
 const $ = (id) => document.getElementById(id);
 
+const INITIAL_MEDICATION_OPTIONS = [
+  { id: 'med_001', label: '鎮痛薬A', active: true, defaultAmount: 1, unit: '錠', sortOrder: 1 },
+  { id: 'med_002', label: '鎮痛薬B', active: true, defaultAmount: 1, unit: '錠', sortOrder: 2 }
+];
+
+const INITIAL_PAIN_STATE_OPTIONS = [
+  { id: 'ps_001', label: '安静時', active: true, sortOrder: 1 },
+  { id: 'ps_002', label: '座位', active: true, sortOrder: 2 },
+  { id: 'ps_003', label: '立位', active: true, sortOrder: 3 },
+  { id: 'ps_004', label: '歩行時', active: true, sortOrder: 4 },
+  { id: 'ps_005', label: '臥位', active: true, sortOrder: 5 },
+  { id: 'ps_006', label: 'その他', active: true, sortOrder: 6 }
+];
+
 function nowParts() {
   const now = new Date();
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -164,6 +178,22 @@ function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
 }
 
+function createInitialAppData() {
+  return {
+    schemaVersion: 1,
+    appName: 'Tide Trace',
+    settings: {
+      medicationOptions: INITIAL_MEDICATION_OPTIONS.map((option) => ({ ...option })),
+      painStateOptions: INITIAL_PAIN_STATE_OPTIONS.map((option) => ({ ...option })),
+      setupCompletedAtUtc: new Date().toISOString(),
+      lastJsonExportedAtUtc: null,
+      lastCsvExportedAtUtc: null
+    },
+    periods: [],
+    events: []
+  };
+}
+
 function supplementSettings(data) {
   if (!data || !data.settings) return { data, changed: false };
   const changed = !Object.prototype.hasOwnProperty.call(data.settings, 'lastJsonExportedAtUtc') ||
@@ -189,6 +219,7 @@ function loadStoredData() {
 
 function showSetup(message = '') {
   stopElapsedRefresh();
+  renderInitialSetupOptions();
   $('setup-screen').classList.remove('hidden');
   $('app-screen').classList.add('hidden');
   $('setup-error').textContent = message;
@@ -199,6 +230,28 @@ function showApp() {
   $('setup-screen').classList.add('hidden');
   $('app-screen').classList.remove('hidden');
   render();
+}
+
+function renderInitialSetupOptions() {
+  const medicationList = $('setup-medication-list');
+  const painStateList = $('setup-pain-state-list');
+  if (medicationList) {
+    medicationList.innerHTML = INITIAL_MEDICATION_OPTIONS
+      .map((option) => `<li>${escapeHtml(option.label)} / ${escapeHtml(option.defaultAmount)} / ${escapeHtml(option.unit)}</li>`)
+      .join('');
+  }
+  if (painStateList) {
+    painStateList.innerHTML = INITIAL_PAIN_STATE_OPTIONS
+      .map((option) => `<li>${escapeHtml(option.label)}</li>`)
+      .join('');
+  }
+}
+
+function completeInitialSetup() {
+  appData = createInitialAppData();
+  clearSaveFeedback();
+  saveData();
+  showApp();
 }
 
 function initializeFromText(text, errorElement) {
@@ -1555,8 +1608,7 @@ function saveMedication(medicationOptionId) {
 }
 
 function wireEvents() {
-  $('load-pasted-json').addEventListener('click', () => initializeFromText($('setup-json').value, $('setup-error')));
-  $('load-file-json').addEventListener('click', () => readFile($('setup-file'), (text) => initializeFromText(text, $('setup-error')), $('setup-error')));
+  $('complete-initial-setup').addEventListener('click', completeInitialSetup);
   $('save-pain').addEventListener('click', () => {
     const stateOptionId = $('pain-state').value;
     if (!stateOptionId) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }
