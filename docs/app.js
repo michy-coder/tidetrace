@@ -11,6 +11,7 @@ let editingEventId = null;
 let editingPeriodId = null;
 let editingMedicationOptionId = null;
 let editingPainStateOptionId = null;
+let expandedWeekDate = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -1522,25 +1523,104 @@ function render() {
   renderWeek(today);
 }
 
+
+function formatWeekDateHeading(dateText) {
+  const date = new Date(`${dateText}T00:00:00+09:00`);
+  const monthDay = new Intl.DateTimeFormat('ja-JP', { timeZone: TIMEZONE, month: 'numeric', day: 'numeric' }).format(date);
+  const weekday = new Intl.DateTimeFormat('ja-JP', { timeZone: TIMEZONE, weekday: 'short' }).format(date);
+  return `${monthDay} ${weekday}`;
+}
+
+function buildDailySummary(events) {
+  const optionById = new Map(appData.settings.medicationOptions.map((option) => [option.id, option]));
+  const painScores = events
+    .filter((event) => event.type === 'pain' && typeof event.painScore === 'number' && Number.isFinite(event.painScore))
+    .map((event) => event.painScore);
+  const medications = new Map();
+  events.filter((event) => event.type === 'medication').forEach((event) => {
+    const option = event.medicationOptionId ? optionById.get(event.medicationOptionId) : null;
+    const label = event.medicationLabel || (option && option.label) || '不明な薬';
+    const unit = medicationSummaryUnit(event, option);
+    const key = `${label}|unit:${unit}`;
+    if (!medications.has(key)) medications.set(key, { label, unit, total: 0 });
+    medications.get(key).total += amountForSummary(event);
+  });
+  const noteEvents = events
+    .map((event, index) => ({
+      event,
+      index,
+      note: typeof event.note === 'string' ? event.note.trim() : '',
+      priority: event.type === 'note' ? 1 : event.type === 'pain' ? 2 : event.type === 'medication' ? 3 : 4
+    }))
+    .filter((item) => item.note && item.priority < 4)
+    .sort((a, b) => a.priority - b.priority || a.event.localTime.localeCompare(b.event.localTime) || a.index - b.index);
+
+  return {
+    painScores,
+    medications: [...medications.values()].sort((a, b) => a.label.localeCompare(b.label, 'ja') || a.unit.localeCompare(b.unit, 'ja')),
+    notes: noteEvents
+  };
+}
+
+function appendDailySummaryRows(container, summary) {
+  if (summary.painScores.length) {
+    const max = Math.max(...summary.painScores);
+    const average = summary.painScores.reduce((total, score) => total + score, 0) / summary.painScores.length;
+    const row = document.createElement('p');
+    row.className = 'week-summary-row';
+    row.textContent = `痛み：最大 ${max} / 平均 ${average.toFixed(1)}`;
+    container.appendChild(row);
+  }
+  if (summary.medications.length) {
+    const row = document.createElement('p');
+    row.className = 'week-summary-row';
+    row.textContent = `服薬：${summary.medications.map((item) => `${item.label} ${amountText(item.total, item.unit)}`).join(' / ')}`;
+    container.appendChild(row);
+  }
+  if (summary.notes.length) {
+    const row = document.createElement('p');
+    row.className = 'week-summary-row';
+    const extraCount = summary.notes.length - 1;
+    row.textContent = `メモ：${summary.notes[0].note}${extraCount > 0 ? `　ほか${extraCount}件` : ''}`;
+    container.appendChild(row);
+  }
+}
+
 function renderWeek(today) {
   const list = $('week-list');
   list.innerHTML = '';
   const dates = [];
-  const base = new Date(`${today}T00:00:00+09:00`);
-  for (let i = 1; i <= 7; i += 1) {
-    const d = new Date(base.getTime() - i * 86400000);
-    dates.push(new Intl.DateTimeFormat('en-CA', { timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d));
-  }
+  for (let i = 1; i <= 7; i += 1) dates.push(addDays(today, -i));
   dates.forEach((date) => {
     const events = appData.events.filter((event) => event.localDate === date);
     if (events.length === 0) return;
-    const details = document.createElement('details');
-    const summary = document.createElement('summary');
-    summary.textContent = `${date}：${events.length}件`;
-    const body = document.createElement('div');
-    renderEventList(body, events, sortedEvents, { showDate: false });
-    details.append(summary, body);
-    list.appendChild(details);
+    const item = document.createElement('section');
+    item.className = 'week-day-summary';
+    const header = document.createElement('div');
+    header.className = 'week-day-header';
+    const title = document.createElement('h3');
+    title.className = 'week-day-title';
+    title.textContent = formatWeekDateHeading(date);
+    const button = document.createElement('button');
+    button.className = 'week-detail-button secondary-button';
+    button.type = 'button';
+    const isExpanded = expandedWeekDate === date;
+    button.textContent = isExpanded ? '閉じる' : '詳細';
+    button.setAttribute('aria-expanded', String(isExpanded));
+    button.addEventListener('click', () => {
+      expandedWeekDate = isExpanded ? null : date;
+      renderWeek(today);
+    });
+    header.append(title, button);
+    item.appendChild(header);
+    appendDailySummaryRows(item, buildDailySummary(events));
+    if (isExpanded) {
+      const detail = document.createElement('div');
+      detail.className = 'week-day-detail';
+      renderEventList(detail, events, sortedEventsDescending, { showDate: false });
+      item.appendChild(detail);
+    }
+    list.appendChild(item);
   });
   if (!list.children.length) list.innerHTML = '<p class="empty">記録はありません。</p>';
 }
