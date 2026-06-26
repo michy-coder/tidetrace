@@ -239,12 +239,18 @@ function renderInitialSetupOptions() {
     medicationList.innerHTML = INITIAL_MEDICATION_OPTIONS
       .map((option, index) => `
         <li class="setup-medication-item">
-          <label for="setup-medication-label-${index}">薬名</label>
-          <input id="setup-medication-label-${index}" class="setup-medication-label" type="text" value="${escapeHtml(option.label)}" autocomplete="off">
-          <label for="setup-medication-amount-${index}">量</label>
-          <input id="setup-medication-amount-${index}" class="setup-medication-amount" type="number" inputmode="decimal" min="0.01" step="any" value="${escapeHtml(option.defaultAmount)}">
-          <label for="setup-medication-unit-${index}">単位</label>
-          <input id="setup-medication-unit-${index}" class="setup-medication-unit" type="text" value="${escapeHtml(option.unit)}" autocomplete="off">
+          <div class="setup-medication-field">
+            <label for="setup-medication-label-${index}">薬名</label>
+            <input id="setup-medication-label-${index}" class="setup-medication-label" type="text" value="${escapeHtml(option.label)}" autocomplete="off">
+          </div>
+          <div class="setup-medication-field">
+            <label for="setup-medication-amount-${index}">量</label>
+            <input id="setup-medication-amount-${index}" class="setup-medication-amount" type="number" inputmode="decimal" min="0.01" step="any" value="${escapeHtml(option.defaultAmount)}">
+          </div>
+          <div class="setup-medication-field">
+            <label for="setup-medication-unit-${index}">単位</label>
+            <input id="setup-medication-unit-${index}" class="setup-medication-unit" type="text" value="${escapeHtml(option.unit)}" autocomplete="off">
+          </div>
         </li>`)
       .join('');
     medicationList.dataset.rendered = 'true';
@@ -252,7 +258,7 @@ function renderInitialSetupOptions() {
   if (painStateList && !painStateList.dataset.rendered) {
     painStateList.innerHTML = INITIAL_PAIN_STATE_OPTIONS
       .map((option, index) => `
-        <li>
+        <li class="setup-pain-state-item">
           <label class="visually-hidden" for="setup-pain-state-label-${index}">痛み状態 ${index + 1}</label>
           <input id="setup-pain-state-label-${index}" class="setup-pain-state-label" type="text" value="${escapeHtml(option.label)}" autocomplete="off">
         </li>`)

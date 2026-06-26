@@ -149,37 +149,60 @@ p { margin: 0 0 10px; }
 
 .setup-confirm-section h3 {
   font-size: 1rem;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+.setup-section-description {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin: 0 0 10px;
 }
 
 .setup-option-list {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
 .setup-option-list li {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-  padding: 10px 12px;
+  min-width: 0;
 }
 
 .setup-medication-item {
   display: grid;
-  grid-template-columns: minmax(4em, auto) minmax(0, 1fr);
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(5.5rem, 0.55fr);
+  align-items: end;
   gap: 8px 10px;
 }
 
+.setup-medication-item .setup-medication-field:first-child {
+  grid-column: 1 / -1;
+}
+
 .setup-medication-item label {
-  margin: 0;
+  font-size: 0.9rem;
+  margin: 0 0 4px;
 }
 
 .setup-option-list input {
   min-height: 44px;
+}
+
+.setup-pain-state-item + .setup-pain-state-item {
+  margin-top: 0;
+}
+
+@media (max-width: 360px) {
+  .setup-medication-item {
+    grid-template-columns: 1fr;
+  }
+
+  .setup-medication-item .setup-medication-field:first-child {
+    grid-column: auto;
+  }
 }
 
 .visually-hidden {
