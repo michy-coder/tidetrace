@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Tide Trace</title>
-  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="styles.css?v=12">
 </head>
 <body>
   <header class="app-header">
@@ -36,16 +36,22 @@
   </header>
 
   <main>
-    <section id="setup-screen" class="card hidden" aria-labelledby="setup-title">
-      <h2 id="setup-title">初回セットアップ</h2>
-      <p>設定JSONを読み込んでください。</p>
-      <p>このアプリでは、入力項目の表示名をブラウザ内の設定データとして保存します。</p>
-      <label for="setup-json">JSON貼り付け欄</label>
-      <textarea id="setup-json" rows="10" autocomplete="off" spellcheck="false"></textarea>
-      <button id="load-pasted-json" type="button">貼り付けたJSONを読み込む</button>
-      <label for="setup-file">JSONファイル選択</label>
-      <input id="setup-file" type="file" accept="application/json,.json">
-      <button id="load-file-json" type="button">JSONファイルを読み込む</button>
+    <section id="setup-screen" class="card setup-card hidden" aria-labelledby="setup-title">
+      <h2 id="setup-title">Tide Traceをはじめる</h2>
+      <p>Tide Traceは、痛みと服薬の記録を自分で見返すためのアプリです。</p>
+      <p>記録はこのブラウザ内に保存されます。必要に応じてバックアップしてください。</p>
+
+      <section class="setup-confirm-section" aria-labelledby="setup-medication-title">
+        <h3 id="setup-medication-title">薬ボタン</h3>
+        <ul id="setup-medication-list" class="setup-option-list"></ul>
+      </section>
+
+      <section class="setup-confirm-section" aria-labelledby="setup-pain-state-title">
+        <h3 id="setup-pain-state-title">痛み状態</h3>
+        <ul id="setup-pain-state-list" class="setup-option-list"></ul>
+      </section>
+
+      <button id="complete-initial-setup" class="setup-start-button" type="button">この設定ではじめる</button>
       <p id="setup-error" class="error" role="alert"></p>
     </section>
 
@@ -235,6 +241,6 @@
     </div>
   </main>
 
-  <script src="app.js?v=12" defer></script>
+  <script src="app.js?v=13" defer></script>
 </body>
 </html>
