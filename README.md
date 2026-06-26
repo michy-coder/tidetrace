@@ -1,9 +1,7 @@
 ## TideTrace
 
-This repository contains a small static web app, TideTrace.
-TideTrace is a local-first, privacy-conscious health journaling app focused on user control over pain and medical-context records.
+TideTrace is a small static web app for local-first health journaling. It is designed to help users record pain, medication, and health-related notes while keeping control over sensitive medical-context records.
 
-TideTrace is designed around user control over pain and medical-context records.
 Pain, medication, and health-related notes can be highly sensitive. 
 For this reason, TideTrace keeps user-entered data in the browser and does not send it to an external server. 
 The goal is not only privacy, but also to help users keep control over how their records are stored, reviewed, exported, summarized, and shared with healthcare professionals.
