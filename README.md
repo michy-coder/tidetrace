@@ -1,46 +1,112 @@
-## TideTrace
+TideTrace
 
-TideTrace is a small static web app for local-first health journaling. It is designed to help users record pain, medication, and health-related notes while keeping control over sensitive medical-context records.
+TideTrace is a small static web app for local-first health journaling.
+It is designed to help users record pain, medication, and health-related notes while keeping control over sensitive medical-context records.
 
-Pain, medication, and health-related notes can be highly sensitive. 
-For this reason, TideTrace keeps user-entered data in the browser and does not send it to an external server. 
-The goal is not only privacy, but also to help users keep control over how their records are stored, reviewed, exported, summarized, and shared with healthcare professionals.
+Live app:
 
-TideTrace does not provide medical advice, diagnosis, medication timing advice, or emergency guidance. It is a record-keeping tool intended to support users in organizing their own observations.
+https://michy-coder.github.io/tidetrace/
 
-The app is published from the `docs/` folder using GitHub Pages.
+Japanese documentation:
 
-## Why structured records matter
+* Introduction: https://note.com/tidetrace/n/n2908ecde3b0e
+* User guide: https://note.com/tidetrace/n/n6d64e28fea65
 
-Pain communication can be affected by memory, time pressure, communication style, and bias. TideTrace does not attempt to diagnose, interpret, or treat pain. Instead, it helps users keep a structured record of pain, medication, and context over time.
+These documentation pages are written in Japanese.
+Depending on the reader’s browser or Note settings, they may be machine-translated.
 
+Purpose
+
+Pain, medication, and health-related notes can be highly sensitive.
+For this reason, TideTrace keeps user-entered data in the browser and does not send it to an external server.
+
+The goal is not only privacy.
+TideTrace is also designed to help users keep control over how their records are stored, reviewed, exported, summarized, and shared with healthcare professionals.
+
+TideTrace does not provide medical advice, diagnosis, medication timing advice, or emergency guidance.
+It is a record-keeping tool intended to support users in organizing their own observations.
+
+Why structured records matter
+
+Pain communication can be affected by memory, time pressure, communication style, and bias.
+TideTrace does not attempt to diagnose, interpret, or treat pain.
+
+Instead, it helps users keep a structured record of pain, medication, and context over time.
 The goal is to make it easier for users to review their own observations and, when appropriate, share clearer summaries with healthcare professionals.
 
-## Privacy rules
+Features
 
-- Do not commit real health records.
-- Do not commit medication logs.
-- Do not commit personal notes.
-- Do not commit CSV or JSON backup files.
-- User-entered data must stay in the browser.
-- The app must not send data to external servers.
-- The app must not use analytics, tracking, external APIs, or third-party libraries.
+TideTrace currently supports:
 
-## GitHub Pages
+* pain records
+* medication records
+* standalone notes
+* configurable medication buttons
+* configurable pain state labels
+* today’s records
+* past records
+* consultation summaries
+* CSV export
+* JSON backup and restore
+
+Local-first design
+
+TideTrace is published as a static web app from the docs/ folder using GitHub Pages.
+
+User-entered records are stored in the user’s browser.
+The app does not send records to an external server.
+
+TideTrace does not use:
+
+* analytics
+* tracking
+* external APIs
+* third-party libraries
+* server-side storage
+
+Actual log data is stored in the user’s browser and should be exported manually as CSV or JSON when needed.
+
+Project rules
+
+Health-related records must not be committed to this repository.
+
+Do not commit:
+
+* real health records
+* medication logs
+* personal notes
+* CSV export files
+* JSON backup files
+
+User-entered data must stay in the browser.
+The app must not send data to external servers.
+
+GitHub Pages
 
 Publishing source:
 
-- Branch: `main`
-- Folder: `/docs`
+* Branch: main
+* Folder: /docs
 
-The published site contains only the app code.  
-Actual log data is stored in the user’s browser and should be exported manually as CSV or JSON when needed.
+The published site contains only the app code.
+User records are not stored in this repository or on GitHub Pages.
 
-## Safety note
+Medical safety
 
-This app is for recording only.  
-It does not provide medical advice, medication timing advice, or emergency guidance.
+This app is for recording only.
 
-## License
+It does not provide:
 
-The source code is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+* medical advice
+* diagnosis
+* treatment recommendations
+* medication timing advice
+* emergency guidance
+
+Users are responsible for deciding how to use their own records.
+When in doubt or when concerned, they should consult a healthcare professional.
+
+License
+
+The source code is licensed under the MIT License.
+See LICENSE for details.
