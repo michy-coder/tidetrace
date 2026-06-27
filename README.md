@@ -91,6 +91,14 @@ Publishing source:
 The published site contains only the app code.
 User records are not stored in this repository or on GitHub Pages.
 
+## Analytics
+
+TideTrace uses Cloudflare Web Analytics to understand basic public page usage, such as page views, visit counts, referrers, approximate region, browser, and device type.
+
+TideTrace does not use analytics to track pain entries, medication entries, notes, button actions, or any data stored in the browser. User-entered health records remain in local browser storage and are not sent to Cloudflare by TideTrace.
+
+Analytics are used only to understand whether the public app page is being visited and how people generally reach it.
+
 ## Medical safety
 
 This app is for recording only.
