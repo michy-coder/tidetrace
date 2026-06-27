@@ -1,20 +1,21 @@
 :root {
   color-scheme: light;
-  --bg: #f5f7f8;
+  --bg: #f4f6f8;
   --surface: #ffffff;
   --surface-muted: #f0f3f4;
-  --text: #1f2933;
-  --text-muted: #687582;
-  --border: #d8dee3;
-  --input-bg: #ffffff;
-  --input-border: #cfd7dd;
-  --button-bg: #2f5f66;
-  --button-active-bg: #254c52;
+  --text: #1f2937;
+  --text-muted: #6b7280;
+  --border: #d9e1e5;
+  --input-bg: #fcfdfd;
+  --input-border: #c9d4da;
+  --button-bg: #5e858e;
+  --button-hover-bg: #537981;
+  --button-active-bg: #486a71;
   --button-text: #ffffff;
   --danger-bg: #b63a3a;
   --danger-active-bg: #8f3030;
   --danger-text: #ffffff;
-  --divider: #d8dee3;
+  --divider: #d9e1e5;
   --focus-ring: #6fa5ad;
   --shadow: rgba(31, 41, 51, 0.06);
 }
@@ -301,6 +302,10 @@ button {
   font-weight: 700;
   margin: 10px 0 0;
   padding: 12px 14px;
+}
+
+button:not(.secondary-button):not(.danger):not(.toast-undo-button):not(.edit-event-button):not(.delete-event-button):hover {
+  background: var(--button-hover-bg, var(--button-bg));
 }
 
 button:active { background: var(--button-active-bg); }
