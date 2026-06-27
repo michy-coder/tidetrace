@@ -792,3 +792,24 @@ summary { font-weight: 700; padding: 8px 0; }
 .week-day-detail {
   margin-top: 10px;
 }
+
+.history-card details > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 8px 0;
+}
+
+.history-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.history-nav-button {
+  align-self: flex-start;
+  margin: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  width: auto;
+}

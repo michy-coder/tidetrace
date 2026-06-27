@@ -12,6 +12,7 @@ let editingPeriodId = null;
 let editingMedicationOptionId = null;
 let editingPainStateOptionId = null;
 let expandedWeekDate = null;
+let historyRange = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -1520,7 +1521,7 @@ function render() {
   if (!editingPeriodId && !$('comparison-period-start').value) $('comparison-period-start').value = nextPeriodStartSuggestion();
 
   renderEventList($('today-list'), appData.events.filter((event) => event.localDate === today), sortedEventsDescending, { showDate: false });
-  renderWeek(today);
+  renderHistory(today);
 }
 
 
@@ -1586,12 +1587,46 @@ function appendDailySummaryRows(container, summary) {
   }
 }
 
-function renderWeek(today) {
-  const list = $('week-list');
-  list.innerHTML = '';
+function recentHistoryRange(today) {
+  const end = addDays(today, -1);
+  return { start: addDays(end, -6), end, mode: 'recent' };
+}
+
+function olderHistoryRange(currentRange) {
+  const end = addDays(currentRange.start, -1);
+  return { start: addDays(end, -29), end, mode: 'older' };
+}
+
+function formatHistoryNavDate(dateText) {
+  const date = new Date(`${dateText}T00:00:00+09:00`);
+  return new Intl.DateTimeFormat('ja-JP', { timeZone: TIMEZONE, month: 'numeric', day: 'numeric' }).format(date);
+}
+
+function formatHistoryRangeLabel(range) {
+  return `${formatHistoryNavDate(range.start)}〜${formatHistoryNavDate(range.end)}`;
+}
+
+function hasOlderHistory(currentRange) {
+  const target = olderHistoryRange(currentRange);
+  return appData.events.some((event) => event.localDate <= target.end);
+}
+
+function datesInRangeDescending(startDate, endDate) {
   const dates = [];
-  for (let i = 1; i <= 7; i += 1) dates.push(addDays(today, -i));
-  dates.forEach((date) => {
+  for (let date = endDate; date >= startDate; date = addDays(date, -1)) dates.push(date);
+  return dates;
+}
+
+function renderHistory(today) {
+  const details = $('history-details');
+  const list = $('week-list');
+  if (!details.open) {
+    list.innerHTML = '';
+    return;
+  }
+  if (!historyRange) historyRange = recentHistoryRange(today);
+  list.innerHTML = '';
+  datesInRangeDescending(historyRange.start, historyRange.end).forEach((date) => {
     const events = appData.events.filter((event) => event.localDate === date);
     if (events.length === 0) return;
     const item = document.createElement('section');
@@ -1609,7 +1644,7 @@ function renderWeek(today) {
     button.setAttribute('aria-expanded', String(isExpanded));
     button.addEventListener('click', () => {
       expandedWeekDate = isExpanded ? null : date;
-      renderWeek(today);
+      renderHistory(today);
     });
     header.append(title, button);
     item.appendChild(header);
@@ -1622,7 +1657,39 @@ function renderWeek(today) {
     }
     list.appendChild(item);
   });
-  if (!list.children.length) list.innerHTML = '<p class="empty">記録はありません。</p>';
+  if (!list.querySelector('.week-day-summary')) list.innerHTML = '<p class="empty">この期間に記録はありません。</p>';
+  renderHistoryNavigation(today, list);
+}
+
+function renderHistoryNavigation(today, list) {
+  const nav = document.createElement('div');
+  nav.className = 'history-navigation';
+  if (historyRange.mode === 'older') {
+    const recentButton = document.createElement('button');
+    recentButton.className = 'history-nav-button secondary-button';
+    recentButton.type = 'button';
+    recentButton.textContent = '◀︎ 直近7日分';
+    recentButton.addEventListener('click', () => {
+      historyRange = recentHistoryRange(today);
+      expandedWeekDate = null;
+      renderHistory(today);
+    });
+    nav.appendChild(recentButton);
+  }
+  if (hasOlderHistory(historyRange)) {
+    const target = olderHistoryRange(historyRange);
+    const olderButton = document.createElement('button');
+    olderButton.className = 'history-nav-button secondary-button';
+    olderButton.type = 'button';
+    olderButton.textContent = `▶︎ ${formatHistoryRangeLabel(target)}`;
+    olderButton.addEventListener('click', () => {
+      historyRange = target;
+      expandedWeekDate = null;
+      renderHistory(today);
+    });
+    nav.appendChild(olderButton);
+  }
+  if (nav.children.length) list.appendChild(nav);
 }
 
 function escapeHtml(value) {
@@ -1845,6 +1912,13 @@ function wireEvents() {
   $('summary-end-yesterday').addEventListener('change', updateSummaryEndDateMode);
   $('summary-end-custom').addEventListener('change', updateSummaryEndDateMode);
   $('run-visit-summary').addEventListener('click', runVisitSummary);
+  $('history-details').addEventListener('toggle', () => {
+    if ($('history-details').open) {
+      historyRange = recentHistoryRange(nowParts().localDate);
+      expandedWeekDate = null;
+    }
+    renderHistory(nowParts().localDate);
+  });
   $('cancel-medication-edit').addEventListener('click', () => {
     resetMedicationOptionForm();
     setMedicationSettingsMessage('');
