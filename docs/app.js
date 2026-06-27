@@ -53,53 +53,6 @@ function parseJson(text) {
 }
 
 function normalizeImportedData(data) {
-  if (!data || typeof data !== 'object') return data;
-  if (data.settings && Array.isArray(data.settings.painStateOptions)) {
-    const usedPainIds = new Set();
-    data.settings.painStateOptions = data.settings.painStateOptions.map((option, index) => {
-      const source = option && typeof option === 'object' ? option : {};
-      const { isActive: _legacyIsActive, ...normalizedSource } = source;
-      let id = typeof source.id === 'string' && source.id ? source.id : `ps_imported_${index + 1}`;
-      while (usedPainIds.has(id)) id = `${id}_${index + 1}`;
-      usedPainIds.add(id);
-      return {
-        ...normalizedSource,
-        id,
-        label: typeof source.label === 'string' && source.label.trim() ? source.label : `状態 ${index + 1}`,
-        active: source.active ?? source.isActive ?? true,
-        sortOrder: Number.isFinite(Number(source.sortOrder)) ? Number(source.sortOrder) : index + 1
-      };
-    });
-  }
-  if (data.settings && Array.isArray(data.settings.medicationOptions)) {
-    const usedIds = new Set();
-    data.settings.medicationOptions = data.settings.medicationOptions.map((option, index) => {
-      const source = option && typeof option === 'object' ? option : {};
-      const { isActive: _legacyIsActive, ...normalizedSource } = source;
-      let id = typeof source.id === 'string' && source.id ? source.id : `med_imported_${index + 1}`;
-      while (usedIds.has(id)) id = `${id}_${index + 1}`;
-      usedIds.add(id);
-      return {
-        ...normalizedSource,
-        id,
-        label: typeof source.label === 'string' && source.label ? source.label : `Medication ${index + 1}`,
-        defaultAmount: source.defaultAmount ?? 1,
-        unit: typeof source.unit === 'string' ? source.unit : '',
-        active: source.active ?? source.isActive ?? true,
-        sortOrder: source.sortOrder ?? index + 1
-      };
-    });
-  }
-  data.periods = Array.isArray(data.periods) ? data.periods : [];
-  data.periods.forEach((period) => {
-    if (!period || typeof period !== 'object') return;
-    period.note = typeof period.note === 'string' ? period.note : '';
-  });
-  if (!Array.isArray(data.events)) return data;
-  data.events.forEach((event) => {
-    if (!event || typeof event !== 'object') return;
-    event.updatedAtUtc = event.updatedAtUtc || event.createdAtUtc || event.recordedAtUtc;
-  });
   return data;
 }
 
@@ -122,7 +75,7 @@ function validatePeriods(periods) {
     if (typeof period.id !== 'string') return false;
     if (typeof period.label !== 'string') return false;
     if (!isDateString(period.startDate) || !isDateString(period.endDate)) return false;
-    if (period.note !== undefined && typeof period.note !== 'string') return false;
+    if (typeof period.note !== 'string') return false;
     if (period.startDate > period.endDate) return false;
   }
   for (let i = 0; i < periods.length; i += 1) {
@@ -141,6 +94,8 @@ function validateData(data) {
   if (typeof data.appName !== 'string') return false;
   if (!data.settings || typeof data.settings !== 'object' || Array.isArray(data.settings)) return false;
   if (!Array.isArray(data.settings.painStateOptions) || !Array.isArray(data.settings.medicationOptions)) return false;
+  if (![null, 'string'].includes(data.settings.lastJsonExportedAtUtc === null ? null : typeof data.settings.lastJsonExportedAtUtc)) return false;
+  if (![null, 'string'].includes(data.settings.lastCsvExportedAtUtc === null ? null : typeof data.settings.lastCsvExportedAtUtc)) return false;
   if (!Array.isArray(data.periods) || !Array.isArray(data.events)) return false;
   if (!validatePeriods(data.periods)) return false;
 
@@ -196,16 +151,6 @@ function createInitialAppData() {
   };
 }
 
-function supplementSettings(data) {
-  if (!data || !data.settings) return { data, changed: false };
-  const changed = !Object.prototype.hasOwnProperty.call(data.settings, 'lastJsonExportedAtUtc') ||
-    !Object.prototype.hasOwnProperty.call(data.settings, 'lastCsvExportedAtUtc') ||
-    data.settings.lastJsonExportedAtUtc === undefined ||
-    data.settings.lastCsvExportedAtUtc === undefined;
-  data.settings.lastJsonExportedAtUtc ??= null;
-  data.settings.lastCsvExportedAtUtc ??= null;
-  return { data, changed };
-}
 
 function loadStoredData() {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -214,9 +159,7 @@ function loadStoredData() {
   if (!parsed.data) return null;
   const normalized = normalizeImportedData(parsed.data);
   if (!validateData(normalized)) return null;
-  const supplemented = supplementSettings(normalized);
-  if (supplemented.changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(supplemented.data));
-  return supplemented.data;
+  return normalized;
 }
 
 function showSetup(message = '') {
@@ -336,7 +279,7 @@ function initializeFromText(text, errorElement) {
   if (parsed.error) { errorElement.textContent = parsed.error; return false; }
   const normalized = normalizeImportedData(parsed.data);
   if (!validateData(normalized)) { errorElement.textContent = SCHEMA_ERROR; return false; }
-  appData = supplementSettings(normalized).data;
+  appData = normalized;
   clearSaveFeedback();
   saveData();
   errorElement.textContent = '';
