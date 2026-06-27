@@ -38,18 +38,18 @@
   <main>
     <section id="setup-screen" class="card setup-card hidden" aria-labelledby="setup-title">
       <h2 id="setup-title">Tide Traceをはじめる</h2>
-      <p>Tide Traceは、痛みと服薬の記録を自分で見返すためのアプリです。</p>
-      <p>記録はこのブラウザ内に保存されます。必要に応じてバックアップしてください。</p>
+      <p>Tide Traceは、痛みや服薬の記録を自分で見返すためのアプリです。</p>
+      <p>記録はお使いのブラウザ内に保存されます。必要に応じて、バックアップを保存してください。</p>
 
       <section class="setup-confirm-section" aria-labelledby="setup-medication-title">
         <h3 id="setup-medication-title">薬ボタン</h3>
-        <p class="setup-section-description">管理したい薬を登録します。薬名・量・単位は後から管理画面で変更できます。<br>使わない欄は空にしてください。</p>
+        <p class="setup-section-description">管理したい薬を登録します。あとから管理画面で変更できます。使わない欄は空欄のままにしてください。</p>
         <ul id="setup-medication-list" class="setup-option-list"></ul>
       </section>
 
       <section class="setup-confirm-section" aria-labelledby="setup-pain-state-title">
         <h3 id="setup-pain-state-title">痛み状態</h3>
-        <p class="setup-section-description">痛みが変わる場面や姿勢を登録します。例：安静時、座位、立位、歩行時など。<br>使わない欄は空にしてください。</p>
+        <p class="setup-section-description">痛みが変わりやすい場面や姿勢を登録します。あとから管理画面で変更できます。使わない欄は空欄のままにしてください。</p>
         <ul id="setup-pain-state-list" class="setup-option-list"></ul>
       </section>
 
@@ -141,8 +141,8 @@
       </section>
 
       <section class="notice card">
-        <p>このアプリの記録は、このブラウザ内に保存されます。端末やブラウザの状態によっては消えることがあります。必要に応じてバックアップしてください。</p>
-        <p>プライベートブラウズでは、記録が保持されない場合があります。通常のブラウザ画面で使用してください。</p>
+        <p>このアプリの記録は、お使いのブラウザ内に保存されます。端末やブラウザの状態によっては、記録が消えることがあります。必要に応じて、バックアップを保存してください。</p>
+        <p>プライベートブラウズでは、記録が保持されない場合があります。通常のブラウザ画面でご利用ください。</p>
       </section>
 
       <section class="card management" aria-labelledby="manage-title">
@@ -171,8 +171,8 @@
         <hr>
         <details class="medication-settings settings-disclosure">
           <summary id="medication-settings-title"><span id="medication-settings-summary">薬設定</span></summary>
-          <p class="message">薬ボタンの表示名、よく使う量、単位、表示順を設定します。<br>非表示にした薬は新規記録ボタンには出ませんが、過去記録は残ります。</p>
-          <p class="notice-text">別の薬に変える場合は、名前を上書きせず、元の薬を非表示にして新しい薬を追加してください。非表示にしても過去記録は残り、再開時には表示に戻せます。</p>
+          <p class="message">薬ボタンの表示名、よく使う量、単位、表示順を設定できます。</p>
+          <p class="notice-text">別の薬に変更する場合は、名前を上書きせず、元の薬を非表示にしてから、新しい薬を追加してください。非表示にした薬は新規記録ボタンに表示されませんが、過去の記録は残ります。再開するときは、表示に戻せます。</p>
           <form id="medication-option-form">
             <input id="medication-option-id" type="hidden">
             <label for="medication-label">薬名</label>
@@ -200,8 +200,10 @@
         <hr>
         <details class="pain-state-settings settings-disclosure">
           <summary id="pain-state-settings-title"><span id="pain-state-settings-summary">痛み状態設定</span></summary>
-          <p class="message">痛み記録で選ぶ状態名と表示順を設定します。</p>
-          <p class="notice-text">別の状態に変える場合は、名前を上書きせず、元の状態を非表示にして新しい状態を追加してください。名前を上書きすると、過去記録や診察用サマリーの状態別集計が分かりにくくなることがあります。非表示にしても過去記録は残り、再度表示に戻せます。</p>
+          <p class="message">痛み記録で選ぶ状態名と、表示順を設定できます。</p>
+          <p class="notice-text">別の状態に変更する場合は、名前を上書きせず、元の状態を非表示にしてから、新しい状態を追加してください。
+
+名前を上書きすると、過去の記録や診察用サマリーの状態別集計が分かりにくくなることがあります。非表示にしても過去の記録は残り、再開するときは表示に戻せます。</p>
           <form id="pain-state-option-form">
             <input id="pain-state-option-id" type="hidden">
             <label for="pain-state-label">状態名</label>
