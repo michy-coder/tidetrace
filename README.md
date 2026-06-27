@@ -1,4 +1,4 @@
-TideTrace
+##TideTrace
 
 TideTrace is a small static web app for local-first health journaling.
 It is designed to help users record pain, medication, and health-related notes while keeping control over sensitive medical-context records.
@@ -15,7 +15,7 @@ Japanese documentation:
 These documentation pages are written in Japanese.
 Depending on the reader’s browser or Note settings, they may be machine-translated.
 
-Purpose
+##Purpose
 
 Pain, medication, and health-related notes can be highly sensitive.
 For this reason, TideTrace keeps user-entered data in the browser and does not send it to an external server.
@@ -26,7 +26,7 @@ TideTrace is also designed to help users keep control over how their records are
 TideTrace does not provide medical advice, diagnosis, medication timing advice, or emergency guidance.
 It is a record-keeping tool intended to support users in organizing their own observations.
 
-Why structured records matter
+##Why structured records matter
 
 Pain communication can be affected by memory, time pressure, communication style, and bias.
 TideTrace does not attempt to diagnose, interpret, or treat pain.
@@ -34,7 +34,7 @@ TideTrace does not attempt to diagnose, interpret, or treat pain.
 Instead, it helps users keep a structured record of pain, medication, and context over time.
 The goal is to make it easier for users to review their own observations and, when appropriate, share clearer summaries with healthcare professionals.
 
-Features
+##Features
 
 TideTrace currently supports:
 
@@ -49,7 +49,7 @@ TideTrace currently supports:
 * CSV export
 * JSON backup and restore
 
-Local-first design
+##Local-first design
 
 TideTrace is published as a static web app from the docs/ folder using GitHub Pages.
 
@@ -66,7 +66,7 @@ TideTrace does not use:
 
 Actual log data is stored in the user’s browser and should be exported manually as CSV or JSON when needed.
 
-Project rules
+##Project rules
 
 Health-related records must not be committed to this repository.
 
@@ -81,7 +81,7 @@ Do not commit:
 User-entered data must stay in the browser.
 The app must not send data to external servers.
 
-GitHub Pages
+##GitHub Pages
 
 Publishing source:
 
@@ -91,7 +91,7 @@ Publishing source:
 The published site contains only the app code.
 User records are not stored in this repository or on GitHub Pages.
 
-Medical safety
+##Medical safety
 
 This app is for recording only.
 
@@ -106,7 +106,7 @@ It does not provide:
 Users are responsible for deciding how to use their own records.
 When in doubt or when concerned, they should consult a healthcare professional.
 
-License
+##License
 
 The source code is licensed under the MIT License.
 See LICENSE for details.
