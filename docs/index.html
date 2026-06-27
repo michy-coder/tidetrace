@@ -85,23 +85,32 @@
 
       <section class="card" aria-labelledby="input-title">
         <h2 id="input-title">記録</h2>
-        <div id="medication-buttons" class="button-list"></div>
-
-        <hr>
-        <div class="field-row">
-          <label for="pain-score">痛みスコア</label>
-          <select id="pain-score"></select>
+        <div class="record-input-section">
+          <h3 class="record-input-heading">薬</h3>
+          <div id="medication-buttons" class="button-list"></div>
+          <p class="record-input-help">ボタンを押すと服薬を記録します。</p>
         </div>
-        <div class="field-row">
-          <label for="pain-state">痛みの状態</label>
-          <select id="pain-state"></select>
-        </div>
-        <button id="save-pain" type="button">痛みを記録</button>
 
-        <hr>
-        <label for="shared-note-input">メモ</label>
-        <textarea id="shared-note-input" rows="4"></textarea>
-        <button id="save-note" type="button">メモのみを保存</button>
+        <div class="record-input-section">
+          <h3 class="record-input-heading">痛み</h3>
+          <div class="pain-input-grid">
+            <div class="field-row pain-score-field">
+              <label for="pain-score">スコア</label>
+              <select id="pain-score"></select>
+            </div>
+            <div class="field-row pain-state-field">
+              <label for="pain-state">状態</label>
+              <select id="pain-state"></select>
+            </div>
+          </div>
+          <button id="save-pain" type="button">痛みを記録</button>
+        </div>
+
+        <div class="record-input-section">
+          <label for="shared-note-input">メモ（任意）</label>
+          <textarea id="shared-note-input" rows="4" placeholder="薬や痛みの補足、または単独メモ"></textarea>
+          <button id="save-note" class="secondary-button note-save-button" type="button">メモだけ保存</button>
+        </div>
       </section>
 
       <section class="card" aria-labelledby="today-title">

@@ -1869,14 +1869,15 @@ function clearSharedNote() {
 function saveMedication(medicationOptionId) {
   const option = appData.settings.medicationOptions.find((item) => item.id === medicationOptionId && item.active);
   if (!option) return;
+  const note = sharedNoteValue();
   addEvent(createEvent({
     type: 'medication',
     medicationOptionId: option.id,
     medicationLabel: option.label,
     amount: option.defaultAmount,
     unit: option.unit,
-    note: sharedNoteValue()
-  }), `${option.label}を記録しました`);
+    note
+  }), note ? `${option.label}をメモ付きで記録しました` : `${option.label}を記録しました`);
   clearSharedNote();
   $('app-message').textContent = '';
 }
@@ -1890,7 +1891,8 @@ function wireEvents() {
     if (!stateOptionId) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }
     const option = appData.settings.painStateOptions.find((item) => item.id === stateOptionId && item.active);
     if (!option) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }
-    addEvent(createEvent({ type: 'pain', painScore: Number($('pain-score').value), stateOptionId: option.id, stateLabel: option.label, note: sharedNoteValue() }), '痛みを記録しました');
+    const note = sharedNoteValue();
+    addEvent(createEvent({ type: 'pain', painScore: Number($('pain-score').value), stateOptionId: option.id, stateLabel: option.label, note }), note ? '痛みをメモ付きで記録しました' : '痛みを記録しました');
     clearSharedNote();
     $('app-message').textContent = '';
   });
