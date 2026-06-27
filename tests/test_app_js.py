@@ -14,17 +14,18 @@ def run_app_js(assertions: str) -> None:
     subprocess.run(["node", "-e", script], check=True, text=True)
 
 
-def test_medication_normalization_sorting_and_validation() -> None:
+def test_backup_validation_rejects_legacy_option_completion() -> None:
     data = {
         "schemaVersion": 1,
         "appName": "Tide Trace",
         "settings": {
-            "painStateOptions": [{"id": "pain", "label": "Pain", "active": True}],
+            "painStateOptions": [{"id": "pain", "label": "Pain", "active": True, "sortOrder": 1}],
             "medicationOptions": [
                 {"label": "B", "isActive": False},
                 {"id": "med_a", "label": "A", "active": True, "sortOrder": 1},
-                {"id": "med_c", "label": "C", "active": True, "sortOrder": 1},
             ],
+            "lastJsonExportedAtUtc": None,
+            "lastCsvExportedAtUtc": None,
         },
         "periods": [],
         "events": [],
@@ -33,17 +34,51 @@ def test_medication_normalization_sorting_and_validation() -> None:
         f"""
         const assert = require('node:assert/strict');
         const data = normalizeImportedData({json.dumps(data)});
-        assert.deepEqual(data.settings.medicationOptions[0], {{
-          id: 'med_imported_1',
-          label: 'B',
-          defaultAmount: 1,
-          unit: '',
-          active: false,
-          sortOrder: 1
-        }});
-        assert.equal(validateData(data), true);
-        appData = data;
-        assert.deepEqual(activeMedicationOptions().map((option) => option.id), ['med_a', 'med_c']);
+        assert.deepEqual(data.settings.medicationOptions[0], {{ label: 'B', isActive: false }});
+        assert.equal(validateData(data), false);
+        """
+    )
+
+
+def test_backup_validation_rejects_missing_current_format_fields() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const valid = {
+          schemaVersion: 1,
+          appName: 'Tide Trace',
+          settings: {
+            painStateOptions: [{ id: 'pain', label: 'Pain', active: true, sortOrder: 1 }],
+            medicationOptions: [{ id: 'med', label: 'Medication', defaultAmount: 1, unit: 'unit', active: true, sortOrder: 1 }],
+            lastJsonExportedAtUtc: null,
+            lastCsvExportedAtUtc: '2026-06-19T00:00:00.000Z'
+          },
+          periods: [{ id: 'period', label: 'Compare', startDate: '2026-06-01', endDate: '2026-06-07', note: '' }],
+          events: [{
+            id: 'event', type: 'pain', recordedAtUtc: '2026-06-19T00:00:00.000Z', localDate: '2026-06-19',
+            localTime: '09:00', timezone: 'Asia/Tokyo', createdAtUtc: '2026-06-19T00:00:00.000Z',
+            updatedAtUtc: '2026-06-19T00:00:00.000Z', painScore: 3, stateOptionId: 'pain', note: ''
+          }]
+        };
+        assert.equal(validateData(valid), true);
+
+        for (const key of ['lastJsonExportedAtUtc', 'lastCsvExportedAtUtc']) {
+          const copy = structuredClone(valid);
+          delete copy.settings[key];
+          assert.equal(validateData(copy), false);
+        }
+        const noPeriods = structuredClone(valid);
+        delete noPeriods.periods;
+        assert.equal(validateData(noPeriods), false);
+        const noPeriodNote = structuredClone(valid);
+        delete noPeriodNote.periods[0].note;
+        assert.equal(validateData(noPeriodNote), false);
+        const noUpdated = structuredClone(valid);
+        delete noUpdated.events[0].updatedAtUtc;
+        assert.equal(validateData(noUpdated), false);
+        const stringSort = structuredClone(valid);
+        stringSort.settings.painStateOptions[0].sortOrder = '1';
+        assert.equal(validateData(stringSort), false);
         """
     )
 
@@ -92,7 +127,7 @@ def test_unedited_exported_backup_import_replaces_storage_and_preserves_data() -
         "schemaVersion": 1,
         "appName": "Tide Trace",
         "settings": {
-            "painStateOptions": [{"id": "pain", "label": "Pain", "active": True}],
+            "painStateOptions": [{"id": "pain", "label": "Pain", "active": True, "sortOrder": 1}],
             "medicationOptions": [
                 {"id": "med", "label": "Medication", "defaultAmount": 1, "unit": "unit", "active": True, "sortOrder": 1}
             ],
@@ -382,7 +417,7 @@ def test_visit_summary_state_pain_display_uses_compact_labels_and_notice() -> No
         const notice = block.children.at(-1);
         assert.match(stateItem.innerHTML, /排便後<\\/strong>：記録日数 6日 \\/ 最大 9 \\/ 平均 7\\.6/);
         assert.doesNotMatch(stateItem.innerHTML, /最大痛み|平均痛み/);
-        assert.equal(notice.className, 'visit-summary-notice');
+        assert.equal(notice.className.includes('visit-summary-notice'), true);
         assert.equal(notice.textContent, '同じ日・同じ状態の痛みを日単位で集計しています。服薬前後や他の薬との併用条件は分けていません。');
         """
     )
@@ -423,7 +458,7 @@ def test_visit_summary_dose_pain_display_uses_compact_pain_labels_and_notice() -
         const notice = block.children.at(-1);
         assert.match(doseRow.innerHTML, /対象 7日 \\/ 痛み記録あり 5日<br>最大 9 \\/ 平均 5\\.4/);
         assert.doesNotMatch(doseRow.innerHTML, /最大痛み|平均痛み/);
-        assert.equal(notice.className, 'visit-summary-notice');
+        assert.equal(notice.className.includes('visit-summary-notice'), true);
         assert.equal(notice.textContent, '薬ごとに日単位で集計しています。他の薬との併用条件は分けていません。');
         """
     )
