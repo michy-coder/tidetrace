@@ -908,7 +908,7 @@ function renderStatePainSummary(block, statePainRows) {
   });
 
   const notice = document.createElement('p');
-  notice.className = 'visit-summary-notice';
+  notice.className = 'visit-summary-notice supplemental-text';
   notice.textContent = '同じ日・同じ状態の痛みを日単位で集計しています。服薬前後や他の薬との併用条件は分けていません。';
   block.appendChild(notice);
 }
@@ -1013,7 +1013,7 @@ function renderDosePainSummary(block, dosePainRows) {
   });
 
   const notice = document.createElement('p');
-  notice.className = 'visit-summary-notice';
+  notice.className = 'visit-summary-notice supplemental-text';
   notice.textContent = '薬ごとに日単位で集計しています。他の薬との併用条件は分けていません。';
   block.appendChild(notice);
 }

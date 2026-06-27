@@ -88,7 +88,7 @@
         <div class="record-input-section">
           <h3 class="record-input-heading">薬</h3>
           <div id="medication-buttons" class="button-list"></div>
-          <p class="record-input-help">ボタンを押すと服薬を記録します。</p>
+          <p class="record-input-help supplemental-text">ボタンを押すと服薬を記録します。</p>
         </div>
 
         <div class="record-input-section">
@@ -152,6 +152,7 @@
       <section class="notice card">
         <p>このアプリの記録は、お使いのブラウザ内に保存されます。端末やブラウザの状態によっては、記録が消えることがあります。必要に応じて、バックアップを保存してください。</p>
         <p>プライベートブラウズでは、記録が保持されない場合があります。通常のブラウザ画面でご利用ください。</p>
+        <p class="usage-link-row">使い方を見る：<a href="https://note.com/tidetrace/n/n6d64e28fea65" target="_blank" rel="noopener noreferrer">TideTraceの使い方</a></p>
       </section>
 
       <section class="card management" aria-labelledby="manage-title">
@@ -190,7 +191,7 @@
             <input id="medication-default-amount" class="form-control" type="number" inputmode="decimal" step="any" value="1" required>
             <label for="medication-unit">単位</label>
             <input id="medication-unit" class="form-control" type="text" autocomplete="off" placeholder="例：錠、包、回" aria-describedby="medication-unit-help">
-            <p id="medication-unit-help" class="field-help">単位が違う記録は、診察用サマリーで別に集計されます。</p>
+            <p id="medication-unit-help" class="field-help supplemental-text">単位が違う記録は、診察用サマリーで別に集計されます。</p>
             <label for="medication-sort-order">表示順</label>
             <input id="medication-sort-order" class="form-control" type="number" inputmode="decimal" step="any" required>
             <label class="checkbox-row" for="medication-active">
