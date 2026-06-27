@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Tide Trace</title>
-  <link rel="stylesheet" href="styles.css?v=12">
+  <link rel="stylesheet" href="styles.css?v=13">
 </head>
 <body>
   <header class="app-header">
@@ -17,15 +17,20 @@
             <stop offset="0.55" stop-color="#66b8d4"></stop>
             <stop offset="1" stop-color="#477fb8"></stop>
           </linearGradient>
+          <clipPath id="brand-logo-clip">
+            <circle cx="36" cy="36" r="34"></circle>
+          </clipPath>
           <filter id="brand-logo-shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#1f5265" flood-opacity="0.4"></feDropShadow>
+            <feDropShadow dx="0" dy="1.25" stdDeviation="1.2" flood-color="#1f5265" flood-opacity="0.48"></feDropShadow>
           </filter>
         </defs>
-        <circle cx="36" cy="36" r="34" fill="url(#brand-logo-gradient)"></circle>
-        <path class="brand-logo-wave" d="M10 48 C20 40 30 40 40 48 S60 56 68 46 L68 72 L10 72 Z"></path>
+        <g clip-path="url(#brand-logo-clip)">
+          <circle cx="36" cy="36" r="34" fill="url(#brand-logo-gradient)"></circle>
+          <path class="brand-logo-wave" d="M0 55 C12 50 20 51 31 55 S53 61 72 52 L72 72 L0 72 Z"></path>
+        </g>
         <g class="brand-logo-letters" filter="url(#brand-logo-shadow)">
-          <text x="22" y="42">T</text>
-          <text x="34" y="48">T</text>
+          <text class="brand-logo-letter-primary" x="20" y="38">T</text>
+          <text class="brand-logo-letter-secondary" x="34" y="47">T</text>
         </g>
       </svg>
     </div>
