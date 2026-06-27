@@ -556,7 +556,7 @@ function openEditEventPanel(id) {
       ${editTextareaHtml(event.note || '')}`;
   } else if (event.type === 'medication') {
     fields.innerHTML = `
-      <label for="edit-medication-option">Medication</label>
+      <label for="edit-medication-option">薬</label>
       <select id="edit-medication-option">${optionHtml(medicationEditOptions(event), event.medicationOptionId)}</select>
       ${editTextareaHtml(event.note || '')}`;
   } else {
