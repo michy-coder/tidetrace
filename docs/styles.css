@@ -312,6 +312,58 @@ button.danger:active { background: var(--danger-active-bg); }
 
 .field-row { margin-bottom: 8px; }
 
+.record-input-section {
+  margin-top: 14px;
+}
+
+.record-input-section:first-of-type {
+  margin-top: 0;
+}
+
+.record-input-heading {
+  font-size: 1rem;
+  margin: 0 0 4px;
+}
+
+.record-input-help {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  margin: 6px 0 0;
+}
+
+.pain-input-grid {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 35%) minmax(0, 1fr);
+  gap: 8px;
+  align-items: end;
+}
+
+.pain-input-grid label {
+  margin-top: 0;
+}
+
+.pain-input-grid .field-row {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.note-save-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 9rem;
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
+@media (max-width: 360px) {
+  .pain-input-grid {
+    grid-template-columns: minmax(5.75rem, 34%) minmax(0, 1fr);
+  }
+}
+
 hr {
   border: 0;
   border-top: 1px solid var(--divider);
