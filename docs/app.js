@@ -64,6 +64,18 @@ function sortedPeriods(periods = appData.periods) {
   return [...periods].sort((a, b) => a.startDate.localeCompare(b.startDate));
 }
 
+function compareSortOrderLabelId(a, b) {
+  return a.sortOrder - b.sortOrder ||
+    a.label.localeCompare(b.label, 'ja') ||
+    a.id.localeCompare(b.id);
+}
+
+function setStatusMessage(elementId, message, isError = false) {
+  const element = $(elementId);
+  element.textContent = message;
+  element.classList.toggle('error', isError);
+}
+
 function findOverlappingPeriod(candidate, ignoredId = null) {
   return appData.periods.find((period) => period.id !== ignoredId && period.startDate <= candidate.endDate && candidate.startDate <= period.endDate);
 }
@@ -340,11 +352,7 @@ function requestInitialBackupRestore() {
 }
 
 function sortedPainOptions(options) {
-  return [...options].sort((a, b) =>
-    a.sortOrder - b.sortOrder ||
-    a.label.localeCompare(b.label, 'ja') ||
-    a.id.localeCompare(b.id)
-  );
+  return [...options].sort(compareSortOrderLabelId);
 }
 function activePainOptions() { return sortedPainOptions(appData.settings.painStateOptions.filter((option) => option.active)); }
 function allPainOptions() { return sortedPainOptions(appData.settings.painStateOptions); }
@@ -362,11 +370,7 @@ function createPainStateOptionId() {
   return id;
 }
 function sortedMedicationOptions(options) {
-  return [...options].sort((a, b) =>
-    a.sortOrder - b.sortOrder ||
-    a.label.localeCompare(b.label, 'ja') ||
-    a.id.localeCompare(b.id)
-  );
+  return [...options].sort(compareSortOrderLabelId);
 }
 function activeMedicationOptions() {
   return sortedMedicationOptions(appData.settings.medicationOptions.filter((option) => option.active));
@@ -660,6 +664,12 @@ function inclusiveDays(startDate, endDate) {
   return Math.floor((new Date(`${endDate}T00:00:00Z`) - new Date(`${startDate}T00:00:00Z`)) / 86400000) + 1;
 }
 
+function datesBetween(startDate, endDate, stepDays = 1) {
+  const dates = [];
+  for (let date = startDate; date <= endDate; date = addDays(date, stepDays)) dates.push(date);
+  return dates;
+}
+
 function setDefaultSummaryRange() {
   const endDate = addDays(nowParts().localDate, -1);
   $('summary-start-date').value = addDays(endDate, -29);
@@ -778,9 +788,7 @@ function amountText(value, unit) {
 }
 
 function dateRange(startDate, endDate) {
-  const dates = [];
-  for (let date = startDate; date <= endDate; date = addDays(date, 1)) dates.push(date);
-  return dates;
+  return datesBetween(startDate, endDate);
 }
 
 function buildDailyPainSummary(startDate, endDate) {
@@ -1026,9 +1034,7 @@ function periodFormValue() {
 }
 
 function setPeriodMessage(message, isError = false) {
-  const element = $('comparison-period-message');
-  element.textContent = message;
-  element.classList.toggle('error', isError);
+  setStatusMessage('comparison-period-message', message, isError);
 }
 
 function validatePeriodFormValue(value, ignoredId = null) {
@@ -1149,9 +1155,7 @@ function resetPainStateOptionForm() {
 }
 
 function setPainStateSettingsMessage(message, isError = false) {
-  const element = $('pain-state-settings-message');
-  element.textContent = message;
-  element.classList.toggle('error', isError);
+  setStatusMessage('pain-state-settings-message', message, isError);
 }
 
 function painStateOptionFormValue() {
@@ -1273,9 +1277,7 @@ function resetMedicationOptionForm() {
 }
 
 function setMedicationSettingsMessage(message, isError = false) {
-  const element = $('medication-settings-message');
-  element.textContent = message;
-  element.classList.toggle('error', isError);
+  setStatusMessage('medication-settings-message', message, isError);
 }
 
 function medicationOptionFormValue() {
@@ -1555,9 +1557,7 @@ function hasOlderHistory(currentRange) {
 }
 
 function datesInRangeDescending(startDate, endDate) {
-  const dates = [];
-  for (let date = endDate; date >= startDate; date = addDays(date, -1)) dates.push(date);
-  return dates;
+  return datesBetween(startDate, endDate).reverse();
 }
 
 function renderHistory(today) {
