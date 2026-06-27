@@ -11,7 +11,7 @@ let editingEventId = null;
 let editingPeriodId = null;
 let editingMedicationOptionId = null;
 let editingPainStateOptionId = null;
-let expandedWeekDate = null;
+let expandedHistoryDate = null;
 let historyRange = null;
 
 const $ = (id) => document.getElementById(id);
@@ -1468,7 +1468,7 @@ function render() {
 }
 
 
-function formatWeekDateHeading(dateText) {
+function formatHistoryDateHeading(dateText) {
   const date = new Date(`${dateText}T00:00:00+09:00`);
   const monthDay = new Intl.DateTimeFormat('ja-JP', { timeZone: TIMEZONE, month: 'numeric', day: 'numeric' }).format(date);
   const weekday = new Intl.DateTimeFormat('ja-JP', { timeZone: TIMEZONE, weekday: 'short' }).format(date);
@@ -1511,19 +1511,19 @@ function appendDailySummaryRows(container, summary) {
     const max = Math.max(...summary.painScores);
     const average = summary.painScores.reduce((total, score) => total + score, 0) / summary.painScores.length;
     const row = document.createElement('p');
-    row.className = 'week-summary-row';
+    row.className = 'history-summary-row';
     row.textContent = `痛み：最大 ${max} / 平均 ${average.toFixed(1)}`;
     container.appendChild(row);
   }
   if (summary.medications.length) {
     const row = document.createElement('p');
-    row.className = 'week-summary-row';
+    row.className = 'history-summary-row';
     row.textContent = `服薬：${summary.medications.map((item) => `${item.label} ${amountText(item.total, item.unit)}`).join(' / ')}`;
     container.appendChild(row);
   }
   if (summary.notes.length) {
     const row = document.createElement('p');
-    row.className = 'week-summary-row';
+    row.className = 'history-summary-row';
     const extraCount = summary.notes.length - 1;
     row.textContent = `メモ：${summary.notes[0].note}${extraCount > 0 ? `　ほか${extraCount}件` : ''}`;
     container.appendChild(row);
@@ -1562,7 +1562,7 @@ function datesInRangeDescending(startDate, endDate) {
 
 function renderHistory(today) {
   const details = $('history-details');
-  const list = $('week-list');
+  const list = $('history-list');
   if (!details.open) {
     list.innerHTML = '';
     return;
@@ -1573,20 +1573,20 @@ function renderHistory(today) {
     const events = appData.events.filter((event) => event.localDate === date);
     if (events.length === 0) return;
     const item = document.createElement('section');
-    item.className = 'week-day-summary';
+    item.className = 'history-day-summary';
     const header = document.createElement('div');
-    header.className = 'week-day-header';
+    header.className = 'history-day-header';
     const title = document.createElement('h3');
-    title.className = 'week-day-title';
-    title.textContent = formatWeekDateHeading(date);
+    title.className = 'history-day-title';
+    title.textContent = formatHistoryDateHeading(date);
     const button = document.createElement('button');
-    button.className = 'week-detail-button secondary-button';
+    button.className = 'history-detail-button secondary-button';
     button.type = 'button';
-    const isExpanded = expandedWeekDate === date;
+    const isExpanded = expandedHistoryDate === date;
     button.textContent = isExpanded ? '閉じる' : '詳細';
     button.setAttribute('aria-expanded', String(isExpanded));
     button.addEventListener('click', () => {
-      expandedWeekDate = isExpanded ? null : date;
+      expandedHistoryDate = isExpanded ? null : date;
       renderHistory(today);
     });
     header.append(title, button);
@@ -1594,13 +1594,13 @@ function renderHistory(today) {
     appendDailySummaryRows(item, buildDailySummary(events));
     if (isExpanded) {
       const detail = document.createElement('div');
-      detail.className = 'week-day-detail';
+      detail.className = 'history-day-detail';
       renderEventList(detail, events, sortedEventsDescending, { showDate: false });
       item.appendChild(detail);
     }
     list.appendChild(item);
   });
-  if (!list.querySelector('.week-day-summary')) list.innerHTML = '<p class="empty">この期間に記録はありません。</p>';
+  if (!list.querySelector('.history-day-summary')) list.innerHTML = '<p class="empty">この期間に記録はありません。</p>';
   renderHistoryNavigation(today, list);
 }
 
@@ -1614,7 +1614,7 @@ function renderHistoryNavigation(today, list) {
     recentButton.textContent = '◀︎ 直近7日分';
     recentButton.addEventListener('click', () => {
       historyRange = recentHistoryRange(today);
-      expandedWeekDate = null;
+      expandedHistoryDate = null;
       renderHistory(today);
     });
     nav.appendChild(recentButton);
@@ -1627,7 +1627,7 @@ function renderHistoryNavigation(today, list) {
     olderButton.textContent = `▶︎ ${formatHistoryRangeLabel(target)}`;
     olderButton.addEventListener('click', () => {
       historyRange = target;
-      expandedWeekDate = null;
+      expandedHistoryDate = null;
       renderHistory(today);
     });
     nav.appendChild(olderButton);
@@ -1860,7 +1860,7 @@ function wireEvents() {
   $('history-details').addEventListener('toggle', () => {
     if ($('history-details').open) {
       historyRange = recentHistoryRange(nowParts().localDate);
-      expandedWeekDate = null;
+      expandedHistoryDate = null;
     }
     renderHistory(nowParts().localDate);
   });
