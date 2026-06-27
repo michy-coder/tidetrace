@@ -325,10 +325,13 @@ button.danger:active { background: var(--danger-active-bg); }
   margin: 0 0 4px;
 }
 
-.record-input-help {
+.supplemental-text {
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   line-height: 1.4;
+}
+
+.record-input-help {
   margin: 6px 0 0;
 }
 
@@ -382,6 +385,17 @@ hr {
 
 .notice p:last-child {
   margin-bottom: 0;
+}
+
+.usage-link-row {
+  font-size: 0.92rem;
+  margin-top: 1rem;
+}
+
+.usage-link-row a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
 }
 
 .error { color: var(--danger-bg); font-weight: 700; }
@@ -648,9 +662,6 @@ summary { font-weight: 700; padding: 8px 0; }
 }
 
 .field-help {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1.4;
   margin: -2px 0 10px;
 }
 
@@ -779,9 +790,6 @@ summary { font-weight: 700; padding: 8px 0; }
 }
 
 .visit-summary-notice {
-  color: var(--muted);
-  font-size: 0.88rem;
-  line-height: 1.45;
   margin: 3px 0 2px;
 }
 
