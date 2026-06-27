@@ -1795,24 +1795,24 @@ function requestBackupImport() {
   input.click();
 }
 
-function sharedNoteInput() {
-  return $('shared-note-input');
+function recordNoteInput() {
+  return $('record-note-input');
 }
 
-function sharedNoteValue() {
-  const input = sharedNoteInput();
+function recordNoteValue() {
+  const input = recordNoteInput();
   return input.value.trim();
 }
 
-function clearSharedNote() {
-  const input = sharedNoteInput();
+function clearRecordNote() {
+  const input = recordNoteInput();
   input.value = '';
 }
 
 function saveMedication(medicationOptionId) {
   const option = appData.settings.medicationOptions.find((item) => item.id === medicationOptionId && item.active);
   if (!option) return;
-  const note = sharedNoteValue();
+  const note = recordNoteValue();
   addEvent(createEvent({
     type: 'medication',
     medicationOptionId: option.id,
@@ -1821,7 +1821,7 @@ function saveMedication(medicationOptionId) {
     unit: option.unit,
     note
   }), note ? `${option.label}をメモ付きで記録しました` : `${option.label}を記録しました`);
-  clearSharedNote();
+  clearRecordNote();
   $('app-message').textContent = '';
 }
 
@@ -1834,16 +1834,16 @@ function wireEvents() {
     if (!stateOptionId) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }
     const option = appData.settings.painStateOptions.find((item) => item.id === stateOptionId && item.active);
     if (!option) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }
-    const note = sharedNoteValue();
+    const note = recordNoteValue();
     addEvent(createEvent({ type: 'pain', painScore: Number($('pain-score').value), stateOptionId: option.id, stateLabel: option.label, note }), note ? '痛みをメモ付きで記録しました' : '痛みを記録しました');
-    clearSharedNote();
+    clearRecordNote();
     $('app-message').textContent = '';
   });
   $('save-note').addEventListener('click', () => {
-    const note = sharedNoteValue();
+    const note = recordNoteValue();
     if (!note) { $('app-message').textContent = 'メモを入力すると保存できます。'; return; }
     addEvent(createEvent({ type: 'note', note }), 'メモを保存しました');
-    clearSharedNote();
+    clearRecordNote();
     $('app-message').textContent = '';
   });
   $('medication-option-form').addEventListener('submit', (event) => {
