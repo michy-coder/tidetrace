@@ -720,7 +720,7 @@ def test_open_edit_event_panel_shows_fields_without_focus() -> None:
         assert.match(fields.innerHTML, /type="time" value="23:45"/);
         assert.equal(fields.innerHTML.includes('<label for="edit-medication-option">薬</label>'), true);
         assert.equal(fields.innerHTML.includes('<select id="edit-medication-option">'), true);
-        assert.equal(fields.innerHTML.includes('<textarea id="edit-note" rows="4"></textarea>'), true);
+        assert.equal(fields.innerHTML.includes('<textarea id="edit-note" rows="4" placeholder="メモを入力"></textarea>'), true);
         assert.equal(fields.innerHTML.includes('日時を変更'), false);
         assert.equal(fields.innerHTML.includes('内容を変更'), false);
         assert.equal(fields.innerHTML.includes('メモを追加'), false);
@@ -844,3 +844,23 @@ def test_save_edited_event_shows_error_and_does_not_save_invalid_date_time() -> 
         assert.equal(appData.events[0].note, 'original');
         """
     )
+
+def test_edit_note_section_uses_single_memo_heading_and_empty_textarea() -> None:
+    run_app_js(
+        r"""
+        const assert = require('node:assert/strict');
+        const html = editEventSectionHtml('メモ', editTextareaHtml(''));
+
+        assert.equal((html.match(/<h3>メモ<\/h3>/g) || []).length, 1);
+        assert.match(html, /<textarea id="edit-note" rows="4" placeholder="メモを入力"><\/textarea>/);
+        assert.doesNotMatch(html, /<label for="edit-note">メモ<\/label>/);
+        assert.doesNotMatch(html, /なし/);
+        """
+    )
+
+
+def test_edit_panel_does_not_call_date_or_time_picker_apis() -> None:
+    source = APP_JS.read_text()
+    assert ".showPicker(" not in source
+    assert "$('edit-local-date').focus" not in source
+    assert "$('edit-local-time').focus" not in source

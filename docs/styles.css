@@ -553,7 +553,6 @@ hr {
 
 
 .edit-event-section {
-  border-bottom: 1px solid var(--divider);
   padding: 0.85rem 0;
 }
 
@@ -570,8 +569,8 @@ hr {
 
 .edit-datetime-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-  gap: 0.5rem;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
   align-items: end;
 }
 
@@ -581,7 +580,13 @@ hr {
   width: 100%;
   min-width: 0;
   font-size: 1rem;
-  padding: 0.75rem 0.7rem;
+  padding: 0.75rem 0.8rem;
+}
+
+@media (min-width: 430px) {
+  .edit-datetime-row {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  }
 }
 
 .edit-event-actions {

@@ -596,7 +596,7 @@ function medicationEditOptions(event) {
 }
 
 function editTextareaHtml(value = '') {
-  return `<label for="edit-note">メモ</label><textarea id="edit-note" rows="4">${escapeHtml(value)}</textarea>`;
+  return `<textarea id="edit-note" rows="4" placeholder="メモを入力">${escapeHtml(value)}</textarea>`;
 }
 
 function editContentHtml(event) {
