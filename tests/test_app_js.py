@@ -904,3 +904,28 @@ def test_edit_panel_does_not_call_date_or_time_picker_apis() -> None:
     assert ".showPicker(" not in source
     assert "$('edit-local-date').focus" not in source
     assert "$('edit-local-time').focus" not in source
+
+
+def test_history_range_labels_use_actual_record_dates_and_skip_empty_ranges() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: { medicationOptions: [] },
+          periods: [],
+          events: [
+            { id: 'recent-start', type: 'note', localDate: '2026-06-15', localTime: '09:00', note: 'start' },
+            { id: 'recent-end', type: 'note', localDate: '2026-06-20', localTime: '09:00', note: 'end' },
+            { id: 'older', type: 'note', localDate: '2026-03-12', localTime: '09:00', note: 'older' }
+          ]
+        };
+
+        const current = { start: '2026-05-22', end: '2026-06-20', mode: 'older' };
+        assert.equal(formatHistoryRangeLabel(current), '6/15〜6/20');
+
+        const target = olderHistoryRange(current);
+        assert.deepEqual(target, { start: '2026-02-11', end: '2026-03-12', mode: 'older' });
+        assert.equal(formatHistoryRangeLabel(target), '3/12');
+        assert.equal(hasOlderHistory(target), false);
+        """
+    )
