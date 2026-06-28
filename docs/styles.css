@@ -558,35 +558,29 @@ hr {
 
 .edit-event-section:first-child { padding-top: 0; }
 
-.edit-event-section h3 {
-  font-size: 0.95rem;
-  margin: 0 0 0.35rem;
-}
-
 .edit-event-field-area {
   margin-bottom: 0.75rem;
 }
 
 .edit-datetime-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-  align-items: end;
+  display: block;
 }
 
-.edit-datetime-row input[type="date"],
-.edit-datetime-row input[type="time"] {
+.edit-datetime-field {
+  margin-bottom: 1rem;
+}
+
+.edit-datetime-field:last-child {
+  margin-bottom: 0;
+}
+
+.edit-datetime-field input[type="date"],
+.edit-datetime-field input[type="time"] {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
   font-size: 1rem;
   padding: 0.75rem 0.8rem;
-}
-
-@media (min-width: 430px) {
-  .edit-datetime-row {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  }
 }
 
 .edit-event-actions {
