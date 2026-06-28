@@ -5,6 +5,7 @@ All notable changes to TideTrace will be documented in this file.
 ## Unreleased
 
 ### Added
+- Added editing for record date and time on medication, pain, and note 
 
 ### Changed
 - Past record range labels now match the dates that actually have records.
