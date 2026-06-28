@@ -690,7 +690,7 @@ def test_initial_setup_settings_validation_messages() -> None:
     )
 
 
-def test_open_edit_event_panel_shows_summaries_without_inputs_or_focus() -> None:
+def test_open_edit_event_panel_shows_fields_without_focus() -> None:
     run_app_js(
         """
         const assert = require('node:assert/strict');
@@ -716,11 +716,14 @@ def test_open_edit_event_panel_shows_summaries_without_inputs_or_focus() -> None
 
         assert.equal(panel.hidden, false);
         assert.equal(focused, false);
-        assert.match(fields.innerHTML, /2026-06-27 23:45/);
-        assert.match(fields.innerHTML, /薬：Medication 1tablet/);
-        assert.match(fields.innerHTML, /メモを追加/);
-        assert.equal(fields.innerHTML.includes('type="date"'), false);
-        assert.equal(fields.innerHTML.includes('type="time"'), false);
+        assert.match(fields.innerHTML, /type="date" value="2026-06-27"/);
+        assert.match(fields.innerHTML, /type="time" value="23:45"/);
+        assert.equal(fields.innerHTML.includes('<label for="edit-medication-option">薬</label>'), true);
+        assert.equal(fields.innerHTML.includes('<select id="edit-medication-option">'), true);
+        assert.equal(fields.innerHTML.includes('<textarea id="edit-note" rows="4"></textarea>'), true);
+        assert.equal(fields.innerHTML.includes('日時を変更'), false);
+        assert.equal(fields.innerHTML.includes('内容を変更'), false);
+        assert.equal(fields.innerHTML.includes('メモを追加'), false);
         """
     )
 
