@@ -80,7 +80,7 @@ function eventEditDateTime(event) {
 function dateTimeInputHtml(event) {
   const value = eventEditDateTime(event);
   return `
-    <div class="edit-event-input-row">
+    <div class="edit-datetime-row">
       <div>
         <label for="edit-local-date">日付</label>
         <input id="edit-local-date" type="date" value="${escapeHtml(value.localDate)}" required>
@@ -615,22 +615,11 @@ function editContentHtml(event) {
   return '';
 }
 
-function editEventContentSummary(event) {
-  if (event.type === 'pain') return `痛み：${event.painScore} / ${painEventLabel(event)}`;
-  if (event.type === 'medication') {
-    const amount = event.amount !== undefined || event.unit ? ` ${event.amount ?? ''}${event.unit || ''}` : '';
-    return `薬：${medicationEventLabel(event) || '不明な薬'}${amount}`;
-  }
-  return '';
-}
-
-function editSectionHtml(title, value, buttonText, target, extraClass = '') {
+function editEventSectionHtml(title, fieldsHtml, extraClass = '') {
   return `
     <section class="edit-event-section ${extraClass}">
       <h3>${escapeHtml(title)}</h3>
-      <p class="edit-event-current">${escapeHtml(value)}</p>
-      <div id="edit-${target}-fields" class="edit-event-field-area" hidden></div>
-      <button class="secondary-button edit-event-change-button" type="button" data-edit-target="${escapeHtml(target)}">${escapeHtml(buttonText)}</button>
+      <div class="edit-event-field-area">${fieldsHtml}</div>
     </section>`;
 }
 
@@ -639,25 +628,13 @@ function openEditEventPanel(id) {
   if (!event) return;
   editingEventId = id;
   const fields = $('edit-event-fields');
-  const contentSection = event.type === 'note' ? '' : editSectionHtml('内容', editEventContentSummary(event), '内容を変更', 'content');
+  const contentSection = event.type === 'note' ? '' : editEventSectionHtml('内容', editContentHtml(event));
   const note = event.note || '';
   fields.innerHTML = `
-    ${editSectionHtml('日時', `${event.localDate} ${event.localTime}`, '日時を変更', 'datetime')}
+    ${editEventSectionHtml('日時', dateTimeInputHtml(event))}
     ${contentSection}
-    ${editSectionHtml('メモ', note || 'なし', note ? 'メモを変更' : 'メモを追加', 'note')}
+    ${editEventSectionHtml('メモ', editTextareaHtml(note))}
     <p id="edit-event-error" class="message error" role="alert"></p>`;
-  fields.querySelectorAll('[data-edit-target]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const target = button.dataset.editTarget;
-      const area = $(`edit-${target}-fields`);
-      if (!area || !area.hidden) return;
-      if (target === 'datetime') area.innerHTML = dateTimeInputHtml(event);
-      if (target === 'content') area.innerHTML = editContentHtml(event);
-      if (target === 'note') area.innerHTML = editTextareaHtml(note);
-      area.hidden = false;
-      button.hidden = true;
-    });
-  });
   $('edit-event-panel').hidden = false;
 }
 

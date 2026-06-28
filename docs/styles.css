@@ -564,27 +564,24 @@ hr {
   margin: 0 0 0.35rem;
 }
 
-.edit-event-current {
-  line-height: 1.5;
-  margin: 0 0 0.65rem;
-  white-space: pre-wrap;
-}
-
 .edit-event-field-area {
   margin-bottom: 0.75rem;
 }
 
-.edit-event-field-area[hidden] { display: none; }
-
-.edit-event-input-row {
+.edit-datetime-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 0.5rem;
+  align-items: end;
 }
 
-.edit-event-change-button {
-  min-height: 2.75rem;
+.edit-datetime-row input[type="date"],
+.edit-datetime-row input[type="time"] {
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
+  font-size: 1rem;
+  padding: 0.75rem 0.7rem;
 }
 
 .edit-event-actions {
