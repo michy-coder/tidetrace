@@ -920,10 +920,15 @@ function buildStatePainSummary(startDate, endDate) {
 
   const rows = new Map();
   [...dailyByState.values()].forEach((day) => {
-    if (!rows.has(day.label)) rows.set(day.label, { label: day.label, recordDays: 0, maxPain: null, averagePainTotal: 0 });
+    if (!rows.has(day.label)) rows.set(day.label, { label: day.label, recordDays: 0, maxPain: null, maxPainDays: 0, averagePainTotal: 0 });
     const row = rows.get(day.label);
     row.recordDays += 1;
-    row.maxPain = row.maxPain === null ? day.max : Math.max(row.maxPain, day.max);
+    if (row.maxPain === null || day.max > row.maxPain) {
+      row.maxPain = day.max;
+      row.maxPainDays = 1;
+    } else if (day.max === row.maxPain) {
+      row.maxPainDays += 1;
+    }
     row.averagePainTotal += day.average;
   });
 
@@ -949,7 +954,7 @@ function renderStatePainSummary(block, statePainRows) {
   statePainRows.forEach((row) => {
     const item = document.createElement('div');
     item.className = 'visit-summary-state-pain-item';
-    item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：記録日数 ${row.recordDays}日 / 最大 ${escapeHtml(formatPainValue(row.maxPain))} / 平均 ${escapeHtml(row.averagePain.toFixed(1))}`;
+    item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：記録日数 ${row.recordDays}日 / 最大 ${escapeHtml(formatPainValue(row.maxPain))}${escapeHtml(formatMaxPainDays(row.maxPainDays))} / 平均 ${escapeHtml(row.averagePain.toFixed(1))}`;
     block.appendChild(item);
   });
 
@@ -998,13 +1003,18 @@ function buildDosePainSummary(startDate, endDate) {
     const doseGroups = new Map();
     dates.forEach((date) => {
       const amount = row.dailyAmounts.get(date) || 0;
-      if (!doseGroups.has(amount)) doseGroups.set(amount, { amount, targetDays: 0, painDays: 0, maxPain: null, averagePainTotal: 0 });
+      if (!doseGroups.has(amount)) doseGroups.set(amount, { amount, targetDays: 0, painDays: 0, maxPain: null, maxPainDays: 0, averagePainTotal: 0 });
       const group = doseGroups.get(amount);
       group.targetDays += 1;
       const pain = dailyPain.get(date);
       if (!pain) return;
       group.painDays += 1;
-      group.maxPain = group.maxPain === null ? pain.max : Math.max(group.maxPain, pain.max);
+      if (group.maxPain === null || pain.max > group.maxPain) {
+        group.maxPain = pain.max;
+        group.maxPainDays = 1;
+      } else if (pain.max === group.maxPain) {
+        group.maxPainDays += 1;
+      }
       group.averagePainTotal += pain.average;
     });
     return {
@@ -1021,6 +1031,10 @@ function buildDosePainSummary(startDate, endDate) {
 
 function formatPainValue(value) {
   return value === null ? '—' : String(value);
+}
+
+function formatMaxPainDays(days) {
+  return typeof days === 'number' && days > 0 ? `(${days}日)` : '';
 }
 
 function formatAveragePain(group) {
@@ -1051,7 +1065,7 @@ function renderDosePainSummary(block, dosePainRows) {
       const item = document.createElement('div');
       item.className = 'visit-summary-dose-pain-row';
       const doseLabel = `${amountText(group.amount, row.unit)}の日`;
-      item.innerHTML = `<strong>${escapeHtml(doseLabel)}</strong><br>対象 ${group.targetDays}日 / 痛み記録あり ${group.painDays}日<br>最大 ${escapeHtml(formatPainValue(group.maxPain))} / 平均 ${escapeHtml(formatAveragePain(group))}`;
+      item.innerHTML = `<strong>${escapeHtml(doseLabel)}</strong><br>対象 ${group.targetDays}日 / 痛み記録あり ${group.painDays}日<br>最大 ${escapeHtml(formatPainValue(group.maxPain))}${escapeHtml(formatMaxPainDays(group.maxPainDays))} / 平均 ${escapeHtml(formatAveragePain(group))}`;
       body.appendChild(item);
     });
     details.append(summary, body);

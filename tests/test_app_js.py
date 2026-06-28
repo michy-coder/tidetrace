@@ -371,6 +371,7 @@ def test_visit_summary_state_pain_groups_daily_by_resolved_state_label() -> None
             { type: 'pain', localDate: '2026-07-01', painScore: 4, stateOptionId: 'standing', stateLabel: '立位' },
             { type: 'pain', localDate: '2026-07-01', painScore: 8, stateOptionId: 'standing', stateLabel: '立位' },
             { type: 'pain', localDate: '2026-07-02', painScore: 6, stateOptionId: 'standing', stateLabel: '立位' },
+            { type: 'pain', localDate: '2026-07-02', painScore: 8, stateOptionId: 'standing', stateLabel: '立位' },
             { type: 'pain', localDate: '2026-07-02', painScore: 3, stateOptionId: 'sitting' },
             { type: 'pain', localDate: '2026-07-03', painScore: 9, stateOptionId: 'missing' },
             { type: 'pain', localDate: '2026-07-04', painScore: 10, stateOptionId: 'standing', stateLabel: '範囲外' }
@@ -379,10 +380,10 @@ def test_visit_summary_state_pain_groups_daily_by_resolved_state_label() -> None
 
         const rows = buildStatePainSummary('2026-07-01', '2026-07-03');
 
-        assert.deepEqual(rows.map((row) => [row.label, row.recordDays, row.maxPain, row.averagePain.toFixed(1)]), [
-          ['不明な状態', 1, 9, '9.0'],
-          ['立位', 2, 8, '6.0'],
-          ['Sitting current', 1, 3, '3.0']
+        assert.deepEqual(rows.map((row) => [row.label, row.recordDays, row.maxPain, row.maxPainDays, row.averagePain.toFixed(1)]), [
+          ['不明な状態', 1, 9, 1, '9.0'],
+          ['立位', 2, 8, 2, '6.5'],
+          ['Sitting current', 1, 3, 1, '3.0']
         ]);
         assert.equal(rows.some((row) => row.label === 'Unused active'), false);
         assert.equal(rows.some((row) => row.label === '範囲外'), false);
@@ -410,15 +411,46 @@ def test_visit_summary_state_pain_display_uses_compact_labels_and_notice() -> No
         };
 
         renderStatePainSummary(block, [
-          { label: '排便後', recordDays: 6, maxPain: 9, averagePain: 7.6 }
+          { label: '排便後', recordDays: 6, maxPain: 9, maxPainDays: 3, averagePain: 7.6 }
         ]);
 
         const stateItem = block.children.find((child) => child.className === 'visit-summary-state-pain-item');
         const notice = block.children.at(-1);
-        assert.match(stateItem.innerHTML, /排便後<\\/strong>：記録日数 6日 \\/ 最大 9 \\/ 平均 7\\.6/);
+        assert.match(stateItem.innerHTML, /排便後<\\/strong>：記録日数 6日 \\/ 最大 9\\(3日\\) \\/ 平均 7\\.6/);
         assert.doesNotMatch(stateItem.innerHTML, /最大痛み|平均痛み/);
         assert.equal(notice.className.includes('visit-summary-notice'), true);
         assert.equal(notice.textContent, '同じ日・同じ状態の痛みを日単位で集計しています。服薬前後や他の薬との併用条件は分けていません。');
+        """
+    )
+
+
+def test_visit_summary_dose_pain_counts_max_pain_days_after_daily_grouping() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: {
+            medicationOptions: [
+              { id: 'med_001', label: '薬A', defaultAmount: 1, unit: '錠', active: true, sortOrder: 1 }
+            ]
+          },
+          events: [
+            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: '薬A', amount: 1, unit: '錠', localDate: '2026-07-01' },
+            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: '薬A', amount: 1, unit: '錠', localDate: '2026-07-02' },
+            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: '薬A', amount: 1, unit: '錠', localDate: '2026-07-03' },
+            { type: 'pain', localDate: '2026-07-01', painScore: 7 },
+            { type: 'pain', localDate: '2026-07-01', painScore: 7 },
+            { type: 'pain', localDate: '2026-07-02', painScore: 5 },
+            { type: 'pain', localDate: '2026-07-03', painScore: 7 }
+          ]
+        };
+
+        const rows = buildDosePainSummary('2026-07-01', '2026-07-03');
+        const oneTabletGroup = rows[0].doseGroups.find((group) => group.amount === 1);
+
+        assert.equal(oneTabletGroup.maxPain, 7);
+        assert.equal(oneTabletGroup.maxPainDays, 2);
+        assert.equal(oneTabletGroup.painDays, 3);
         """
     )
 
@@ -448,7 +480,7 @@ def test_visit_summary_dose_pain_display_uses_compact_pain_labels_and_notice() -
             label: '薬A',
             unit: '錠',
             doseGroups: [
-              { amount: 2, targetDays: 7, painDays: 5, maxPain: 9, averagePainTotal: 27 }
+              { amount: 2, targetDays: 7, painDays: 5, maxPain: 7, maxPainDays: 2, averagePainTotal: 27 }
             ]
           }
         ]);
@@ -456,7 +488,7 @@ def test_visit_summary_dose_pain_display_uses_compact_pain_labels_and_notice() -
         const doseItem = block.children.find((child) => child.className === 'visit-summary-dose-pain-item');
         const doseRow = doseItem.children[1].children[0];
         const notice = block.children.at(-1);
-        assert.match(doseRow.innerHTML, /対象 7日 \\/ 痛み記録あり 5日<br>最大 9 \\/ 平均 5\\.4/);
+        assert.match(doseRow.innerHTML, /対象 7日 \\/ 痛み記録あり 5日<br>最大 7\\(2日\\) \\/ 平均 5\\.4/);
         assert.doesNotMatch(doseRow.innerHTML, /最大痛み|平均痛み/);
         assert.equal(notice.className.includes('visit-summary-notice'), true);
         assert.equal(notice.textContent, '薬ごとに日単位で集計しています。他の薬との併用条件は分けていません。');
