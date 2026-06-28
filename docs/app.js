@@ -80,11 +80,16 @@ function eventEditDateTime(event) {
 function dateTimeInputHtml(event) {
   const value = eventEditDateTime(event);
   return `
-    <label for="edit-local-date">日付</label>
-    <input id="edit-local-date" type="date" value="${escapeHtml(value.localDate)}" required>
-    <label for="edit-local-time">時刻</label>
-    <input id="edit-local-time" type="time" value="${escapeHtml(value.localTime)}" required>
-    <p id="edit-event-error" class="message error" role="alert"></p>`;
+    <div class="edit-event-input-row">
+      <div>
+        <label for="edit-local-date">日付</label>
+        <input id="edit-local-date" type="date" value="${escapeHtml(value.localDate)}" required>
+      </div>
+      <div>
+        <label for="edit-local-time">時刻</label>
+        <input id="edit-local-time" type="time" value="${escapeHtml(value.localTime)}" required>
+      </div>
+    </div>`;
 }
 
 function validateEditedDateTime(localDate, localTime) {
@@ -594,30 +599,66 @@ function editTextareaHtml(value = '') {
   return `<label for="edit-note">メモ</label><textarea id="edit-note" rows="4">${escapeHtml(value)}</textarea>`;
 }
 
+function editContentHtml(event) {
+  if (event.type === 'pain') {
+    return `
+      <label for="edit-pain-score">痛みスコア</label>
+      <select id="edit-pain-score">${Array.from({ length: 11 }, (_, value) => `<option value="${value}"${value === event.painScore ? ' selected' : ''}>${value}</option>`).join('')}</select>
+      <label for="edit-pain-state">痛みの状態</label>
+      <select id="edit-pain-state">${optionHtml(painEditOptions(event), event.stateOptionId)}</select>`;
+  }
+  if (event.type === 'medication') {
+    return `
+      <label for="edit-medication-option">薬</label>
+      <select id="edit-medication-option">${optionHtml(medicationEditOptions(event), event.medicationOptionId)}</select>`;
+  }
+  return '';
+}
+
+function editEventContentSummary(event) {
+  if (event.type === 'pain') return `痛み：${event.painScore} / ${painEventLabel(event)}`;
+  if (event.type === 'medication') {
+    const amount = event.amount !== undefined || event.unit ? ` ${event.amount ?? ''}${event.unit || ''}` : '';
+    return `薬：${medicationEventLabel(event) || '不明な薬'}${amount}`;
+  }
+  return '';
+}
+
+function editSectionHtml(title, value, buttonText, target, extraClass = '') {
+  return `
+    <section class="edit-event-section ${extraClass}">
+      <h3>${escapeHtml(title)}</h3>
+      <p class="edit-event-current">${escapeHtml(value)}</p>
+      <div id="edit-${target}-fields" class="edit-event-field-area" hidden></div>
+      <button class="secondary-button edit-event-change-button" type="button" data-edit-target="${escapeHtml(target)}">${escapeHtml(buttonText)}</button>
+    </section>`;
+}
+
 function openEditEventPanel(id) {
   const event = appData.events.find((item) => item.id === id);
   if (!event) return;
   editingEventId = id;
   const fields = $('edit-event-fields');
-  const dateTimeFields = dateTimeInputHtml(event);
-  if (event.type === 'pain') {
-    fields.innerHTML = `${dateTimeFields}
-      <label for="edit-pain-score">痛みスコア</label>
-      <select id="edit-pain-score">${Array.from({ length: 11 }, (_, value) => `<option value="${value}"${value === event.painScore ? ' selected' : ''}>${value}</option>`).join('')}</select>
-      <label for="edit-pain-state">痛みの状態</label>
-      <select id="edit-pain-state">${optionHtml(painEditOptions(event), event.stateOptionId)}</select>
-      ${editTextareaHtml(event.note || '')}`;
-  } else if (event.type === 'medication') {
-    fields.innerHTML = `${dateTimeFields}
-      <label for="edit-medication-option">薬</label>
-      <select id="edit-medication-option">${optionHtml(medicationEditOptions(event), event.medicationOptionId)}</select>
-      ${editTextareaHtml(event.note || '')}`;
-  } else {
-    fields.innerHTML = `${dateTimeFields}${editTextareaHtml(event.note || '')}`;
-  }
+  const contentSection = event.type === 'note' ? '' : editSectionHtml('内容', editEventContentSummary(event), '内容を変更', 'content');
+  const note = event.note || '';
+  fields.innerHTML = `
+    ${editSectionHtml('日時', `${event.localDate} ${event.localTime}`, '日時を変更', 'datetime')}
+    ${contentSection}
+    ${editSectionHtml('メモ', note || 'なし', note ? 'メモを変更' : 'メモを追加', 'note')}
+    <p id="edit-event-error" class="message error" role="alert"></p>`;
+  fields.querySelectorAll('[data-edit-target]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = button.dataset.editTarget;
+      const area = $(`edit-${target}-fields`);
+      if (!area || !area.hidden) return;
+      if (target === 'datetime') area.innerHTML = dateTimeInputHtml(event);
+      if (target === 'content') area.innerHTML = editContentHtml(event);
+      if (target === 'note') area.innerHTML = editTextareaHtml(note);
+      area.hidden = false;
+      button.hidden = true;
+    });
+  });
   $('edit-event-panel').hidden = false;
-  const firstInput = fields.querySelector('input, select, textarea');
-  if (firstInput) firstInput.focus();
 }
 
 function closeEditEventPanel() {
@@ -635,43 +676,55 @@ function saveEditedEvent() {
   if (!editingEventId) return;
   const event = appData.events.find((item) => item.id === editingEventId);
   if (!event) { closeEditEventPanel(); return; }
-  const localDate = $('edit-local-date').value;
-  const localTime = $('edit-local-time').value;
-  const dateTimeValidation = validateEditedDateTime(localDate, localTime);
-  if (dateTimeValidation.error) {
-    setEditEventError(dateTimeValidation.error);
-    return;
+  const dateInput = $('edit-local-date');
+  const timeInput = $('edit-local-time');
+  const dateTimeChanged = Boolean(dateInput || timeInput);
+  let dateTimeValidation = { recordedAt: null, error: '' };
+  if (dateTimeChanged) {
+    dateTimeValidation = validateEditedDateTime(dateInput?.value || '', timeInput?.value || '');
+    if (dateTimeValidation.error) {
+      setEditEventError(dateTimeValidation.error);
+      return;
+    }
   }
   setEditEventError('');
   if (event.type === 'pain') {
-    const stateOptionId = $('edit-pain-state').value;
-    if (!stateOptionId) return;
-    event.painScore = Number($('edit-pain-score').value);
-    if (stateOptionId !== event.stateOptionId) {
-      const option = appData.settings.painStateOptions.find((item) => item.id === stateOptionId);
-      if (!option) return;
-      event.stateOptionId = option.id;
-      event.stateLabel = option.label;
+    const stateSelect = $('edit-pain-state');
+    if (stateSelect) {
+      const stateOptionId = stateSelect.value;
+      if (!stateOptionId) return;
+      event.painScore = Number($('edit-pain-score').value);
+      if (stateOptionId !== event.stateOptionId) {
+        const option = appData.settings.painStateOptions.find((item) => item.id === stateOptionId);
+        if (!option) return;
+        event.stateOptionId = option.id;
+        event.stateLabel = option.label;
+      }
     }
-    event.note = $('edit-note').value.trim();
+    if ($('edit-note')) event.note = $('edit-note').value.trim();
   } else if (event.type === 'medication') {
-    const medicationOptionId = $('edit-medication-option').value;
-    if (!medicationOptionId) return;
-    if (medicationOptionId !== event.medicationOptionId) {
-      const option = appData.settings.medicationOptions.find((item) => item.id === medicationOptionId);
-      if (!option) return;
-      event.medicationOptionId = option.id;
-      event.medicationLabel = option.label;
-      event.amount = option.defaultAmount;
-      event.unit = option.unit;
+    const medicationSelect = $('edit-medication-option');
+    if (medicationSelect) {
+      const medicationOptionId = medicationSelect.value;
+      if (!medicationOptionId) return;
+      if (medicationOptionId !== event.medicationOptionId) {
+        const option = appData.settings.medicationOptions.find((item) => item.id === medicationOptionId);
+        if (!option) return;
+        event.medicationOptionId = option.id;
+        event.medicationLabel = option.label;
+        event.amount = option.defaultAmount;
+        event.unit = option.unit;
+      }
     }
-    event.note = $('edit-note').value.trim();
-  } else {
+    if ($('edit-note')) event.note = $('edit-note').value.trim();
+  } else if ($('edit-note')) {
     event.note = $('edit-note').value.trim();
   }
-  event.localDate = localDate;
-  event.localTime = localTime;
-  event.recordedAtUtc = dateTimeValidation.recordedAt.toISOString();
+  if (dateTimeChanged) {
+    event.localDate = dateInput.value;
+    event.localTime = timeInput.value;
+    event.recordedAtUtc = dateTimeValidation.recordedAt.toISOString();
+  }
   event.updatedAtUtc = new Date().toISOString();
   saveData();
   render();

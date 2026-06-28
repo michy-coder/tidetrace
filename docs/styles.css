@@ -551,6 +551,42 @@ hr {
   padding: 1rem;
 }
 
+
+.edit-event-section {
+  border-bottom: 1px solid var(--divider);
+  padding: 0.85rem 0;
+}
+
+.edit-event-section:first-child { padding-top: 0; }
+
+.edit-event-section h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.35rem;
+}
+
+.edit-event-current {
+  line-height: 1.5;
+  margin: 0 0 0.65rem;
+  white-space: pre-wrap;
+}
+
+.edit-event-field-area {
+  margin-bottom: 0.75rem;
+}
+
+.edit-event-field-area[hidden] { display: none; }
+
+.edit-event-input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.edit-event-change-button {
+  min-height: 2.75rem;
+  width: 100%;
+}
+
 .edit-event-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -689,6 +689,74 @@ def test_initial_setup_settings_validation_messages() -> None:
         """
     )
 
+
+def test_open_edit_event_panel_shows_summaries_without_inputs_or_focus() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        let focused = false;
+        const fields = {
+          innerHTML: '',
+          querySelectorAll(selector) { return []; },
+          querySelector(selector) { focused = true; return { focus() { focused = true; } }; }
+        };
+        const panel = { hidden: true };
+        global.document = { getElementById(id) { return id === 'edit-event-fields' ? fields : panel; } };
+        appData = {
+          settings: { medicationOptions: [{ id: 'med', label: 'Medication', defaultAmount: 1, unit: 'tablet', active: true, sortOrder: 1 }], painStateOptions: [] },
+          periods: [],
+          events: [{
+            id: 'event-med', type: 'medication', medicationOptionId: 'med', medicationLabel: 'Medication', amount: 1, unit: 'tablet',
+            localDate: '2026-06-27', localTime: '23:45', recordedAtUtc: '2026-06-27T23:45:00.000Z',
+            createdAtUtc: '2026-06-27T23:45:00.000Z', updatedAtUtc: '2026-06-27T23:45:00.000Z', note: ''
+          }]
+        };
+
+        openEditEventPanel('event-med');
+
+        assert.equal(panel.hidden, false);
+        assert.equal(focused, false);
+        assert.match(fields.innerHTML, /2026-06-27 23:45/);
+        assert.match(fields.innerHTML, /薬：Medication 1tablet/);
+        assert.match(fields.innerHTML, /メモを追加/);
+        assert.equal(fields.innerHTML.includes('type="date"'), false);
+        assert.equal(fields.innerHTML.includes('type="time"'), false);
+        """
+    )
+
+
+def test_save_edited_event_without_visible_datetime_preserves_datetime_values() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const elements = {
+          'edit-note': { value: ' changed ' },
+          'edit-event-error': { textContent: '' },
+          'edit-event-panel': { hidden: false },
+          'edit-event-fields': { innerHTML: '' }
+        };
+        global.document = { getElementById(id) { return elements[id]; } };
+        global.localStorage = { setItem() {} };
+        render = () => {};
+        showToast = () => {};
+        appData = { settings: { medicationOptions: [], painStateOptions: [] }, periods: [], events: [{
+          id: 'event-note', type: 'note', localDate: '2026-06-28', localTime: '00:10', recordedAtUtc: '2026-06-28T00:10:00.000Z',
+          createdAtUtc: '2026-06-28T00:10:00.000Z', updatedAtUtc: '2026-06-28T00:10:00.000Z', note: 'original'
+        }] };
+        editingEventId = 'event-note';
+
+        saveEditedEvent();
+
+        const event = appData.events[0];
+        assert.equal(event.localDate, '2026-06-28');
+        assert.equal(event.localTime, '00:10');
+        assert.equal(event.recordedAtUtc, '2026-06-28T00:10:00.000Z');
+        assert.equal(event.createdAtUtc, '2026-06-28T00:10:00.000Z');
+        assert.equal(event.note, 'changed');
+        assert.notEqual(event.updatedAtUtc, '2026-06-28T00:10:00.000Z');
+        """
+    )
+
 def test_validate_edited_date_time_rejects_empty_malformed_and_overflow_values() -> None:
     run_app_js(
         """
