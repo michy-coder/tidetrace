@@ -898,6 +898,12 @@ summary { font-weight: 700; padding: 8px 0; }
   padding: 8px 0;
 }
 
+.history-range-label {
+  color: #5f6f89;
+  font-size: 0.92rem;
+  margin: 0 0 8px;
+}
+
 .history-navigation {
   display: flex;
   flex-direction: column;

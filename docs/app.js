@@ -1646,8 +1646,28 @@ function recentHistoryRange(today) {
 }
 
 function olderHistoryRange(currentRange) {
-  const end = addDays(currentRange.start, -1);
-  return { start: addDays(end, -29), end, mode: 'older' };
+  const previousEventDate = latestHistoryEventDateBefore(currentRange.start);
+  if (!previousEventDate) return null;
+  return { start: addDays(previousEventDate, -29), end: previousEventDate, mode: 'older' };
+}
+
+function historyEventsInRange(range) {
+  if (!range) return [];
+  return appData.events.filter((event) => event.localDate >= range.start && event.localDate <= range.end);
+}
+
+function visibleHistoryDateRange(range) {
+  const dates = [...new Set(historyEventsInRange(range).map((event) => event.localDate))].sort();
+  if (!dates.length) return null;
+  return { start: dates[0], end: dates[dates.length - 1] };
+}
+
+function latestHistoryEventDateBefore(dateText) {
+  return appData.events
+    .map((event) => event.localDate)
+    .filter((date) => date < dateText)
+    .sort()
+    .at(-1) || null;
 }
 
 function formatHistoryNavDate(dateText) {
@@ -1656,12 +1676,13 @@ function formatHistoryNavDate(dateText) {
 }
 
 function formatHistoryRangeLabel(range) {
-  return `${formatHistoryNavDate(range.start)}〜${formatHistoryNavDate(range.end)}`;
+  const visibleRange = visibleHistoryDateRange(range) || range;
+  if (visibleRange.start === visibleRange.end) return formatHistoryNavDate(visibleRange.start);
+  return `${formatHistoryNavDate(visibleRange.start)}〜${formatHistoryNavDate(visibleRange.end)}`;
 }
 
 function hasOlderHistory(currentRange) {
-  const target = olderHistoryRange(currentRange);
-  return appData.events.some((event) => event.localDate <= target.end);
+  return olderHistoryRange(currentRange) !== null;
 }
 
 function datesInRangeDescending(startDate, endDate) {
@@ -1677,6 +1698,10 @@ function renderHistory(today) {
   }
   if (!historyRange) historyRange = recentHistoryRange(today);
   list.innerHTML = '';
+  const rangeLabel = document.createElement('p');
+  rangeLabel.className = 'history-range-label';
+  rangeLabel.textContent = `表示範囲：${formatHistoryRangeLabel(historyRange)}`;
+  list.appendChild(rangeLabel);
   datesInRangeDescending(historyRange.start, historyRange.end).forEach((date) => {
     const events = appData.events.filter((event) => event.localDate === date);
     if (events.length === 0) return;
@@ -1708,7 +1733,12 @@ function renderHistory(today) {
     }
     list.appendChild(item);
   });
-  if (!list.querySelector('.history-day-summary')) list.innerHTML = '<p class="empty">この期間に記録はありません。</p>';
+  if (!list.querySelector('.history-day-summary')) {
+    const empty = document.createElement('p');
+    empty.className = 'empty';
+    empty.textContent = 'この期間に記録はありません。';
+    list.appendChild(empty);
+  }
   renderHistoryNavigation(today, list);
 }
 
@@ -1727,8 +1757,8 @@ function renderHistoryNavigation(today, list) {
     });
     nav.appendChild(recentButton);
   }
-  if (hasOlderHistory(historyRange)) {
-    const target = olderHistoryRange(historyRange);
+  const target = olderHistoryRange(historyRange);
+  if (target) {
     const olderButton = document.createElement('button');
     olderButton.className = 'history-nav-button secondary-button';
     olderButton.type = 'button';
