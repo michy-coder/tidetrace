@@ -688,3 +688,88 @@ def test_initial_setup_settings_validation_messages() -> None:
         );
         """
     )
+
+def test_validate_edited_date_time_rejects_empty_malformed_and_overflow_values() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+
+        assert.equal(validateEditedDateTime('', '23:45').error, '日付を入力してください。');
+        assert.equal(validateEditedDateTime('2026-06-27', '').error, '時刻を入力してください。');
+        assert.equal(validateEditedDateTime('2026-6-27', '23:45').error, '日付はYYYY-MM-DD形式で入力してください。');
+        assert.equal(validateEditedDateTime('2026-06-27', '3:45').error, '時刻はHH:mm形式で入力してください。');
+        assert.equal(validateEditedDateTime('2026-02-30', '23:45').error, '有効な日付と時刻を入力してください。');
+        assert.equal(validateEditedDateTime('2026-06-27', '24:00').error, '有効な日付と時刻を入力してください。');
+        assert.equal(validateEditedDateTime('2026-06-27', '23:45').error, '');
+        """
+    )
+
+
+def test_save_edited_event_updates_local_and_utc_times_without_changing_created_at() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const elements = {
+          'edit-local-date': { value: '2026-06-27' },
+          'edit-local-time': { value: '23:45' },
+          'edit-medication-option': { value: 'med' },
+          'edit-note': { value: ' corrected ' },
+          'edit-event-error': { textContent: '' },
+          'edit-event-panel': { hidden: false },
+          'edit-event-fields': { innerHTML: '' }
+        };
+        global.document = { getElementById(id) { return elements[id]; } };
+        global.localStorage = { setItem() {} };
+        render = () => {};
+        showToast = () => {};
+        appData = {
+          settings: { medicationOptions: [{ id: 'med', label: 'Medication', defaultAmount: 1, unit: 'tablet' }], painStateOptions: [] },
+          periods: [],
+          events: [{
+            id: 'event-med', type: 'medication', medicationOptionId: 'med', medicationLabel: 'Medication', amount: 1, unit: 'tablet',
+            localDate: '2026-06-28', localTime: '00:10', recordedAtUtc: '2026-06-28T00:10:00.000Z',
+            createdAtUtc: '2026-06-28T00:10:00.000Z', updatedAtUtc: '2026-06-28T00:10:00.000Z', note: ''
+          }]
+        };
+        editingEventId = 'event-med';
+
+        saveEditedEvent();
+
+        const event = appData.events[0];
+        assert.equal(event.localDate, '2026-06-27');
+        assert.equal(event.localTime, '23:45');
+        assert.equal(event.recordedAtUtc, new Date('2026-06-27T23:45:00').toISOString());
+        assert.equal(event.createdAtUtc, '2026-06-28T00:10:00.000Z');
+        assert.notEqual(event.updatedAtUtc, '2026-06-28T00:10:00.000Z');
+        assert.equal(event.note, 'corrected');
+        """
+    )
+
+
+def test_save_edited_event_shows_error_and_does_not_save_invalid_date_time() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const elements = {
+          'edit-local-date': { value: '2026-02-30' },
+          'edit-local-time': { value: '23:45' },
+          'edit-note': { value: 'changed' },
+          'edit-event-error': { textContent: '' }
+        };
+        let saved = false;
+        global.document = { getElementById(id) { return elements[id]; } };
+        global.localStorage = { setItem() { saved = true; } };
+        appData = { settings: { medicationOptions: [], painStateOptions: [] }, periods: [], events: [{
+          id: 'event-note', type: 'note', localDate: '2026-06-28', localTime: '00:10', recordedAtUtc: '2026-06-28T00:10:00.000Z',
+          createdAtUtc: '2026-06-28T00:10:00.000Z', updatedAtUtc: '2026-06-28T00:10:00.000Z', note: 'original'
+        }] };
+        editingEventId = 'event-note';
+
+        saveEditedEvent();
+
+        assert.equal(saved, false);
+        assert.equal(elements['edit-event-error'].textContent, '有効な日付と時刻を入力してください。');
+        assert.equal(appData.events[0].localDate, '2026-06-28');
+        assert.equal(appData.events[0].note, 'original');
+        """
+    )
