@@ -81,11 +81,11 @@ function dateTimeInputHtml(event) {
   const value = eventEditDateTime(event);
   return `
     <div class="edit-datetime-row">
-      <div>
+      <div class="edit-datetime-field">
         <label for="edit-local-date">日付</label>
         <input id="edit-local-date" type="date" value="${escapeHtml(value.localDate)}" required>
       </div>
-      <div>
+      <div class="edit-datetime-field">
         <label for="edit-local-time">時刻</label>
         <input id="edit-local-time" type="time" value="${escapeHtml(value.localTime)}" required>
       </div>
@@ -596,7 +596,7 @@ function medicationEditOptions(event) {
 }
 
 function editTextareaHtml(value = '') {
-  return `<textarea id="edit-note" rows="4" placeholder="メモを入力">${escapeHtml(value)}</textarea>`;
+  return `<label for="edit-note">メモ</label><textarea id="edit-note" rows="4" placeholder="メモを入力">${escapeHtml(value)}</textarea>`;
 }
 
 function editContentHtml(event) {
@@ -615,10 +615,9 @@ function editContentHtml(event) {
   return '';
 }
 
-function editEventSectionHtml(title, fieldsHtml, extraClass = '') {
+function editEventSectionHtml(fieldsHtml, extraClass = '') {
   return `
     <section class="edit-event-section ${extraClass}">
-      <h3>${escapeHtml(title)}</h3>
       <div class="edit-event-field-area">${fieldsHtml}</div>
     </section>`;
 }
@@ -628,12 +627,12 @@ function openEditEventPanel(id) {
   if (!event) return;
   editingEventId = id;
   const fields = $('edit-event-fields');
-  const contentSection = event.type === 'note' ? '' : editEventSectionHtml('内容', editContentHtml(event));
+  const contentSection = event.type === 'note' ? '' : editEventSectionHtml(editContentHtml(event));
   const note = event.note || '';
   fields.innerHTML = `
-    ${editEventSectionHtml('日時', dateTimeInputHtml(event))}
+    ${editEventSectionHtml(dateTimeInputHtml(event))}
     ${contentSection}
-    ${editEventSectionHtml('メモ', editTextareaHtml(note))}
+    ${editEventSectionHtml(editTextareaHtml(note))}
     <p id="edit-event-error" class="message error" role="alert"></p>`;
   $('edit-event-panel').hidden = false;
 }

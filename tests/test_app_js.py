@@ -877,18 +877,26 @@ def test_save_edited_event_shows_error_and_does_not_save_invalid_date_time() -> 
         """
     )
 
-def test_edit_note_section_uses_single_memo_heading_and_empty_textarea() -> None:
+def test_edit_note_section_uses_single_memo_label_and_empty_textarea() -> None:
     run_app_js(
         r"""
         const assert = require('node:assert/strict');
-        const html = editEventSectionHtml('メモ', editTextareaHtml(''));
+        const html = editEventSectionHtml(editTextareaHtml(''));
 
-        assert.equal((html.match(/<h3>メモ<\/h3>/g) || []).length, 1);
+        assert.equal((html.match(/<label for="edit-note">メモ<\/label>/g) || []).length, 1);
         assert.match(html, /<textarea id="edit-note" rows="4" placeholder="メモを入力"><\/textarea>/);
-        assert.doesNotMatch(html, /<label for="edit-note">メモ<\/label>/);
+        assert.doesNotMatch(html, /<h3>メモ<\/h3>/);
         assert.doesNotMatch(html, /なし/);
         """
     )
+
+
+def test_edit_panel_omits_redundant_section_headings() -> None:
+    source = APP_JS.read_text()
+    assert "editEventSectionHtml('日時'" not in source
+    assert "editEventSectionHtml('内容'" not in source
+    assert "editEventSectionHtml('メモ'" not in source
+    assert "<h3>${escapeHtml(title)}</h3>" not in source
 
 
 def test_edit_panel_does_not_call_date_or_time_picker_apis() -> None:
