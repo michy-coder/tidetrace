@@ -60,6 +60,54 @@ function isDateString(value) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
+function isTimeString(value) {
+  return typeof value === 'string' && /^\d{2}:\d{2}$/.test(value);
+}
+
+function eventEditDateTime(event) {
+  if (isDateString(event.localDate) && isTimeString(event.localTime)) {
+    return { localDate: event.localDate, localTime: event.localTime };
+  }
+  const recordedAt = new Date(event.recordedAtUtc);
+  if (Number.isNaN(recordedAt.getTime())) return { localDate: '', localTime: '' };
+  const pad = (value) => String(value).padStart(2, '0');
+  return {
+    localDate: `${recordedAt.getFullYear()}-${pad(recordedAt.getMonth() + 1)}-${pad(recordedAt.getDate())}`,
+    localTime: `${pad(recordedAt.getHours())}:${pad(recordedAt.getMinutes())}`
+  };
+}
+
+function dateTimeInputHtml(event) {
+  const value = eventEditDateTime(event);
+  return `
+    <label for="edit-local-date">日付</label>
+    <input id="edit-local-date" type="date" value="${escapeHtml(value.localDate)}" required>
+    <label for="edit-local-time">時刻</label>
+    <input id="edit-local-time" type="time" value="${escapeHtml(value.localTime)}" required>
+    <p id="edit-event-error" class="message error" role="alert"></p>`;
+}
+
+function validateEditedDateTime(localDate, localTime) {
+  if (!localDate) return { recordedAt: null, error: '日付を入力してください。' };
+  if (!localTime) return { recordedAt: null, error: '時刻を入力してください。' };
+  if (!isDateString(localDate)) return { recordedAt: null, error: '日付はYYYY-MM-DD形式で入力してください。' };
+  if (!isTimeString(localTime)) return { recordedAt: null, error: '時刻はHH:mm形式で入力してください。' };
+  const [year, month, day] = localDate.split('-').map(Number);
+  const [hour, minute] = localTime.split(':').map(Number);
+  const recordedAt = new Date(`${localDate}T${localTime}:00`);
+  if (
+    Number.isNaN(recordedAt.getTime()) ||
+    recordedAt.getFullYear() !== year ||
+    recordedAt.getMonth() + 1 !== month ||
+    recordedAt.getDate() !== day ||
+    recordedAt.getHours() !== hour ||
+    recordedAt.getMinutes() !== minute
+  ) {
+    return { recordedAt: null, error: '有効な日付と時刻を入力してください。' };
+  }
+  return { recordedAt, error: '' };
+}
+
 function sortedPeriods(periods = appData.periods) {
   return [...periods].sort((a, b) => a.startDate.localeCompare(b.startDate));
 }
@@ -551,23 +599,24 @@ function openEditEventPanel(id) {
   if (!event) return;
   editingEventId = id;
   const fields = $('edit-event-fields');
+  const dateTimeFields = dateTimeInputHtml(event);
   if (event.type === 'pain') {
-    fields.innerHTML = `
+    fields.innerHTML = `${dateTimeFields}
       <label for="edit-pain-score">痛みスコア</label>
       <select id="edit-pain-score">${Array.from({ length: 11 }, (_, value) => `<option value="${value}"${value === event.painScore ? ' selected' : ''}>${value}</option>`).join('')}</select>
       <label for="edit-pain-state">痛みの状態</label>
       <select id="edit-pain-state">${optionHtml(painEditOptions(event), event.stateOptionId)}</select>
       ${editTextareaHtml(event.note || '')}`;
   } else if (event.type === 'medication') {
-    fields.innerHTML = `
+    fields.innerHTML = `${dateTimeFields}
       <label for="edit-medication-option">薬</label>
       <select id="edit-medication-option">${optionHtml(medicationEditOptions(event), event.medicationOptionId)}</select>
       ${editTextareaHtml(event.note || '')}`;
   } else {
-    fields.innerHTML = editTextareaHtml(event.note || '');
+    fields.innerHTML = `${dateTimeFields}${editTextareaHtml(event.note || '')}`;
   }
   $('edit-event-panel').hidden = false;
-  const firstInput = fields.querySelector('select, textarea');
+  const firstInput = fields.querySelector('input, select, textarea');
   if (firstInput) firstInput.focus();
 }
 
@@ -577,10 +626,23 @@ function closeEditEventPanel() {
   $('edit-event-fields').innerHTML = '';
 }
 
+function setEditEventError(message) {
+  const error = $('edit-event-error');
+  if (error) error.textContent = message;
+}
+
 function saveEditedEvent() {
   if (!editingEventId) return;
   const event = appData.events.find((item) => item.id === editingEventId);
   if (!event) { closeEditEventPanel(); return; }
+  const localDate = $('edit-local-date').value;
+  const localTime = $('edit-local-time').value;
+  const dateTimeValidation = validateEditedDateTime(localDate, localTime);
+  if (dateTimeValidation.error) {
+    setEditEventError(dateTimeValidation.error);
+    return;
+  }
+  setEditEventError('');
   if (event.type === 'pain') {
     const stateOptionId = $('edit-pain-state').value;
     if (!stateOptionId) return;
@@ -607,6 +669,9 @@ function saveEditedEvent() {
   } else {
     event.note = $('edit-note').value.trim();
   }
+  event.localDate = localDate;
+  event.localTime = localTime;
+  event.recordedAtUtc = dateTimeValidation.recordedAt.toISOString();
   event.updatedAtUtc = new Date().toISOString();
   saveData();
   render();
