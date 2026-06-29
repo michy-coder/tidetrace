@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="Tide Trace">
+  <defs>
+    <linearGradient id="logo-gradient" x1="12" y1="8" x2="62" y2="66" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9fe3df"/>
+      <stop offset="0.55" stop-color="#66b8d4"/>
+      <stop offset="1" stop-color="#477fb8"/>
+    </linearGradient>
+    <clipPath id="logo-clip">
+      <circle cx="36" cy="36" r="34"/>
+    </clipPath>
+    <filter id="logo-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1.25" stdDeviation="1.2" flood-color="#1f5265" flood-opacity="0.48"/>
+    </filter>
+  </defs>
+  <g clip-path="url(#logo-clip)">
+    <circle cx="36" cy="36" r="34" fill="url(#logo-gradient)"/>
+    <path d="M0 55 C12 50 20 51 31 55 S53 61 72 52 L72 72 L0 72 Z" fill="rgba(255,255,255,0.82)"/>
+  </g>
+  <g filter="url(#logo-shadow)" fill="#fff" stroke="rgba(31,82,101,0.28)" stroke-width="0.7" paint-order="stroke fill" font-family="Georgia, 'Times New Roman', serif" font-size="31" font-weight="800">
+    <text x="20" y="38">T</text>
+    <text x="34" y="47" fill="#f4fbff">T</text>
+  </g>
+</svg>
