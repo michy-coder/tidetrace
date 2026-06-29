@@ -1792,8 +1792,7 @@ function latestHistoryEventDateBefore(dateText) {
 }
 
 function formatHistoryNavDate(dateText) {
-  const date = new Date(`${dateText}T00:00:00+09:00`);
-  return new Intl.DateTimeFormat('ja-JP', { timeZone: TIMEZONE, month: 'numeric', day: 'numeric' }).format(date);
+  return formatFullDate(dateText);
 }
 
 function formatHistoryRangeLabel(range) {
@@ -1819,10 +1818,7 @@ function renderHistory(today) {
   }
   if (!historyRange) historyRange = recentHistoryRange(today);
   list.innerHTML = '';
-  const rangeLabel = document.createElement('p');
-  rangeLabel.className = 'history-range-label';
-  rangeLabel.textContent = `表示範囲：${formatHistoryRangeLabel(historyRange)}`;
-  list.appendChild(rangeLabel);
+  renderHistoryNavigation(today, list);
   datesInRangeDescending(historyRange.start, historyRange.end).forEach((date) => {
     const events = appData.events.filter((event) => event.localDate === date);
     if (events.length === 0) return;
@@ -1863,35 +1859,52 @@ function renderHistory(today) {
   renderHistoryNavigation(today, list);
 }
 
+function scrollHistoryToStart() {
+  const firstRecord = document.querySelector('#history-list .history-day-summary');
+  const target = firstRecord || $('history-details');
+  target.scrollIntoView({ block: 'start' });
+}
+
 function renderHistoryNavigation(today, list) {
   const nav = document.createElement('div');
   nav.className = 'history-navigation';
+
+  const rangeLabel = document.createElement('p');
+  rangeLabel.className = 'history-range-label';
+  rangeLabel.textContent = `表示範囲：${formatHistoryRangeLabel(historyRange)}`;
+  nav.appendChild(rangeLabel);
+
+  const buttons = document.createElement('div');
+  buttons.className = 'history-navigation-buttons';
   if (historyRange.mode === 'older') {
     const recentButton = document.createElement('button');
     recentButton.className = 'history-nav-button secondary-button';
     recentButton.type = 'button';
-    recentButton.textContent = '◀︎ 直近7日分';
+    recentButton.textContent = '◀︎ 新しい記録へ';
     recentButton.addEventListener('click', () => {
       historyRange = recentHistoryRange(today);
       expandedHistoryDate = null;
       renderHistory(today);
+      scrollHistoryToStart();
     });
-    nav.appendChild(recentButton);
+    buttons.appendChild(recentButton);
   }
   const target = olderHistoryRange(historyRange);
   if (target) {
     const olderButton = document.createElement('button');
     olderButton.className = 'history-nav-button secondary-button';
     olderButton.type = 'button';
-    olderButton.textContent = `▶︎ ${formatHistoryRangeLabel(target)}`;
+    olderButton.textContent = '古い記録へ ▶︎';
     olderButton.addEventListener('click', () => {
       historyRange = target;
       expandedHistoryDate = null;
       renderHistory(today);
+      scrollHistoryToStart();
     });
-    nav.appendChild(olderButton);
+    buttons.appendChild(olderButton);
   }
-  if (nav.children.length) list.appendChild(nav);
+  nav.appendChild(buttons);
+  list.appendChild(nav);
 }
 
 function escapeHtml(value) {

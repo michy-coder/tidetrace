@@ -1004,11 +1004,18 @@ def test_history_range_labels_use_actual_record_dates_and_skip_empty_ranges() ->
         };
 
         const current = { start: '2026-05-22', end: '2026-06-20', mode: 'older' };
-        assert.equal(formatHistoryRangeLabel(current), '6/15〜6/20');
+        assert.equal(formatHistoryRangeLabel(current), '2026/06/15〜2026/06/20');
 
         const target = olderHistoryRange(current);
         assert.deepEqual(target, { start: '2026-02-11', end: '2026-03-12', mode: 'older' });
-        assert.equal(formatHistoryRangeLabel(target), '3/12');
+        assert.equal(formatHistoryRangeLabel(target), '2026/03/12');
         assert.equal(hasOlderHistory(target), false);
         """
     )
+
+
+def test_history_navigation_renders_before_and_after_records() -> None:
+    source = APP_JS.read_text()
+    assert source.count("renderHistoryNavigation(today, list);") == 2
+    assert "scrollHistoryToStart();" in source
+    assert "formatFullDate(dateText)" in source
