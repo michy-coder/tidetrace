@@ -933,14 +933,20 @@ summary { font-weight: 700; padding: 8px 0; }
 .history-range-label {
   color: #5f6f89;
   font-size: 0.92rem;
-  margin: 0 0 8px;
+  margin: 0;
 }
 
 .history-navigation {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 12px;
+  margin: 12px 0;
+}
+
+.history-navigation-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .history-nav-button {
