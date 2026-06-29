@@ -6,6 +6,7 @@ All notable changes to TideTrace will be documented in this file.
 
 ### Added
 - Added editing for record date and time on medication, pain, and note 
+- Added medication pain-change summaries to visit summaries, showing recorded before-and-after pain-score changes by medication without assessing medication effectiveness.
 
 ### Changed
 - Past record range labels now match the dates that actually have records.
