@@ -83,24 +83,6 @@ main {
   overflow: hidden;
 }
 
-.brand-logo-wave {
-  fill: rgba(255, 255, 255, 0.82);
-}
-
-.brand-logo-letters text {
-  fill: #ffffff;
-  stroke: rgba(31, 82, 101, 0.28);
-  stroke-width: 0.7px;
-  paint-order: stroke fill;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 31px;
-  font-weight: 800;
-  letter-spacing: 0;
-}
-
-.brand-logo-letter-secondary {
-  fill: #f4fbff;
-}
 
 .brand-copy {
   min-width: 0;
