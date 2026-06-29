@@ -1077,7 +1077,126 @@ function renderDosePainSummary(block, dosePainRows) {
   block.appendChild(notice);
 }
 
-function renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows, dosePainRows) {
+
+function eventLocalTimestamp(event) {
+  if (!isDateString(event.localDate) || !isTimeString(event.localTime)) return null;
+  const timestamp = new Date(`${event.localDate}T${event.localTime}:00+09:00`).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function medicationPainChangeKey(event, option) {
+  return event.medicationOptionId ? `id:${event.medicationOptionId}` : `label:${event.medicationLabel || '不明な薬'}`;
+}
+
+function buildMedicationPainChangeSummary(startDate, endDate) {
+  const optionById = new Map(appData.settings.medicationOptions.map((option) => [option.id, option]));
+  const rows = new Map();
+  const ensureRow = (key, base) => {
+    if (!rows.has(key)) rows.set(key, { ...base, changes: [], beforeTotal: 0, afterTotal: 0, latestLabelDate: '' });
+    return rows.get(key);
+  };
+
+  const painEvents = appData.events
+    .filter((event) => event.type === 'pain' && event.localDate >= startDate && event.localDate <= endDate)
+    .map((event) => ({ ...event, timestamp: eventLocalTimestamp(event) }))
+    .filter((event) => event.timestamp !== null && typeof event.painScore === 'number' && Number.isFinite(event.painScore));
+
+  appData.events.filter((event) => event.type === 'medication' && event.localDate >= startDate && event.localDate <= endDate).forEach((event) => {
+    const medicationTimestamp = eventLocalTimestamp(event);
+    if (medicationTimestamp === null) return;
+
+    const before = painEvents
+      .filter((pain) => pain.painScore >= 1 && pain.timestamp >= medicationTimestamp - 2 * 60 * 60 * 1000 && pain.timestamp <= medicationTimestamp)
+      .sort((a, b) => Math.abs(medicationTimestamp - a.timestamp) - Math.abs(medicationTimestamp - b.timestamp))[0];
+    if (!before) return;
+
+    const after = painEvents
+      .filter((pain) => pain.painScore >= 0 && pain.timestamp >= medicationTimestamp + 60 * 60 * 1000 && pain.timestamp <= medicationTimestamp + 3 * 60 * 60 * 1000)
+      .sort((a, b) => a.painScore - b.painScore || Math.abs(a.timestamp - medicationTimestamp) - Math.abs(b.timestamp - medicationTimestamp))[0];
+    if (!after || before.painScore === 0) return;
+
+    const option = event.medicationOptionId ? optionById.get(event.medicationOptionId) : null;
+    const label = event.medicationLabel || (option && option.label) || '不明な薬';
+    const key = medicationPainChangeKey(event, option);
+    const row = ensureRow(key, {
+      medicationSortOrder: option ? option.sortOrder : Number.MAX_SAFE_INTEGER,
+      medicationId: event.medicationOptionId || '',
+      label
+    });
+    const changeRate = ((before.painScore - after.painScore) / before.painScore) * 100;
+    row.changes.push(changeRate);
+    row.beforeTotal += before.painScore;
+    row.afterTotal += after.painScore;
+    if (event.medicationLabel && event.localDate >= row.latestLabelDate) {
+      row.label = event.medicationLabel;
+      row.latestLabelDate = event.localDate;
+    }
+  });
+
+  return [...rows.values()]
+    .filter((row) => row.changes.length > 0)
+    .map((row) => {
+      const sortedChanges = [...row.changes].sort((a, b) => a - b);
+      const middle = Math.floor(sortedChanges.length / 2);
+      const medianChange = sortedChanges.length % 2 === 0 ? (sortedChanges[middle - 1] + sortedChanges[middle]) / 2 : sortedChanges[middle];
+      return {
+        ...row,
+        count: row.changes.length,
+        averageChange: row.changes.reduce((total, value) => total + value, 0) / row.changes.length,
+        medianChange,
+        averageBefore: row.beforeTotal / row.changes.length,
+        averageAfter: row.afterTotal / row.changes.length
+      };
+    })
+    .sort((a, b) =>
+      a.medicationSortOrder - b.medicationSortOrder ||
+      a.label.localeCompare(b.label, 'ja') ||
+      a.medicationId.localeCompare(b.medicationId)
+    );
+}
+
+function formatOneDecimal(value) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function formatPainChangeRate(value) {
+  const rounded = Math.round(Math.abs(value));
+  if (rounded === 0) return '0%';
+  return value > 0 ? `${rounded}%低下` : `${rounded}%上昇`;
+}
+
+function renderMedicationPainChangeSummary(block, painChangeRows) {
+  const heading = document.createElement('h3');
+  heading.textContent = '服薬前後の痛み変化';
+  block.appendChild(heading);
+
+  if (!painChangeRows.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty';
+    empty.textContent = '条件に合う服薬前後の痛み記録はありません。';
+    block.appendChild(empty);
+  } else {
+    painChangeRows.forEach((row) => {
+      const item = document.createElement('div');
+      item.className = 'visit-summary-pain-change-item';
+      const beforeAfter = `${formatOneDecimal(row.averageBefore)}→${formatOneDecimal(row.averageAfter)}`;
+      const averageText = formatPainChangeRate(row.averageChange);
+      if (row.count === 1) {
+        item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：対象 1回 / ${escapeHtml(averageText)} / 前後 ${escapeHtml(beforeAfter)}`;
+      } else {
+        item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：対象 ${row.count}回 / 平均 ${escapeHtml(averageText)} / 中央 ${escapeHtml(formatPainChangeRate(row.medianChange))} / 前後 ${escapeHtml(beforeAfter)}`;
+      }
+      block.appendChild(item);
+    });
+  }
+
+  const notice = document.createElement('p');
+  notice.className = 'visit-summary-notice supplemental-text';
+  notice.textContent = '服薬前2時間以内と服薬後1〜3時間以内の痛み記録がそろう服薬だけを集計しています。姿勢・状態・他の薬との併用条件は分けていません。';
+  block.appendChild(notice);
+}
+
+function renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows, dosePainRows, painChangeRows = []) {
   const result = $('visit-summary-result');
   result.innerHTML = '';
   const block = document.createElement('div');
@@ -1099,6 +1218,7 @@ function renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows,
   }
   renderStatePainSummary(block, statePainRows);
   renderDosePainSummary(block, dosePainRows);
+  renderMedicationPainChangeSummary(block, painChangeRows);
   result.appendChild(block);
 }
 
@@ -1115,7 +1235,8 @@ function runVisitSummary() {
   const rows = buildMedicationSummary(startDate, endDate);
   const statePainRows = buildStatePainSummary(startDate, endDate);
   const dosePainRows = buildDosePainSummary(startDate, endDate);
-  renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows, dosePainRows);
+  const painChangeRows = buildMedicationPainChangeSummary(startDate, endDate);
+  renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows, dosePainRows, painChangeRows);
 }
 
 function nextPeriodStartSuggestion() {

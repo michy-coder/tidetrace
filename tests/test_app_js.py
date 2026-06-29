@@ -495,6 +495,89 @@ def test_visit_summary_dose_pain_display_uses_compact_pain_labels_and_notice() -
         """
     )
 
+
+
+def test_visit_summary_pain_change_uses_required_windows_and_medication_groups() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: {
+            medicationOptions: [
+              { id: 'med_a', label: '薬A', active: true, sortOrder: 1 },
+              { id: 'med_b', label: '薬B', active: true, sortOrder: 2 }
+            ]
+          },
+          events: [
+            { type: 'pain', localDate: '2026-07-01', localTime: '08:00', painScore: 9 },
+            { type: 'pain', localDate: '2026-07-01', localTime: '09:30', painScore: 8 },
+            { type: 'medication', medicationOptionId: 'med_a', medicationLabel: '薬A', localDate: '2026-07-01', localTime: '10:00' },
+            { type: 'pain', localDate: '2026-07-01', localTime: '11:00', painScore: 5 },
+            { type: 'pain', localDate: '2026-07-01', localTime: '12:00', painScore: 4 },
+            { type: 'pain', localDate: '2026-07-01', localTime: '12:30', painScore: 4 },
+            { type: 'pain', localDate: '2026-07-02', localTime: '08:10', painScore: 6 },
+            { type: 'medication', medicationOptionId: 'med_a', medicationLabel: '薬A', localDate: '2026-07-02', localTime: '09:00' },
+            { type: 'pain', localDate: '2026-07-02', localTime: '10:30', painScore: 3 },
+            { type: 'pain', localDate: '2026-07-03', localTime: '08:00', painScore: 7 },
+            { type: 'medication', medicationOptionId: 'med_b', medicationLabel: '薬B', localDate: '2026-07-03', localTime: '09:00' },
+            { type: 'pain', localDate: '2026-07-04', localTime: '10:00', painScore: 4 },
+            { type: 'medication', medicationOptionId: 'med_b', medicationLabel: '薬B', localDate: '2026-07-04', localTime: '11:00' },
+            { type: 'pain', localDate: '2026-07-04', localTime: '14:30', painScore: 2 },
+            { type: 'pain', localDate: '2026-07-05', localTime: '08:00', painScore: 0 },
+            { type: 'medication', medicationOptionId: 'med_b', medicationLabel: '薬B', localDate: '2026-07-05', localTime: '09:00' },
+            { type: 'pain', localDate: '2026-07-05', localTime: '10:30', painScore: 0 }
+          ]
+        };
+
+        const rows = buildMedicationPainChangeSummary('2026-07-01', '2026-07-05');
+
+        assert.equal(rows.length, 1);
+        assert.equal(rows[0].label, '薬A');
+        assert.equal(rows[0].count, 2);
+        assert.equal(rows[0].averageBefore.toFixed(1), '7.0');
+        assert.equal(rows[0].averageAfter.toFixed(1), '3.5');
+        assert.equal(Math.round(rows[0].averageChange), 50);
+        assert.equal(Math.round(rows[0].medianChange), 50);
+        """
+    )
+
+
+def test_visit_summary_pain_change_display_and_empty_notice() -> None:
+    run_app_js(
+        r"""
+        const assert = require('node:assert/strict');
+        const block = { children: [], appendChild(item) { this.children.push(item); } };
+        global.document = {
+          createElement(tag) {
+            return {
+              tag,
+              className: '',
+              innerHTML: '',
+              textContent: '',
+              children: [],
+              appendChild(item) { this.children.push(item); },
+              append(...items) { this.children.push(...items); }
+            };
+          }
+        };
+
+        renderMedicationPainChangeSummary(block, [
+          { label: '薬A', count: 2, averageChange: 42.4, medianChange: 40, averageBefore: 7.75, averageAfter: 4.5 },
+          { label: '薬B', count: 1, averageChange: -15.2, medianChange: -15.2, averageBefore: 5, averageAfter: 5.76 }
+        ]);
+
+        const items = block.children.filter((child) => child.className === 'visit-summary-pain-change-item');
+        const notice = block.children.at(-1);
+        assert.match(items[0].innerHTML, /薬A<\/strong>：対象 2回 \/ 平均 42%低下 \/ 中央 40%低下 \/ 前後 7\.8→4\.5/);
+        assert.match(items[1].innerHTML, /薬B<\/strong>：対象 1回 \/ 15%上昇 \/ 前後 5→5\.8/);
+        assert.equal(notice.textContent, '服薬前2時間以内と服薬後1〜3時間以内の痛み記録がそろう服薬だけを集計しています。姿勢・状態・他の薬との併用条件は分けていません。');
+
+        const emptyBlock = { children: [], appendChild(item) { this.children.push(item); } };
+        renderMedicationPainChangeSummary(emptyBlock, []);
+        assert.equal(emptyBlock.children.find((child) => child.className === 'empty').textContent, '条件に合う服薬前後の痛み記録はありません。');
+        """
+    )
+
 def test_last_medication_list_uses_active_sorted_options_and_compact_elapsed_text() -> None:
     run_app_js(
         """
