@@ -540,6 +540,8 @@ hr {
 .edit-event-panel[hidden] { display: none; }
 
 .edit-event-form {
+  display: grid;
+  gap: 0;
   width: min(100%, 420px);
   max-height: calc(100vh - 2rem);
   overflow: auto;
@@ -548,18 +550,20 @@ hr {
   border: 1px solid var(--border);
   border-radius: 1rem;
   box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.25);
-  padding: 1rem;
+  padding: 0.8rem;
 }
 
+.edit-event-form h2 {
+  margin-bottom: 0.65rem;
+}
 
 .edit-event-section {
-  padding: 0.85rem 0;
+  padding: 0;
+  margin-bottom: 0.65rem;
 }
 
-.edit-event-section:first-child { padding-top: 0; }
-
 .edit-event-field-area {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
 }
 
 .edit-datetime-row {
@@ -567,11 +571,28 @@ hr {
 }
 
 .edit-datetime-field {
-  margin-bottom: 1rem;
+  margin-bottom: 0.65rem;
 }
 
 .edit-datetime-field:last-child {
   margin-bottom: 0;
+}
+
+.edit-event-form label {
+  margin: 0 0 0.25rem;
+}
+
+.edit-event-form input + label,
+.edit-event-form select + label,
+.edit-event-form textarea + label {
+  margin-top: 0.65rem;
+}
+
+.edit-event-form input,
+.edit-event-form select {
+  min-height: 2.6rem;
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
 }
 
 .edit-datetime-field input[type="date"],
@@ -580,16 +601,26 @@ hr {
   width: 100%;
   min-width: 0;
   font-size: 1rem;
-  padding: 0.75rem 0.8rem;
+}
+
+.edit-event-form textarea {
+  min-height: 4.5rem;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+}
+
+.edit-event-form .message {
+  margin-bottom: 0;
 }
 
 .edit-event-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
+  margin-top: 0.15rem;
 }
 
-.edit-event-actions button { margin-top: 0.5rem; }
+.edit-event-actions button { margin-top: 0; }
 
 .last-medication-card {
   padding-top: 12px;
