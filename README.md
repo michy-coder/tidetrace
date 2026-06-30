@@ -2,6 +2,7 @@
 
 TideTrace is a small static web app for local-first health journaling.
 It is designed to help users record pain, medication, and health-related notes while keeping control over sensitive medical-context records.
+
 The app UI is currently Japanese. English documentation is provided for project overview, privacy model, and development context. UI internationalization may be considered later if there is user or contributor demand.
 
 Live app:
