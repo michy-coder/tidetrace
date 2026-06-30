@@ -1050,3 +1050,45 @@ def test_visit_summary_text_uses_shared_summary_data_without_ui_labels() -> None
         assert.equal(visitSummaryTextFilename(summary), 'tide-trace-summary-2026-02-16_2026-02-16.txt');
         """
     )
+
+def test_visit_summary_actions_are_hidden_until_run_and_cleared_on_condition_change() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        nowParts = () => ({ iso: '2026-06-21T00:00:00.000Z', localDate: '2026-06-21', localTime: '09:00' });
+        appData = { schemaVersion: 1, settings: { medicationOptions: [], painStateOptions: [] }, periods: [], events: [] };
+        const elements = {
+          'summary-start-date': { value: '2026-06-01' },
+          'summary-end-date': { value: '2026-06-07', disabled: false, hidden: false },
+          'summary-end-yesterday': { checked: false },
+          'summary-end-custom': { checked: true },
+          'summary-end-yesterday-label': { textContent: '' },
+          'visit-summary-actions': { hidden: true },
+          'visit-summary-result': { innerHTML: '' },
+          'visit-summary-message': { textContent: '', classList: { values: new Set(), toggle(name, on) { on ? this.values.add(name) : this.values.delete(name); }, remove(name) { this.values.delete(name); } } }
+        };
+        global.document = { getElementById(id) { return elements[id]; } };
+        renderVisitSummaryResult = (startDate, endDate) => { elements['visit-summary-result'].innerHTML = `${startDate}_${endDate}`; };
+
+        assert.equal(elements['visit-summary-actions'].hidden, true);
+        runVisitSummary();
+        assert.equal(elements['visit-summary-actions'].hidden, false);
+        assert.equal(elements['visit-summary-result'].innerHTML, '2026-06-01_2026-06-07');
+        assert.equal(currentVisitSummaryDataForAction().startDate, '2026-06-01');
+
+        elements['summary-start-date'].value = '2026-06-02';
+        handleVisitSummaryConditionChange();
+        assert.equal(elements['visit-summary-actions'].hidden, true);
+        assert.equal(elements['visit-summary-result'].innerHTML, '');
+        assert.equal(currentVisitSummaryDataForAction(), null);
+        """
+    )
+
+
+def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> None:
+    html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
+    run_index = html.index('id="run-visit-summary"')
+    actions_index = html.index('id="visit-summary-actions"')
+    result_index = html.index('id="visit-summary-result"')
+    assert run_index < actions_index < result_index
+    assert 'id="visit-summary-actions" class="visit-summary-actions" aria-label="診察用サマリーの操作" hidden' in html
