@@ -14,6 +14,7 @@ let editingPainStateOptionId = null;
 let expandedHistoryDate = null;
 let historyRange = null;
 let currentVisitSummaryData = null;
+let currentVisitSummaryText = '';
 
 const $ = (id) => document.getElementById(id);
 
@@ -790,6 +791,7 @@ function updateSummaryEndDateMode() {
 
 function resetVisitSummaryResult() {
   currentVisitSummaryData = null;
+  currentVisitSummaryText = '';
   const actions = $('visit-summary-actions');
   const result = $('visit-summary-result');
   if (actions) actions.hidden = true;
@@ -821,11 +823,12 @@ function renderSummaryPeriodPicker() {
   ).join('');
   select.addEventListener('change', () => {
     const period = appData.periods.find((item) => item.id === select.value);
-    if (!period) return;
-    $('summary-start-date').value = period.startDate;
-    $('summary-end-date').value = period.endDate;
-    $('summary-end-yesterday').checked = false;
-    $('summary-end-custom').checked = true;
+    if (period) {
+      $('summary-start-date').value = period.startDate;
+      $('summary-end-date').value = period.endDate;
+      $('summary-end-yesterday').checked = false;
+      $('summary-end-custom').checked = true;
+    }
     handleVisitSummaryConditionChange();
   });
   container.append(label, select);
@@ -1303,17 +1306,21 @@ function buildVisitSummaryText(summary) {
 }
 
 function currentVisitSummaryDataForAction() {
-  return currentVisitSummaryData;
+  return currentVisitSummaryData && currentVisitSummaryText ? currentVisitSummaryData : null;
+}
+
+function currentVisitSummaryTextForAction() {
+  return currentVisitSummaryData && currentVisitSummaryText ? currentVisitSummaryText : '';
 }
 
 async function copyVisitSummary() {
-  const summary = currentVisitSummaryDataForAction();
-  if (!summary || !navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+  const text = currentVisitSummaryTextForAction();
+  if (!text || !navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
     showToast('コピーできませんでした');
     return;
   }
   try {
-    await navigator.clipboard.writeText(buildVisitSummaryText(summary));
+    await navigator.clipboard.writeText(text);
     showToast('診察用サマリーをコピーしました');
   } catch {
     showToast('コピーできませんでした');
@@ -1329,13 +1336,14 @@ function visitSummaryTextFilename(summary) {
 
 function saveVisitSummaryText() {
   const summary = currentVisitSummaryDataForAction();
-  if (!summary) {
+  const text = currentVisitSummaryTextForAction();
+  if (!summary || !text) {
     showToast('テキスト保存できませんでした');
     return;
   }
   let url = '';
   try {
-    const blob = new Blob([buildVisitSummaryText(summary)], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
     url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -1385,8 +1393,9 @@ function runVisitSummary() {
   if (message) return;
   const summary = buildVisitSummaryData(startDate, endDate);
   currentVisitSummaryData = summary;
+  currentVisitSummaryText = buildVisitSummaryText(summary);
   renderVisitSummaryResult(startDate, endDate, summary.days, summary.medicationRows, summary.statePainRows, summary.dosePainRows, summary.painChangeRows);
-  $('visit-summary-actions').hidden = false;
+  $('visit-summary-actions').hidden = !currentVisitSummaryDataForAction();
 }
 
 function nextPeriodStartSuggestion() {
