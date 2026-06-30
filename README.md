@@ -60,7 +60,6 @@ The app does not send records to an external server.
 
 TideTrace does not use:
 
-* analytics
 * tracking
 * external APIs
 * third-party libraries
