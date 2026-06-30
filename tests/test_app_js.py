@@ -1075,12 +1075,56 @@ def test_visit_summary_actions_are_hidden_until_run_and_cleared_on_condition_cha
         assert.equal(elements['visit-summary-actions'].hidden, false);
         assert.equal(elements['visit-summary-result'].innerHTML, '2026-06-01_2026-06-07');
         assert.equal(currentVisitSummaryDataForAction().startDate, '2026-06-01');
+        assert.equal(currentVisitSummaryTextForAction().includes('範囲：2026/06/01〜2026/06/07'), true);
 
         elements['summary-start-date'].value = '2026-06-02';
         handleVisitSummaryConditionChange();
         assert.equal(elements['visit-summary-actions'].hidden, true);
         assert.equal(elements['visit-summary-result'].innerHTML, '');
         assert.equal(currentVisitSummaryDataForAction(), null);
+        assert.equal(currentVisitSummaryTextForAction(), '');
+        """
+    )
+
+
+def test_visit_summary_copy_and_save_use_current_generated_text_without_rebuilding() -> None:
+    run_app_js(
+        """
+        (async () => {
+        const assert = require('node:assert/strict');
+        nowParts = () => ({ iso: '2026-06-21T00:00:00.000Z', localDate: '2026-06-21', localTime: '09:00' });
+        appData = { schemaVersion: 1, settings: { medicationOptions: [], painStateOptions: [] }, periods: [], events: [] };
+        const elements = {
+          'summary-start-date': { value: '2026-06-01' },
+          'summary-end-date': { value: '2026-06-07', disabled: false, hidden: false },
+          'summary-end-yesterday': { checked: false },
+          'summary-end-custom': { checked: true },
+          'summary-end-yesterday-label': { textContent: '' },
+          'visit-summary-actions': { hidden: true },
+          'visit-summary-result': { innerHTML: '' },
+          'visit-summary-message': { textContent: '', classList: { toggle() {} } }
+        };
+        global.document = {
+          getElementById(id) { return elements[id]; },
+          createElement(tag) { return { tag, click() {}, set href(value) { this._href = value; }, set download(value) { this._download = value; } }; }
+        };
+        renderVisitSummaryResult = () => { elements['visit-summary-result'].innerHTML = 'rendered'; };
+        let clipboardText = '';
+        Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText(text) { clipboardText = text; return Promise.resolve(); } } }, configurable: true });
+        let blobText = '';
+        global.Blob = function(parts) { blobText = parts.join(''); };
+        global.URL = { createObjectURL() { return 'blob:test'; }, revokeObjectURL() {} };
+        global.showToast = () => {};
+
+        runVisitSummary();
+        const generatedText = currentVisitSummaryTextForAction();
+        buildVisitSummaryData = () => { throw new Error('copy/save must not rebuild'); };
+        await copyVisitSummary();
+        saveVisitSummaryText();
+
+        assert.equal(clipboardText, generatedText);
+        assert.equal(blobText, generatedText);
+        })();
         """
     )
 
