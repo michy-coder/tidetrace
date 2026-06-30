@@ -1196,6 +1196,146 @@ function renderMedicationPainChangeSummary(block, painChangeRows) {
   block.appendChild(notice);
 }
 
+
+function buildVisitSummaryData(startDate, endDate) {
+  const days = inclusiveDays(startDate, endDate);
+  return {
+    startDate,
+    endDate,
+    days,
+    medicationRows: buildMedicationSummary(startDate, endDate),
+    statePainRows: buildStatePainSummary(startDate, endDate),
+    dosePainRows: buildDosePainSummary(startDate, endDate),
+    painChangeRows: buildMedicationPainChangeSummary(startDate, endDate)
+  };
+}
+
+function visitSummaryRangeFromControls() {
+  const startDate = $('summary-start-date').value;
+  const endDate = $('summary-end-yesterday').checked ? addDays(nowParts().localDate, -1) : $('summary-end-date').value;
+  return { startDate, endDate };
+}
+
+function appendVisitSummaryTextSection(lines, heading, rows, emptyText, rowFormatter, notice = '') {
+  lines.push('', heading);
+  if (!rows.length) {
+    lines.push(emptyText);
+  } else {
+    rows.forEach((row) => lines.push(rowFormatter(row)));
+  }
+  if (notice) lines.push(notice);
+}
+
+function buildVisitSummaryText(summary) {
+  const data = summary || buildVisitSummaryData(...Object.values(visitSummaryRangeFromControls()));
+  const lines = [
+    'Tide Trace 診察用サマリー',
+    `範囲：${formatFullDate(data.startDate)}〜${formatFullDate(data.endDate)}`,
+    `日数：${data.days}日`
+  ];
+
+  appendVisitSummaryTextSection(
+    lines,
+    '服薬',
+    data.medicationRows,
+    '服薬記録はありません。',
+    (row) => `${row.label}：合計 ${amountText(row.total, row.unit)} / 1日平均 ${(row.total / data.days).toFixed(2)}${row.unit}`
+  );
+
+  appendVisitSummaryTextSection(
+    lines,
+    '状態別の痛み',
+    data.statePainRows,
+    '状態別の痛み記録はありません。',
+    (row) => `${row.label}：記録日数 ${row.recordDays}日 / 最大 ${formatPainValue(row.maxPain)}${formatMaxPainDays(row.maxPainDays)} / 平均 ${row.averagePain.toFixed(1)}`,
+    '同じ日・同じ状態の痛みを日単位で集計しています。服薬前後や他の薬との併用条件は分けていません。'
+  );
+
+  lines.push('', '薬量別の痛み');
+  if (!data.dosePainRows.length) {
+    lines.push('服薬記録がないため、薬量別の痛みサマリーはありません。');
+  } else {
+    data.dosePainRows.forEach((row) => {
+      lines.push(row.unit ? `${row.label}（${row.unit}）` : row.label);
+      row.doseGroups.forEach((group) => {
+        const doseLabel = `${amountText(group.amount, row.unit)}の日`;
+        lines.push(`- ${doseLabel}：対象 ${group.targetDays}日 / 痛み記録あり ${group.painDays}日 / 最大 ${formatPainValue(group.maxPain)}${formatMaxPainDays(group.maxPainDays)} / 平均 ${formatAveragePain(group)}`);
+      });
+    });
+  }
+  lines.push('薬ごとに日単位で集計しています。他の薬との併用条件は分けていません。');
+
+  appendVisitSummaryTextSection(
+    lines,
+    '服薬前後の痛み変化',
+    data.painChangeRows,
+    '条件に合う服薬前後の痛み記録はありません。',
+    (row) => {
+      const beforeAfter = `${formatOneDecimal(row.averageBefore)}→${formatOneDecimal(row.averageAfter)}`;
+      const averageText = formatPainChangeRate(row.averageChange);
+      return row.count === 1
+        ? `${row.label}：対象 1回 / ${averageText} / 前後 ${beforeAfter}`
+        : `${row.label}：対象 ${row.count}回 / 平均 ${averageText} / 中央 ${formatPainChangeRate(row.medianChange)} / 前後 ${beforeAfter}`;
+    },
+    '服薬前2時間以内と服薬後1〜3時間以内の痛み記録がそろう服薬だけを集計しています。姿勢・状態・他の薬との併用条件は分けていません。'
+  );
+
+  return lines.join('\n');
+}
+
+function currentVisitSummaryDataForAction() {
+  updateSummaryEndDateMode();
+  const { startDate, endDate } = visitSummaryRangeFromControls();
+  const message = summaryValidationMessage(startDate, endDate);
+  $('visit-summary-message').textContent = message;
+  $('visit-summary-message').classList.toggle('error', Boolean(message));
+  if (message) return null;
+  return buildVisitSummaryData(startDate, endDate);
+}
+
+async function copyVisitSummary() {
+  const summary = currentVisitSummaryDataForAction();
+  if (!summary || !navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+    showToast('コピーできませんでした');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(buildVisitSummaryText(summary));
+    showToast('診察用サマリーをコピーしました');
+  } catch {
+    showToast('コピーできませんでした');
+  }
+}
+
+function visitSummaryTextFilename(summary) {
+  if (summary && isValidDateString(summary.startDate) && isValidDateString(summary.endDate)) {
+    return `tide-trace-summary-${summary.startDate}_${summary.endDate}.txt`;
+  }
+  return `tide-trace-summary-${nowParts().localDate}.txt`;
+}
+
+function saveVisitSummaryText() {
+  const summary = currentVisitSummaryDataForAction();
+  if (!summary) {
+    showToast('テキスト保存できませんでした');
+    return;
+  }
+  let url = '';
+  try {
+    const blob = new Blob([buildVisitSummaryText(summary)], { type: 'text/plain;charset=utf-8' });
+    url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = visitSummaryTextFilename(summary);
+    link.click();
+    showToast('診察用サマリーを保存しました');
+  } catch {
+    showToast('テキスト保存できませんでした');
+  } finally {
+    if (url) URL.revokeObjectURL(url);
+  }
+}
+
 function renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows, dosePainRows, painChangeRows = []) {
   const result = $('visit-summary-result');
   result.innerHTML = '';
@@ -1224,19 +1364,14 @@ function renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows,
 
 function runVisitSummary() {
   updateSummaryEndDateMode();
-  const startDate = $('summary-start-date').value;
-  const endDate = $('summary-end-yesterday').checked ? addDays(nowParts().localDate, -1) : $('summary-end-date').value;
+  const { startDate, endDate } = visitSummaryRangeFromControls();
   const message = summaryValidationMessage(startDate, endDate);
   $('visit-summary-message').textContent = message;
   $('visit-summary-message').classList.toggle('error', Boolean(message));
   $('visit-summary-result').innerHTML = '';
   if (message) return;
-  const days = inclusiveDays(startDate, endDate);
-  const rows = buildMedicationSummary(startDate, endDate);
-  const statePainRows = buildStatePainSummary(startDate, endDate);
-  const dosePainRows = buildDosePainSummary(startDate, endDate);
-  const painChangeRows = buildMedicationPainChangeSummary(startDate, endDate);
-  renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows, dosePainRows, painChangeRows);
+  const summary = buildVisitSummaryData(startDate, endDate);
+  renderVisitSummaryResult(startDate, endDate, summary.days, summary.medicationRows, summary.statePainRows, summary.dosePainRows, summary.painChangeRows);
 }
 
 function nextPeriodStartSuggestion() {
@@ -2129,6 +2264,8 @@ function wireEvents() {
   $('summary-end-yesterday').addEventListener('change', updateSummaryEndDateMode);
   $('summary-end-custom').addEventListener('change', updateSummaryEndDateMode);
   $('run-visit-summary').addEventListener('click', runVisitSummary);
+  $('copy-visit-summary').addEventListener('click', copyVisitSummary);
+  $('save-visit-summary-text').addEventListener('click', saveVisitSummaryText);
   $('history-details').addEventListener('toggle', () => {
     if ($('history-details').open) {
       historyRange = recentHistoryRange(nowParts().localDate);
