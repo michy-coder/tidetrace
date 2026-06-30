@@ -497,6 +497,65 @@ def test_visit_summary_dose_pain_display_uses_compact_pain_labels_and_notice() -
 
 
 
+def test_visit_summary_time_pain_groups_by_local_time_and_restored_utc() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: { medicationOptions: [], painStateOptions: [] },
+          events: [
+            { type: 'pain', localDate: '2026-07-01', localTime: '00:00', painScore: 4 },
+            { type: 'pain', localDate: '2026-07-01', localTime: '05:59', painScore: 9 },
+            { type: 'pain', localDate: '2026-07-01', localTime: '06:00', painScore: 5 },
+            { type: 'pain', localDate: '2026-07-02', localTime: '11:59', painScore: 7 },
+            { type: 'pain', localDate: '2026-07-02', localTime: '12:00', painScore: 6 },
+            { type: 'pain', localDate: '2026-07-03', localTime: '17:59', painScore: 8 },
+            { type: 'pain', localDate: '2026-07-03', localTime: '18:00', painScore: 3 },
+            { type: 'pain', localDate: '2026-07-04', localTime: '23:59', painScore: 5 },
+            { type: 'pain', localDate: '2026-07-04', recordedAtUtc: '2026-07-03T15:30:00.000Z', painScore: 7 },
+            { type: 'pain', localDate: '2026-07-04', painScore: 10 },
+            { type: 'pain', localDate: '2026-07-04', localTime: '09:00', painScore: '8' }
+          ]
+        };
+
+        const rows = buildTimePainSummary('2026-07-01', '2026-07-04');
+        assert.deepEqual(rows.map((row) => row.label), ['深夜・早朝', '午前', '午後', '夜']);
+        assert.deepEqual(rows.map((row) => [row.recordDays, row.count, row.maxPain, row.maxPainDays, row.averagePain.toFixed(1)]), [
+          [2, 3, 9, 1, '6.7'],
+          [2, 2, 7, 1, '6.0'],
+          [2, 2, 8, 1, '7.0'],
+          [2, 2, 5, 1, '4.0']
+        ]);
+        assert.equal(formatTimePainSummaryRow(rows[0]), '深夜・早朝：記録日数 2日 / 回数 3回 / 最大 9(1日) / 平均 6.7');
+        """
+    )
+
+
+def test_visit_summary_time_pain_display_and_empty_notice() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const block = { children: [], appendChild(item) { this.children.push(item); } };
+        global.document = {
+          createElement(tag) {
+            return { tag, className: '', innerHTML: '', textContent: '', children: [], appendChild(item) { this.children.push(item); } };
+          }
+        };
+
+        renderTimePainSummary(block, [{ label: '午前', recordDays: 1, count: 2, maxPain: 8, maxPainDays: 1, averagePain: 6.5 }]);
+        assert.equal(block.children[0].textContent, '時間帯別の痛み');
+        assert.equal(block.children[1].textContent, '午前：記録日数 1日 / 回数 2回 / 最大 8(1日) / 平均 6.5');
+        assert.equal(block.children[2].className, 'visit-summary-notice supplemental-text');
+        assert.equal(block.children[2].textContent, '時間帯ごとに痛み記録を集計しています。姿勢・状態・服薬前後・他の薬との併用条件は分けていません。');
+
+        const emptyBlock = { children: [], appendChild(item) { this.children.push(item); } };
+        renderTimePainSummary(emptyBlock, []);
+        assert.equal(emptyBlock.children[1].className, 'empty');
+        assert.equal(emptyBlock.children[1].textContent, '条件に合う痛み記録はありません。');
+        """
+    )
+
+
 def test_visit_summary_pain_change_uses_required_windows_and_medication_groups() -> None:
     run_app_js(
         """
@@ -1044,6 +1103,7 @@ def test_visit_summary_text_uses_shared_summary_data_without_ui_labels() -> None
         assert.equal(text.includes('範囲：2026/02/16〜2026/02/16'), true);
         assert.equal(text.includes('服薬\\n薬A：合計 1錠 / 1日平均 1.00錠'), true);
         assert.equal(text.includes('状態別の痛み\\n安静時：記録日数 1日 / 最大 6(1日) / 平均 4.5'), true);
+        assert.equal(text.includes('時間帯別の痛み\\n午前：記録日数 1日 / 回数 2回 / 最大 6(1日) / 平均 4.5'), true);
         assert.equal(text.includes('服薬前後の痛み変化\\n薬A：対象 1回 / 50%低下 / 前後 6→3'), true);
         assert.equal(text.includes('コピー'), false);
         assert.equal(text.includes('テキスト保存'), false);
