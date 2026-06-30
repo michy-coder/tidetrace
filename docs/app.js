@@ -13,6 +13,7 @@ let editingMedicationOptionId = null;
 let editingPainStateOptionId = null;
 let expandedHistoryDate = null;
 let historyRange = null;
+let currentVisitSummaryData = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -787,6 +788,24 @@ function updateSummaryEndDateMode() {
   if (useYesterday) $('summary-end-date').value = yesterday;
 }
 
+function resetVisitSummaryResult() {
+  currentVisitSummaryData = null;
+  const actions = $('visit-summary-actions');
+  const result = $('visit-summary-result');
+  if (actions) actions.hidden = true;
+  if (result) result.innerHTML = '';
+}
+
+function handleVisitSummaryConditionChange() {
+  updateSummaryEndDateMode();
+  resetVisitSummaryResult();
+  const message = $('visit-summary-message');
+  if (message) {
+    message.textContent = '';
+    message.classList.remove('error');
+  }
+}
+
 function renderSummaryPeriodPicker() {
   const container = $('summary-period-picker');
   container.innerHTML = '';
@@ -807,7 +826,7 @@ function renderSummaryPeriodPicker() {
     $('summary-end-date').value = period.endDate;
     $('summary-end-yesterday').checked = false;
     $('summary-end-custom').checked = true;
-    updateSummaryEndDateMode();
+    handleVisitSummaryConditionChange();
   });
   container.append(label, select);
 }
@@ -1284,13 +1303,7 @@ function buildVisitSummaryText(summary) {
 }
 
 function currentVisitSummaryDataForAction() {
-  updateSummaryEndDateMode();
-  const { startDate, endDate } = visitSummaryRangeFromControls();
-  const message = summaryValidationMessage(startDate, endDate);
-  $('visit-summary-message').textContent = message;
-  $('visit-summary-message').classList.toggle('error', Boolean(message));
-  if (message) return null;
-  return buildVisitSummaryData(startDate, endDate);
+  return currentVisitSummaryData;
 }
 
 async function copyVisitSummary() {
@@ -1368,10 +1381,12 @@ function runVisitSummary() {
   const message = summaryValidationMessage(startDate, endDate);
   $('visit-summary-message').textContent = message;
   $('visit-summary-message').classList.toggle('error', Boolean(message));
-  $('visit-summary-result').innerHTML = '';
+  resetVisitSummaryResult();
   if (message) return;
   const summary = buildVisitSummaryData(startDate, endDate);
+  currentVisitSummaryData = summary;
   renderVisitSummaryResult(startDate, endDate, summary.days, summary.medicationRows, summary.statePainRows, summary.dosePainRows, summary.painChangeRows);
+  $('visit-summary-actions').hidden = false;
 }
 
 function nextPeriodStartSuggestion() {
@@ -2261,8 +2276,12 @@ function wireEvents() {
     event.preventDefault();
     savePainStateOptionFromForm();
   });
-  $('summary-end-yesterday').addEventListener('change', updateSummaryEndDateMode);
-  $('summary-end-custom').addEventListener('change', updateSummaryEndDateMode);
+  $('summary-end-yesterday').addEventListener('change', handleVisitSummaryConditionChange);
+  $('summary-end-custom').addEventListener('change', handleVisitSummaryConditionChange);
+  $('summary-start-date').addEventListener('input', handleVisitSummaryConditionChange);
+  $('summary-start-date').addEventListener('change', handleVisitSummaryConditionChange);
+  $('summary-end-date').addEventListener('input', handleVisitSummaryConditionChange);
+  $('summary-end-date').addEventListener('change', handleVisitSummaryConditionChange);
   $('run-visit-summary').addEventListener('click', runVisitSummary);
   $('copy-visit-summary').addEventListener('click', copyVisitSummary);
   $('save-visit-summary-text').addEventListener('click', saveVisitSummaryText);

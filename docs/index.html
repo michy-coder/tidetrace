@@ -116,10 +116,6 @@
       <section class="card visit-summary-card" aria-labelledby="visit-summary-title">
         <details id="visit-summary-details">
           <summary id="visit-summary-title">診察用サマリー</summary>
-          <div class="visit-summary-actions" aria-label="診察用サマリーの操作">
-            <button id="copy-visit-summary" class="secondary-button" type="button">コピー</button>
-            <button id="save-visit-summary-text" class="secondary-button" type="button">テキスト保存</button>
-          </div>
           <div id="summary-period-picker"></div>
           <label for="summary-start-date">集計開始日</label>
           <input id="summary-start-date" class="form-control" type="date">
@@ -136,6 +132,10 @@
           </fieldset>
           <input id="summary-end-date" class="form-control" type="date">
           <button id="run-visit-summary" type="button">集計する</button>
+          <div id="visit-summary-actions" class="visit-summary-actions" aria-label="診察用サマリーの操作" hidden>
+            <button id="copy-visit-summary" class="secondary-button" type="button">コピー</button>
+            <button id="save-visit-summary-text" class="secondary-button" type="button">テキスト保存</button>
+          </div>
           <p id="visit-summary-message" class="message" role="alert"></p>
           <div id="visit-summary-result"></div>
         </details>
