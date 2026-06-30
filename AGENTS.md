@@ -32,3 +32,14 @@
 - The app is for logging only.
 - Keep the app usable on an iPhone in portrait orientation.
 - Use plain HTML, CSS, and JavaScript.
+
+## Changelog
+
+- Do not update CHANGELOG.md for minor UI text edits, small CSS adjustments, code cleanup, or internal refactoring.
+- Update CHANGELOG.md only for changes that affect how users record, review, edit, export, import, summarize, or compare their data.
+- Add new user-facing features under Unreleased > Added.
+- Add behavior changes under Unreleased > Changed.
+- Add user-visible bug fixes under Unreleased > Fixed.
+- Do not modify past release sections.
+- Do not rewrite, reorder, or reorganize CHANGELOG.md.
+- If the change is borderline, do not edit CHANGELOG.md. Instead, mention in the final summary that a changelog entry may be appropriate.
