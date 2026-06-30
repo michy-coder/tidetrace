@@ -33,6 +33,30 @@
 - Keep the app usable on an iPhone in portrait orientation.
 - Use plain HTML, CSS, and JavaScript.
 
+## Data safety
+
+- Preserve compatibility with existing localStorage data.
+- Do not rename storage keys, event fields, or settings fields unless a migration is included.
+- Do not silently drop existing user data during backup, restore, import, export, edit, or delete operations.
+- If a data structure change is necessary, explain the migration path and any compatibility risk.
+
+## Medical-context boundaries
+
+- Keep TideTrace as a record-keeping and review-support tool.
+- Do not add diagnosis, treatment recommendations, medication timing advice, emergency triage, or severity judgment.
+- Use neutral wording for health-related summaries. The app may organize user-entered observations, but must not interpret them as medical conclusions.
+
+## Manual checks
+
+When relevant, manually check the affected flow before finishing:
+
+- Add pain, medication, and note records.
+- Edit and delete existing records.
+- Export and restore a JSON backup.
+- Export CSV files.
+- Check today’s records and past records display.
+- Check mobile Safari layout assumptions when UI is changed.
+
 ## Changelog
 
 - Do not update CHANGELOG.md for minor UI text edits, small CSS adjustments, code cleanup, or internal refactoring.
