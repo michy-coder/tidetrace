@@ -985,6 +985,121 @@ function renderStatePainSummary(block, statePainRows) {
   block.appendChild(notice);
 }
 
+
+const TIME_PAIN_BUCKETS = [
+  { id: 'late-night-early-morning', label: '深夜・早朝', startHour: 0, endHour: 5 },
+  { id: 'morning', label: '午前', startHour: 6, endHour: 11 },
+  { id: 'afternoon', label: '午後', startHour: 12, endHour: 17 },
+  { id: 'night', label: '夜', startHour: 18, endHour: 23 }
+];
+
+function localDateTimeFromRecordedAtUtc(recordedAtUtc) {
+  const recordedAt = new Date(recordedAtUtc);
+  if (Number.isNaN(recordedAt.getTime())) return null;
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TIMEZONE,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(recordedAt).reduce((acc, part) => {
+    acc[part.type] = part.value;
+    return acc;
+  }, {});
+  const hour = parts.hour === '24' ? '00' : parts.hour;
+  return {
+    localDate: `${parts.year}-${parts.month}-${parts.day}`,
+    localTime: `${hour}:${parts.minute}`
+  };
+}
+
+function visitSummaryEventLocalDateTime(event) {
+  if (isDateString(event.localDate) && isTimeString(event.localTime)) {
+    return { localDate: event.localDate, localTime: event.localTime };
+  }
+  const restored = localDateTimeFromRecordedAtUtc(event.recordedAtUtc);
+  if (!restored) return null;
+  return {
+    localDate: isDateString(event.localDate) ? event.localDate : restored.localDate,
+    localTime: restored.localTime
+  };
+}
+
+function timePainBucketForLocalTime(localTime) {
+  if (!isTimeString(localTime)) return null;
+  const hour = Number(localTime.slice(0, 2));
+  return TIME_PAIN_BUCKETS.find((bucket) => hour >= bucket.startHour && hour <= bucket.endHour) || null;
+}
+
+function buildTimePainSummary(startDate, endDate) {
+  const rows = new Map(TIME_PAIN_BUCKETS.map((bucket) => [bucket.id, {
+    id: bucket.id,
+    label: bucket.label,
+    recordDates: new Set(),
+    count: 0,
+    maxPain: null,
+    maxPainDates: new Set(),
+    totalPain: 0
+  }]));
+
+  appData.events.forEach((event) => {
+    if (event.type !== 'pain' || typeof event.painScore !== 'number' || !Number.isFinite(event.painScore)) return;
+    const local = visitSummaryEventLocalDateTime(event);
+    if (!local || local.localDate < startDate || local.localDate > endDate) return;
+    const bucket = timePainBucketForLocalTime(local.localTime);
+    if (!bucket) return;
+    const row = rows.get(bucket.id);
+    row.recordDates.add(local.localDate);
+    row.count += 1;
+    row.totalPain += event.painScore;
+    if (row.maxPain === null || event.painScore > row.maxPain) {
+      row.maxPain = event.painScore;
+      row.maxPainDates = new Set([local.localDate]);
+    } else if (event.painScore === row.maxPain) {
+      row.maxPainDates.add(local.localDate);
+    }
+  });
+
+  return TIME_PAIN_BUCKETS.map((bucket) => rows.get(bucket.id))
+    .filter((row) => row.count > 0)
+    .map((row) => ({
+      id: row.id,
+      label: row.label,
+      recordDays: row.recordDates.size,
+      count: row.count,
+      maxPain: row.maxPain,
+      maxPainDays: row.maxPainDates.size,
+      averagePain: row.totalPain / row.count
+    }));
+}
+
+function formatTimePainSummaryRow(row) {
+  return `${row.label}：記録日数 ${row.recordDays}日 / 回数 ${row.count}回 / 最大 ${formatPainValue(row.maxPain)}${formatMaxPainDays(row.maxPainDays)} / 平均 ${row.averagePain.toFixed(1)}`;
+}
+
+function renderTimePainSummary(block, timePainRows) {
+  const heading = document.createElement('h3');
+  heading.textContent = '時間帯別の痛み';
+  block.appendChild(heading);
+
+  if (!timePainRows.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty';
+    empty.textContent = '条件に合う痛み記録はありません。';
+    block.appendChild(empty);
+  } else {
+    timePainRows.forEach((row) => {
+      const item = document.createElement('div');
+      item.className = 'visit-summary-time-pain-item';
+      item.textContent = formatTimePainSummaryRow(row);
+      block.appendChild(item);
+    });
+  }
+
+  const notice = document.createElement('p');
+  notice.className = 'visit-summary-notice supplemental-text';
+  notice.textContent = '時間帯ごとに痛み記録を集計しています。姿勢・状態・服薬前後・他の薬との併用条件は分けていません。';
+  block.appendChild(notice);
+}
+
 function buildDosePainSummary(startDate, endDate) {
   const dates = dateRange(startDate, endDate);
   const optionById = new Map(appData.settings.medicationOptions.map((option) => [option.id, option]));
@@ -1227,6 +1342,7 @@ function buildVisitSummaryData(startDate, endDate) {
     days,
     medicationRows: buildMedicationSummary(startDate, endDate),
     statePainRows: buildStatePainSummary(startDate, endDate),
+    timePainRows: buildTimePainSummary(startDate, endDate),
     dosePainRows: buildDosePainSummary(startDate, endDate),
     painChangeRows: buildMedicationPainChangeSummary(startDate, endDate)
   };
@@ -1271,6 +1387,15 @@ function buildVisitSummaryText(summary) {
     '状態別の痛み記録はありません。',
     (row) => `${row.label}：記録日数 ${row.recordDays}日 / 最大 ${formatPainValue(row.maxPain)}${formatMaxPainDays(row.maxPainDays)} / 平均 ${row.averagePain.toFixed(1)}`,
     '同じ日・同じ状態の痛みを日単位で集計しています。服薬前後や他の薬との併用条件は分けていません。'
+  );
+
+  appendVisitSummaryTextSection(
+    lines,
+    '時間帯別の痛み',
+    data.timePainRows,
+    '条件に合う痛み記録はありません。',
+    formatTimePainSummaryRow,
+    '時間帯ごとに痛み記録を集計しています。姿勢・状態・服薬前後・他の薬との併用条件は分けていません。'
   );
 
   lines.push('', '薬量別の痛み');
@@ -1357,7 +1482,15 @@ function saveVisitSummaryText() {
   }
 }
 
-function renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows, dosePainRows, painChangeRows = []) {
+function renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows, timePainRows = [], dosePainRows = [], painChangeRows = []) {
+  if (arguments.length === 6) {
+    dosePainRows = timePainRows;
+    timePainRows = [];
+  } else if (arguments.length === 7) {
+    painChangeRows = dosePainRows;
+    dosePainRows = timePainRows;
+    timePainRows = [];
+  }
   const result = $('visit-summary-result');
   result.innerHTML = '';
   const block = document.createElement('div');
@@ -1378,6 +1511,7 @@ function renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows,
     });
   }
   renderStatePainSummary(block, statePainRows);
+  renderTimePainSummary(block, timePainRows);
   renderDosePainSummary(block, dosePainRows);
   renderMedicationPainChangeSummary(block, painChangeRows);
   result.appendChild(block);
@@ -1394,7 +1528,7 @@ function runVisitSummary() {
   const summary = buildVisitSummaryData(startDate, endDate);
   currentVisitSummaryData = summary;
   currentVisitSummaryText = buildVisitSummaryText(summary);
-  renderVisitSummaryResult(startDate, endDate, summary.days, summary.medicationRows, summary.statePainRows, summary.dosePainRows, summary.painChangeRows);
+  renderVisitSummaryResult(startDate, endDate, summary.days, summary.medicationRows, summary.statePainRows, summary.timePainRows, summary.dosePainRows, summary.painChangeRows);
   $('visit-summary-actions').hidden = !currentVisitSummaryDataForAction();
 }
 
