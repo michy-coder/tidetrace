@@ -2015,7 +2015,7 @@ function renderHistoryNavigation(today, list) {
     const recentButton = document.createElement('button');
     recentButton.className = 'history-nav-button secondary-button';
     recentButton.type = 'button';
-    recentButton.textContent = '◀︎ 新しい記録へ';
+    recentButton.textContent = '◀︎ 新しい記録';
     recentButton.addEventListener('click', () => {
       historyRange = recentHistoryRange(today);
       expandedHistoryDate = null;
@@ -2029,7 +2029,7 @@ function renderHistoryNavigation(today, list) {
     const olderButton = document.createElement('button');
     olderButton.className = 'history-nav-button secondary-button';
     olderButton.type = 'button';
-    olderButton.textContent = '古い記録へ ▶︎';
+    olderButton.textContent = '古い記録 ▶︎';
     olderButton.addEventListener('click', () => {
       historyRange = target;
       expandedHistoryDate = null;
