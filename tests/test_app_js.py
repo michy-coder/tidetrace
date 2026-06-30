@@ -1019,3 +1019,34 @@ def test_history_navigation_renders_before_and_after_records() -> None:
     assert source.count("renderHistoryNavigation(today, list);") == 2
     assert "scrollHistoryToStart();" in source
     assert "formatFullDate(dateText)" in source
+
+
+def test_visit_summary_text_uses_shared_summary_data_without_ui_labels() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          schemaVersion: 1,
+          settings: {
+            painStateOptions: [{ id: 'state', label: '安静時', active: true, sortOrder: 1 }],
+            medicationOptions: [{ id: 'med', label: '薬A', defaultAmount: 1, unit: '錠', active: true, sortOrder: 1 }]
+          },
+          periods: [],
+          events: [
+            { id: 'm1', type: 'medication', localDate: '2026-02-16', localTime: '09:00', medicationOptionId: 'med', medicationLabel: '薬A', amount: 1, unit: '錠' },
+            { id: 'p1', type: 'pain', localDate: '2026-02-16', localTime: '08:30', painScore: 6, stateOptionId: 'state', stateLabel: '安静時' },
+            { id: 'p2', type: 'pain', localDate: '2026-02-16', localTime: '11:00', painScore: 3, stateOptionId: 'state', stateLabel: '安静時' }
+          ]
+        };
+        const summary = buildVisitSummaryData('2026-02-16', '2026-02-16');
+        const text = buildVisitSummaryText(summary);
+        assert.match(text, /^Tide Trace 診察用サマリー/);
+        assert.equal(text.includes('範囲：2026/02/16〜2026/02/16'), true);
+        assert.equal(text.includes('服薬\\n薬A：合計 1錠 / 1日平均 1.00錠'), true);
+        assert.equal(text.includes('状態別の痛み\\n安静時：記録日数 1日 / 最大 6(1日) / 平均 4.5'), true);
+        assert.equal(text.includes('服薬前後の痛み変化\\n薬A：対象 1回 / 50%低下 / 前後 6→3'), true);
+        assert.equal(text.includes('コピー'), false);
+        assert.equal(text.includes('テキスト保存'), false);
+        assert.equal(visitSummaryTextFilename(summary), 'tide-trace-summary-2026-02-16_2026-02-16.txt');
+        """
+    )

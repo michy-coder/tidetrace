@@ -794,6 +794,19 @@ summary { font-weight: 700; padding: 8px 0; }
   font-size: 1.1rem;
 }
 
+.visit-summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 8px 0 12px;
+}
+
+.visit-summary-actions button {
+  flex: 1 1 9rem;
+  margin: 0;
+  min-height: 44px;
+}
+
 .summary-end-mode {
   border: 1px solid var(--border);
   border-radius: 12px;
