@@ -51,22 +51,21 @@ TideTrace currently supports:
 * CSV export
 * JSON backup and restore
 
-## Local-first design
-
 TideTrace is published as a static web app from the docs/ folder using GitHub Pages.
 
-User-entered records are stored in the user’s browser.
-The app does not send records to an external server.
+User-entered records are stored in the user’s browser. TideTrace does not send pain entries, medication entries, notes, backups, or other user-entered health records to an external server.
+
+TideTrace may use Cloudflare Web Analytics to understand basic public page usage, such as page views, visit counts, referrers, approximate region, browser, and device type. Analytics are not used to track pain entries, medication entries, notes, button actions, or data stored in the browser.
 
 TideTrace does not use:
 
-* tracking
-* external APIs
-* third-party libraries
-* server-side storage
+* server-side storage for user-entered records
+* external APIs for app features or record processing
+* third-party libraries for app functionality
+* advertising trackers
+* analytics for user-entered health records or in-app health-related actions
 
 Actual log data is stored in the user’s browser and should be exported manually as CSV or JSON when needed.
-
 ## Project rules
 
 Health-related records must not be committed to this repository.
