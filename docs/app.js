@@ -987,7 +987,7 @@ function renderStatePainSummary(block, statePainRows) {
 
 
 const TIME_PAIN_BUCKETS = [
-  { id: 'late-night-early-morning', label: '深夜・早朝', startHour: 0, endHour: 5 },
+  { id: 'late-night-early-morning', label: '深夜', startHour: 0, endHour: 5 },
   { id: 'morning', label: '午前', startHour: 6, endHour: 11 },
   { id: 'afternoon', label: '午後', startHour: 12, endHour: 17 },
   { id: 'night', label: '夜', startHour: 18, endHour: 23 }
@@ -1072,7 +1072,7 @@ function buildTimePainSummary(startDate, endDate) {
 }
 
 function formatTimePainSummaryRow(row) {
-  return `${row.label}：記録日数 ${row.recordDays}日 / 回数 ${row.count}回 / 最大 ${formatPainValue(row.maxPain)}${formatMaxPainDays(row.maxPainDays)} / 平均 ${row.averagePain.toFixed(1)}`;
+  return `${row.label}：記録日数 ${row.recordDays}日 / 最大 ${formatPainValue(row.maxPain)}${formatMaxPainDays(row.maxPainDays)} / 平均 ${row.averagePain.toFixed(1)}`;
 }
 
 function renderTimePainSummary(block, timePainRows) {
@@ -1096,7 +1096,7 @@ function renderTimePainSummary(block, timePainRows) {
 
   const notice = document.createElement('p');
   notice.className = 'visit-summary-notice supplemental-text';
-  notice.textContent = '時間帯ごとに痛み記録を集計しています。姿勢・状態・服薬前後・他の薬との併用条件は分けていません。';
+  notice.textContent = '同じ日・同じ時間帯の痛みを日単位で集計しています。姿勢・状態・服薬前後・他の薬との併用条件は分けていません。';
   block.appendChild(notice);
 }
 
@@ -1395,7 +1395,7 @@ function buildVisitSummaryText(summary) {
     data.timePainRows,
     '条件に合う痛み記録はありません。',
     formatTimePainSummaryRow,
-    '時間帯ごとに痛み記録を集計しています。姿勢・状態・服薬前後・他の薬との併用条件は分けていません。'
+    '同じ日・同じ時間帯の痛みを日単位で集計しています。姿勢・状態・服薬前後・他の薬との併用条件は分けていません。'
   );
 
   lines.push('', '薬量別の痛み');
