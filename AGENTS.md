@@ -67,3 +67,13 @@ When relevant, manually check the affected flow before finishing:
 - Do not modify past release sections.
 - Do not rewrite, reorder, or reorganize CHANGELOG.md.
 - If the change is borderline, do not edit CHANGELOG.md. Instead, mention in the final summary that a changelog entry may be appropriate.
+
+## Specification documentation
+
+When changing TideTrace behavior, check whether `/specs/SPEC.md` or `/specs/DATA_FORMAT.md` also needs to be updated.
+
+Update `SPEC.md` for user-visible behavior, user flows, settings, import/export, editing/deletion, period comparison, and UI wording principles.
+
+Update `DATA_FORMAT.md` for localStorage keys, schemaVersion, settings, event fields, period fields, JSON backup format, CSV export format, and compatibility or migration behavior.
+
+Document only the current implementation. Do not invent planned behavior. If unclear from the code, write “Unknown from current implementation”.
