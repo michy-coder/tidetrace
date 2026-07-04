@@ -11,6 +11,7 @@ All notable changes to TideTrace will be documented in this file.
 - Added time-of-day pain summaries to visit summaries, grouping pain records by late night/early morning, morning, afternoon, and night without assessing causes or medication effects.
 
 ### Changed
+- Updated visit-summary state-pain rows to prioritize higher average pain before maximum pain.
 - Updated visit-summary time-of-day pain rows to match the state-pain summary detail level and shorten the late-night label.
 - Past record range labels now match the dates that actually have records.
 - Added maximum-pain day counts to state and dose pain sections in visit summaries.
