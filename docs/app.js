@@ -956,7 +956,7 @@ function buildStatePainSummary(startDate, endDate) {
   return [...rows.values()].map((row) => ({
     ...row,
     averagePain: row.averagePainTotal / row.recordDays
-  })).sort((a, b) => b.maxPain - a.maxPain || b.averagePain - a.averagePain || a.label.localeCompare(b.label, 'ja'));
+  })).sort((a, b) => b.averagePain - a.averagePain || b.maxPain - a.maxPain || a.label.localeCompare(b.label, 'ja'));
 }
 
 function renderStatePainSummary(block, statePainRows) {
