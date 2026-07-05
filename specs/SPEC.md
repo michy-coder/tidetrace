@@ -138,6 +138,25 @@ The current summary includes:
 
 Summary text can be copied or downloaded as a plain text file. Summary wording is intended to be descriptive and non-diagnostic, describing recorded values without assessing treatment effectiveness, causes, or severity.
 
+
+## Past records and healthcare data behavior
+
+The “過去の記録とヘルスケアデータ” view is shown below the visit summary. It is intended to place past TideTrace records and HeartWatch-style healthcare reference values side by side by day for review. The wording is descriptive and does not assess causes, medication effects, severity, prediction, or whether care is needed.
+
+The current implementation supports temporary import of HeartWatch daily CSV files only. Detailed HeartWatch CSV files, Apple Healthcare exports, graph display, and heart-rate display around pain or medication events are not implemented. Imported healthcare data is kept only in memory for the current screen use and is not saved to `localStorage` or included in backups. Reloading or closing the page clears the imported healthcare data.
+
+The view excludes today’s date because the day is not complete. Today is determined with the same Asia/Tokyo date helper used for TideTrace records.
+
+HeartWatch rows are joined by date using the first 10 characters of the CSV `ISO` value (`YYYY-MM-DD`). The implementation does not convert the `ISO` value to a JavaScript `Date` or UTC date before creating the join key. TideTrace records are joined by the event `localDate` field.
+
+The daily summary table shows dates that exist in either TideTrace records or the imported HeartWatch CSV, excluding today, sorted oldest first. Columns are: date, maximum pain, average pain, pain record count, medication count, steps, sleep duration, sleep HRV, normal heart-rate average, normal heart-rate high, and resting heart-rate high. Missing values remain blank and are not converted to zero. Note contents are not shown.
+
+Available actions are:
+
+- Copy readable plain text for the daily summary.
+- Copy TSV with full column labels, including `睡眠HRV(ms)`, for spreadsheet paste.
+- Show a print-friendly display; users can save PDF files through the browser’s share or print feature.
+
 ## Import/export behavior
 
 ### JSON backup export

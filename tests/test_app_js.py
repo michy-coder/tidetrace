@@ -1196,3 +1196,50 @@ def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> No
     result_index = html.index('id="visit-summary-result"')
     assert run_index < actions_index < result_index
     assert 'id="visit-summary-actions" class="visit-summary-actions" aria-label="診察用サマリーの操作" hidden' in html
+
+
+
+def test_heartwatch_csv_uses_iso_prefix_and_keeps_import_temporary() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        let storageWrites = 0;
+        global.localStorage = { getItem() { return null; }, setItem() { storageWrites += 1; } };
+        const csv = '\\uFEFFISO,日付,睡眠時間,睡眠-心拍変動-ms,平常-平均-bpm,平常-高-bpm,安静-高-bpm,歩数\\n2026-06-15T23:00:00+09:00,6/15,09:51:22,34,83.5,132,97,5757\\n2026-06-16T04:00:00+09:00,6/16,,29,76.1,120,94,2384';
+        const parsed = parseHeartWatchCsv(csv);
+        assert.equal(parsed.error, false);
+        assert.equal(parsed.data.has('2026-06-15'), true);
+        assert.equal(parsed.data.has('2026-06-16'), true);
+        assert.equal(parsed.data.has('2026-06-14'), false);
+        assert.equal(parsed.data.get('2026-06-15').sleep, '9:51');
+        assert.equal(parsed.data.get('2026-06-16').sleep, '');
+        assert.equal(storageWrites, 0);
+        """
+    )
+
+
+def test_health_history_daily_summary_joins_local_dates_and_excludes_today() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        nowParts = () => ({ iso: '2026-06-17T00:00:00.000Z', localDate: '2026-06-16', localTime: '09:00' });
+        appData = { events: [
+          { type: 'pain', localDate: '2026-06-15', painScore: 8 },
+          { type: 'pain', localDate: '2026-06-15', painScore: 5 },
+          { type: 'medication', localDate: '2026-06-15' },
+          { type: 'pain', localDate: '2026-06-16', painScore: 9 },
+          { type: 'medication', localDate: '2026-06-14' }
+        ] };
+        const parsed = parseHeartWatchCsv('ISO,睡眠時間,睡眠-心拍変動-ms,平常-平均-bpm,平常-高-bpm,安静-高-bpm,歩数\\n2026-06-15T23:00:00+09:00,09:51:00,34,83.5,132,97,5757\\n2026-06-16T04:00:00+09:00,08:04:00,29,76.1,120,94,2384');
+        const rows = buildHealthHistoryRows(parsed.data);
+        assert.deepEqual(rows.map((row) => row.date), ['2026-06-14', '2026-06-15']);
+        assert.equal(rows[1].painMax, 8);
+        assert.equal(rows[1].painAverage, '6.5');
+        assert.equal(rows[1].painCount, '2');
+        assert.equal(rows[1].medicationCount, '1');
+        assert.equal(rows[1].steps, '5757');
+        assert.match(buildHealthHistoryTsv(rows), /^日付\t痛み最大\t痛み平均\t痛み記録数\t服薬回数\t歩数\t睡眠時間\t睡眠HRV\\(ms\\)/);
+        assert.match(buildHealthHistoryText(rows), /日ごとのまとめ（2026-06-14〜2026-06-15）/);
+        assert.equal(hasMissingHeartWatchDates(rows, parsed.data), true);
+        """
+    )

@@ -1532,6 +1532,215 @@ function runVisitSummary() {
   $('visit-summary-actions').hidden = !currentVisitSummaryDataForAction();
 }
 
+
+const HEARTWATCH_COLUMNS = ['ISO', '睡眠時間', '睡眠-心拍変動-ms', '平常-平均-bpm', '平常-高-bpm', '安静-高-bpm', '歩数'];
+const HEALTH_HISTORY_TSV_HEADERS = ['日付', '痛み最大', '痛み平均', '痛み記録数', '服薬回数', '歩数', '睡眠時間', '睡眠HRV(ms)', '平常時心拍 平均', '平常時心拍 最高', '安静時心拍 最高'];
+let currentHealthHistoryRows = [];
+
+function parseCsv(text) {
+  const source = String(text || '').replace(/^\uFEFF/, '');
+  const rows = [];
+  let row = [];
+  let field = '';
+  let quoted = false;
+  for (let i = 0; i < source.length; i += 1) {
+    const char = source[i];
+    if (quoted) {
+      if (char === '"') {
+        if (source[i + 1] === '"') { field += '"'; i += 1; }
+        else quoted = false;
+      } else field += char;
+    } else if (char === '"') {
+      quoted = true;
+    } else if (char === ',') {
+      row.push(field); field = '';
+    } else if (char === '\n') {
+      row.push(field); rows.push(row); row = []; field = '';
+    } else if (char !== '\r') {
+      field += char;
+    }
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function formatSleepDuration(value) {
+  if (!value) return '';
+  const match = String(value).trim().match(/^(\d{1,3}):(\d{2})(?::\d{2})?$/);
+  return match ? `${Number(match[1])}:${match[2]}` : String(value).trim();
+}
+
+function parseHeartWatchCsv(text) {
+  const rows = parseCsv(text).filter((row) => row.some((cell) => cell.trim() !== ''));
+  if (!rows.length) return { data: null, error: true };
+  const headers = rows[0].map((header) => header.trim().replace(/^\uFEFF/, ''));
+  if (!HEARTWATCH_COLUMNS.every((column) => headers.includes(column))) return { data: null, error: true };
+  const indexes = Object.fromEntries(HEARTWATCH_COLUMNS.map((column) => [column, headers.indexOf(column)]));
+  const data = new Map();
+  rows.slice(1).forEach((row) => {
+    const iso = (row[indexes.ISO] || '').trim();
+    const dateKey = iso.slice(0, 10);
+    if (!isValidDateString(dateKey)) return;
+    data.set(dateKey, {
+      steps: (row[indexes['歩数']] || '').trim(),
+      sleep: formatSleepDuration(row[indexes['睡眠時間']] || ''),
+      sleepHrv: (row[indexes['睡眠-心拍変動-ms']] || '').trim(),
+      normalAvgHr: (row[indexes['平常-平均-bpm']] || '').trim(),
+      normalHighHr: (row[indexes['平常-高-bpm']] || '').trim(),
+      restingHighHr: (row[indexes['安静-高-bpm']] || '').trim()
+    });
+  });
+  return { data, error: false };
+}
+
+function tideTraceDailyHealthSummary() {
+  const days = new Map();
+  appData.events.forEach((event) => {
+    if (!isValidDateString(event.localDate)) return;
+    if (!days.has(event.localDate)) days.set(event.localDate, { painScores: [], medicationCount: 0 });
+    const day = days.get(event.localDate);
+    if (event.type === 'pain' && typeof event.painScore === 'number' && Number.isFinite(event.painScore)) day.painScores.push(event.painScore);
+    if (event.type === 'medication') day.medicationCount += 1;
+  });
+  return days;
+}
+
+function buildHealthHistoryRows(heartwatchData) {
+  const today = nowParts().localDate;
+  const tideDays = tideTraceDailyHealthSummary();
+  const dates = new Set([...tideDays.keys(), ...heartwatchData.keys()]);
+  return [...dates].filter((date) => date < today).sort().map((date) => {
+    const tide = tideDays.get(date) || { painScores: [], medicationCount: 0 };
+    const heart = heartwatchData.get(date) || {};
+    const painCount = tide.painScores.length;
+    const painMax = painCount ? Math.max(...tide.painScores) : '';
+    const painAverage = painCount ? (tide.painScores.reduce((total, score) => total + score, 0) / painCount).toFixed(1) : '';
+    return { date, painMax, painAverage, painCount: painCount ? String(painCount) : '', medicationCount: tide.medicationCount ? String(tide.medicationCount) : '', steps: heart.steps || '', sleep: heart.sleep || '', sleepHrv: heart.sleepHrv || '', normalAvgHr: heart.normalAvgHr || '', normalHighHr: heart.normalHighHr || '', restingHighHr: heart.restingHighHr || '' };
+  });
+}
+
+function hasMissingHeartWatchDates(rows, heartwatchData) {
+  const heartDates = new Set(heartwatchData.keys());
+  if (rows.some((row) => !heartDates.has(row.date))) return true;
+  const csvDates = [...heartDates].sort();
+  if (csvDates.length < 2) return false;
+  for (let date = csvDates[0]; date <= csvDates[csvDates.length - 1]; date = addDays(date, 1)) {
+    if (!heartDates.has(date)) return true;
+  }
+  return false;
+}
+
+function healthHistoryValues(row) {
+  return [row.date, row.painMax, row.painAverage, row.painCount, row.medicationCount, row.steps, row.sleep, row.sleepHrv, row.normalAvgHr, row.normalHighHr, row.restingHighHr];
+}
+
+function renderHealthHistoryRows(rows, missingHeartWatchDates) {
+  const result = $('health-history-result');
+  result.innerHTML = '';
+  const block = document.createElement('div');
+  block.className = 'visit-summary-result-block';
+  block.innerHTML = '<h3>日ごとのまとめ</h3>';
+  if (missingHeartWatchDates) {
+    const notice = document.createElement('p');
+    notice.className = 'visit-summary-notice supplemental-text';
+    notice.textContent = 'HeartWatch CSVに含まれない日があります。必要に応じてCSVを書き出し直してください。';
+    block.appendChild(notice);
+  }
+  if (!rows.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty';
+    empty.textContent = '表示できる過去の日ごとの記録はありません。';
+    block.appendChild(empty);
+  } else {
+    const wrap = document.createElement('div');
+    wrap.className = 'health-history-table-wrap';
+    const table = document.createElement('table');
+    table.className = 'health-history-table';
+    table.innerHTML = `<thead><tr>${['日付','痛み最大','痛み平均','記録数','服薬回数','歩数','睡眠','睡眠HRV','平常平均','平常最高','安静最高'].map((h) => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>`;
+    const tbody = document.createElement('tbody');
+    rows.forEach((row) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = healthHistoryValues(row).map((value) => `<td>${escapeHtml(value)}</td>`).join('');
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    block.appendChild(wrap);
+  }
+  result.appendChild(block);
+  $('health-history-actions').hidden = rows.length === 0;
+}
+
+function healthHistoryRangeText(rows) {
+  return rows.length ? `（${rows[0].date}〜${rows[rows.length - 1].date}）` : '';
+}
+
+function buildHealthHistoryText(rows) {
+  const lines = [`日ごとのまとめ${healthHistoryRangeText(rows)}`];
+  const labels = ['日付', '痛み最大', '痛み平均', '痛み記録数', '服薬回数', '歩数', '睡眠時間', '睡眠HRV(ms)', '平常時心拍 平均', '平常時心拍 最高', '安静時心拍 最高'];
+  rows.forEach((row) => {
+    const values = healthHistoryValues(row);
+    lines.push('', row.date);
+    values.slice(1).forEach((value, index) => { if (value !== '') lines.push(`${labels[index + 1]}：${value}`); });
+  });
+  return lines.join('\n');
+}
+
+function buildHealthHistoryTsv(rows) {
+  return [HEALTH_HISTORY_TSV_HEADERS.join('\t'), ...rows.map((row) => healthHistoryValues(row).join('\t'))].join('\n');
+}
+
+async function copyHealthHistoryText() {
+  if (!currentHealthHistoryRows.length || !navigator.clipboard) return showToast('コピーできませんでした');
+  try { await navigator.clipboard.writeText(buildHealthHistoryText(currentHealthHistoryRows)); showToast('テキストをコピーしました'); }
+  catch { showToast('コピーできませんでした'); }
+}
+
+async function copyHealthHistoryTsv() {
+  if (!currentHealthHistoryRows.length || !navigator.clipboard) return showToast('コピーできませんでした');
+  try { await navigator.clipboard.writeText(buildHealthHistoryTsv(currentHealthHistoryRows)); showToast('TSVをコピーしました'); }
+  catch { showToast('コピーできませんでした'); }
+}
+
+function showHealthHistoryPrint() {
+  if (!currentHealthHistoryRows.length) return;
+  $('health-history-print-help').hidden = false;
+  $('health-history-details').open = true;
+  document.body.classList.add('health-history-print-mode');
+  window.print();
+}
+
+function handleHeartWatchCsvSelected(event) {
+  const input = event.target;
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const parsed = parseHeartWatchCsv(String(reader.result));
+    const message = $('health-history-message');
+    message.textContent = '';
+    message.classList.remove('error');
+    currentHealthHistoryRows = [];
+    $('health-history-actions').hidden = true;
+    if (parsed.error) {
+      message.textContent = 'HeartWatch CSVとして読み込めませんでした。';
+      message.classList.add('error');
+      $('health-history-result').innerHTML = '';
+    } else {
+      currentHealthHistoryRows = buildHealthHistoryRows(parsed.data);
+      renderHealthHistoryRows(currentHealthHistoryRows, hasMissingHeartWatchDates(currentHealthHistoryRows, parsed.data));
+      showToast('HeartWatch CSVを読み込みました');
+    }
+    input.value = '';
+  };
+  reader.onerror = () => {
+    $('health-history-message').textContent = 'HeartWatch CSVとして読み込めませんでした。';
+    $('health-history-message').classList.add('error');
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
 function nextPeriodStartSuggestion() {
   if (!appData.periods.length) return '';
   const latest = [...appData.periods].sort((a, b) => b.endDate.localeCompare(a.endDate))[0];
@@ -2428,6 +2637,10 @@ function wireEvents() {
   $('run-visit-summary').addEventListener('click', runVisitSummary);
   $('copy-visit-summary').addEventListener('click', copyVisitSummary);
   $('save-visit-summary-text').addEventListener('click', saveVisitSummaryText);
+  $('heartwatch-csv-file').addEventListener('change', handleHeartWatchCsvSelected);
+  $('copy-health-history-text').addEventListener('click', copyHealthHistoryText);
+  $('copy-health-history-tsv').addEventListener('click', copyHealthHistoryTsv);
+  $('show-health-history-print').addEventListener('click', showHealthHistoryPrint);
   $('history-details').addEventListener('toggle', () => {
     if ($('history-details').open) {
       historyRange = recentHistoryRange(nowParts().localDate);
