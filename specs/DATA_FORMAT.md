@@ -4,13 +4,13 @@ This document describes the current TideTrace storage and export format. It docu
 
 ## Storage location
 
-TideTrace stores the full app data object in browser `localStorage`.
+The current implementation stores the full TideTrace app data object in browser `localStorage`.
 
 | Key | Value |
 | --- | --- |
 | `tideTrace.data.v1` | JSON string containing the app data object |
 
-There are no other app data `localStorage` keys in the current implementation.
+This describes only TideTrace app data storage; other `localStorage` keys may exist globally in the browser.
 
 ## Top-level app data object
 
@@ -61,7 +61,7 @@ Validated settings fields:
 | `medicationOptions` | array | Required. Each item must match the medication option format. |
 | `painStateOptions` | array | Required. Each item must match the pain-state option format. |
 | `lastJsonExportedAtUtc` | string or null | Required by validation. Updated before JSON backup download. |
-| `lastCsvExportedAtUtc` | string or null | Required by validation. Updated before CSV download. |
+| `lastCsvExportedAtUtc` | string or null | Required by validation. Updated after CSV download is triggered. |
 
 Other settings fields used by current initial data:
 
@@ -245,7 +245,7 @@ JSON restore/import accepts only data that passes current validation. Import rep
 
 ## CSV export format
 
-CSV export writes UTF-8 CSV with a byte order mark. Filenames use:
+CSV export triggers a UTF-8 CSV download with a byte order mark before updating `settings.lastCsvExportedAtUtc`, saving data, and updating the export status display. Filenames use:
 
 ```text
 tide-trace-{type}-YYYYMMDD-HHMM.csv

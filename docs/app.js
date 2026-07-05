@@ -287,7 +287,7 @@ function buildInitialSetupSettings(medicationValues, painStateValues) {
     const amountText = value.amount.trim();
     const defaultAmount = amountText ? Number(amountText) : 1;
     if (!Number.isFinite(defaultAmount) || defaultAmount <= 0) {
-      return { error: '薬の量は1以上の数値で入力してください。' };
+      return { error: '薬の量は0より大きい数値を入力してください。' };
     }
     medicationOptions.push({
       id: `med_${String(medicationOptions.length + 1).padStart(3, '0')}`,

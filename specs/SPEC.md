@@ -4,7 +4,7 @@ This document describes the current TideTrace implementation. It documents exist
 
 ## Purpose
 
-TideTrace is a small static web app for local-first pain, medication, and note logging. It helps users record observations, review recent and past records, prepare neutral visit summaries, and export or restore their data.
+TideTrace is a small static web app for local-first pain, medication, and note logging. It helps users record observations, review recent and past records, prepare descriptive visit summaries, and export or restore their data.
 
 ## Non-goals
 
@@ -15,13 +15,13 @@ TideTrace does not provide:
 - External APIs for app features or record processing.
 - Third-party application libraries.
 
-Cloudflare Web Analytics is present in the published page for public page-usage analytics. The app does not use analytics to process user-entered health records.
+Cloudflare Web Analytics may be present in the published page for public page-usage analytics. User-entered TideTrace records are stored locally and are not sent to a TideTrace application server.
 
 ## Local-first privacy model
 
 - The app runs as a static GitHub Pages app from `docs/`.
-- User-entered app data is stored in browser `localStorage` under `tideTrace.data.v1`.
-- Pain records, medication records, notes, periods, and settings are not sent to a TideTrace server.
+- The current implementation stores TideTrace app data in browser `localStorage` under `tideTrace.data.v1`.
+- Pain records, medication records, notes, periods, and settings are not sent to a TideTrace application server.
 - Users are warned that browser or device conditions can remove local records and that private browsing may not retain records.
 - Users can manually export a JSON backup or CSV files.
 
@@ -136,7 +136,7 @@ The current summary includes:
 - Pain summaries by medication dose grouping.
 - Recorded before-and-after pain-score changes by medication when applicable.
 
-Summary text can be copied or downloaded as a plain text file. Summary wording is neutral and describes recorded values without assessing treatment effectiveness, causes, or severity.
+Summary text can be copied or downloaded as a plain text file. Summary wording is intended to be descriptive and non-diagnostic, describing recorded values without assessing treatment effectiveness, causes, or severity.
 
 ## Import/export behavior
 
@@ -156,7 +156,7 @@ Summary text can be copied or downloaded as a plain text file. Summary wording i
 ### CSV export
 
 - CSV export is available for all records, pain records only, medication records only, or note records only.
-- The app updates `settings.lastCsvExportedAtUtc`, saves data, and downloads a UTF-8 CSV with a BOM.
+- The app downloads a UTF-8 CSV with a BOM, then updates `settings.lastCsvExportedAtUtc`, saves data, and updates the export status display.
 - CSV rows are sorted ascending by local date, local time, and creation timestamp.
 - CSV export is an output format only; CSV import is not implemented.
 
