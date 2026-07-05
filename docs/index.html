@@ -141,6 +141,25 @@
         </details>
       </section>
 
+      <section class="card health-history-card" aria-labelledby="health-history-title">
+        <details id="health-history-details">
+          <summary id="health-history-title">過去の記録とヘルスケアデータ</summary>
+          <p>TideTraceの過去の記録と、HeartWatchなどのヘルスケアデータを日ごとに並べます。<br>原因や効果は判定しません。</p>
+          <p class="supplemental-text">今日のデータは、1日が終わっていないため表示しません。</p>
+          <p class="supplemental-text">読み込んだヘルスケアデータは、この画面内だけで使います。</p>
+          <label class="file-action-label secondary-button" for="heartwatch-csv-file">HeartWatch CSVを読み込む</label>
+          <input id="heartwatch-csv-file" class="visually-hidden-file-input" type="file" accept=".csv,text/csv" tabindex="-1">
+          <p id="health-history-message" class="message" role="alert"></p>
+          <div id="health-history-actions" class="visit-summary-actions" aria-label="過去の記録とヘルスケアデータの操作" hidden>
+            <button id="copy-health-history-text" class="secondary-button" type="button">テキストをコピー</button>
+            <button id="copy-health-history-tsv" class="secondary-button" type="button">TSVをコピー</button>
+            <button id="show-health-history-print" class="secondary-button" type="button">印刷用に表示</button>
+          </div>
+          <p id="health-history-print-help" class="supplemental-text" hidden>ブラウザの共有・印刷機能からPDF保存できます。</p>
+          <div id="health-history-result"></div>
+        </details>
+      </section>
+
       <section class="notice card">
         <p>このアプリの記録は、お使いのブラウザ内に保存されます。端末やブラウザの状態によっては、記録が消えることがあります。必要に応じて、バックアップを保存してください。</p>
         <p>プライベートブラウズでは、記録が保持されない場合があります。通常のブラウザ画面でご利用ください。</p>

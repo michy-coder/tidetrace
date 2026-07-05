@@ -875,6 +875,61 @@ summary { font-weight: 700; padding: 8px 0; }
   padding: 8px 0 8px 12px;
 }
 
+
+.health-history-card details > summary {
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.file-action-label {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  margin: 8px 0 12px;
+  min-height: 44px;
+  width: 100%;
+}
+
+.health-history-table-wrap {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+}
+
+.health-history-table {
+  border-collapse: collapse;
+  min-width: 760px;
+  width: 100%;
+}
+
+.health-history-table th,
+.health-history-table td {
+  border-bottom: 1px solid var(--divider);
+  padding: 8px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.health-history-table th {
+  background: var(--surface-muted);
+  font-weight: 700;
+}
+
+@media print {
+  body.health-history-print-mode .card:not(.health-history-card),
+  body.health-history-print-mode .app-header,
+  body.health-history-print-mode .notice:not(.health-history-card) {
+    display: none !important;
+  }
+
+  body.health-history-print-mode .health-history-card {
+    box-shadow: none;
+  }
+
+  body.health-history-print-mode .health-history-table-wrap {
+    overflow: visible;
+  }
+}
+
 .history-day-summary {
   border-top: 1px solid var(--divider);
   padding: 14px 0;
