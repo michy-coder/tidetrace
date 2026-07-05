@@ -20,7 +20,7 @@ Depending on the reader’s browser or Note settings, they may be machine-transl
 ## Purpose
 
 Pain, medication, and health-related notes can be highly sensitive.
-For this reason, TideTrace keeps user-entered data in the browser and does not send it to an external server.
+For this reason, TideTrace keeps user-entered records in the browser and does not send them to a TideTrace application server.
 
 The goal is not only privacy.
 TideTrace is also designed to help users keep control over how their records are stored, reviewed, exported, summarized, and shared with healthcare professionals.
@@ -53,9 +53,9 @@ TideTrace currently supports:
 
 TideTrace is published as a static web app from the docs/ folder using GitHub Pages.
 
-User-entered records are stored in the user’s browser. TideTrace does not send pain entries, medication entries, notes, backups, or other user-entered health records to an external server.
+User-entered records are stored in the user’s browser. TideTrace does not send pain entries, medication entries, notes, backups, or other user-entered health records to a TideTrace application server.
 
-TideTrace may use Cloudflare Web Analytics to understand basic public page usage, such as page views, visit counts, referrers, approximate region, browser, and device type. Analytics are not used to track pain entries, medication entries, notes, button actions, or data stored in the browser.
+TideTrace may use Cloudflare Web Analytics to understand basic public page usage, such as page views, visit counts, referrers, approximate region, browser, and device type. Cloudflare Web Analytics is separate from TideTrace record data and is not used by TideTrace to process pain entries, medication entries, notes, backups, or data stored in the browser.
 
 TideTrace does not use:
 
@@ -79,7 +79,7 @@ Do not commit:
 * JSON backup files
 
 User-entered data must stay in the browser.
-The app must not send data to external servers.
+The app must not send user-entered TideTrace record data to a TideTrace application server.
 
 ## GitHub Pages
 
@@ -93,9 +93,9 @@ User records are not stored in this repository or on GitHub Pages.
 
 ## Analytics
 
-TideTrace uses Cloudflare Web Analytics to understand basic public page usage, such as page views, visit counts, referrers, approximate region, browser, and device type.
+TideTrace may use Cloudflare Web Analytics to understand basic public page usage, such as page views, visit counts, referrers, approximate region, browser, and device type.
 
-TideTrace does not use analytics to track pain entries, medication entries, notes, button actions, or any data stored in the browser. User-entered health records remain in local browser storage and are not sent to Cloudflare by TideTrace.
+Cloudflare Web Analytics may be present for public page-usage analytics. User-entered TideTrace records remain in local browser storage and are not sent to a TideTrace application server.
 
 Analytics are used only to understand whether the public app page is being visited and how people generally reach it.
 

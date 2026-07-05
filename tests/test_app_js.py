@@ -850,11 +850,11 @@ def test_initial_setup_settings_validation_messages() -> None:
         );
         assert.equal(
           buildInitialSetupSettings([{ label: '薬', amount: 'abc', unit: '錠' }], ['安静時']).error,
-          '薬の量は1以上の数値で入力してください。'
+          '薬の量は0より大きい数値を入力してください。'
         );
         assert.equal(
           buildInitialSetupSettings([{ label: '薬', amount: '0', unit: '錠' }], ['安静時']).error,
-          '薬の量は1以上の数値で入力してください。'
+          '薬の量は0より大きい数値を入力してください。'
         );
         assert.equal(
           buildInitialSetupSettings([{ label: '薬', amount: '1', unit: '錠' }], [' ']).error,
