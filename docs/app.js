@@ -1533,8 +1533,7 @@ function runVisitSummary() {
 }
 
 
-const HEARTWATCH_COLUMNS = ['ISO', '睡眠時間', '睡眠-心拍変動-ms', '平常-平均-bpm', '平常-高-bpm', '安静-高-bpm', '歩数'];
-const HEALTH_HISTORY_TSV_HEADERS = ['日付', '痛み最大', '痛み平均', '痛み記録数', '服薬回数', '歩数', '睡眠時間', '睡眠HRV(ms)', '平常時心拍 平均', '平常時心拍 最高', '安静時心拍 最高'];
+const HEARTWATCH_COLUMNS = ['ISO', '歩数', '睡眠時間', '睡眠-bpm', '睡眠-心拍変動-ms', '起床-心拍変動-ms'];
 let currentHealthHistoryRows = [];
 
 function parseCsv(text) {
@@ -1584,23 +1583,78 @@ function parseHeartWatchCsv(text) {
     data.set(dateKey, {
       steps: (row[indexes['歩数']] || '').trim(),
       sleep: formatSleepDuration(row[indexes['睡眠時間']] || ''),
+      sleepBpm: (row[indexes['睡眠-bpm']] || '').trim(),
       sleepHrv: (row[indexes['睡眠-心拍変動-ms']] || '').trim(),
-      normalAvgHr: (row[indexes['平常-平均-bpm']] || '').trim(),
-      normalHighHr: (row[indexes['平常-高-bpm']] || '').trim(),
-      restingHighHr: (row[indexes['安静-高-bpm']] || '').trim()
+      wakeHrv: (row[indexes['起床-心拍変動-ms']] || '').trim()
     });
   });
   return { data, error: false };
 }
 
+function healthHistoryMedicationOptions() {
+  return sortedMedicationOptions((appData.settings && appData.settings.medicationOptions || []).filter((option) => option.active));
+}
+
+function visiblePrefix(value, length) {
+  return Array.from(String(value || '').trim()).slice(0, length).join('');
+}
+
+function healthHistoryMedicationLabels(options) {
+  const labels = options.map((option) => visiblePrefix(option.label, 2) || option.id || '薬');
+  const maxLengths = options.map((option) => Math.max(2, Array.from(String(option.label || '').trim()).length));
+  let changed = true;
+  while (changed) {
+    changed = false;
+    labels.forEach((label, index) => {
+      const duplicate = labels.some((other, otherIndex) => otherIndex !== index && other === label);
+      if (duplicate && Array.from(labels[index]).length < maxLengths[index]) {
+        const nextLabel = visiblePrefix(options[index].label, Array.from(labels[index]).length + 1) || labels[index];
+        if (nextLabel !== labels[index]) {
+          labels[index] = nextLabel;
+          changed = true;
+        }
+      }
+    });
+  }
+  const seen = new Map();
+  return labels.map((label) => {
+    const count = seen.get(label) || 0;
+    seen.set(label, count + 1);
+    return count ? `${label}${count + 1}` : label;
+  });
+}
+
+function healthHistoryColumns() {
+  const medicationOptions = healthHistoryMedicationOptions();
+  const medicationLabels = healthHistoryMedicationLabels(medicationOptions);
+  return [
+    { key: 'date', label: '日付' },
+    { key: 'painMax', label: '最大' },
+    { key: 'painAverage', label: '平均' },
+    ...medicationOptions.map((option, index) => ({ key: `medication:${option.id}`, label: medicationLabels[index], medicationOption: option })),
+    { key: 'steps', label: '歩数' },
+    { key: 'sleep', label: '睡眠' },
+    { key: 'sleepBpm', label: '睡bpm' },
+    { key: 'sleepHrv', label: '睡HRV' },
+    { key: 'wakeHrv', label: '起HRV' }
+  ];
+}
+
 function tideTraceDailyHealthSummary() {
   const days = new Map();
+  const medicationOptions = healthHistoryMedicationOptions();
+  const activeIds = new Set(medicationOptions.map((option) => option.id));
+  const activeLabels = new Map(medicationOptions.map((option) => [option.label, option.id]));
   appData.events.forEach((event) => {
     if (!isValidDateString(event.localDate)) return;
-    if (!days.has(event.localDate)) days.set(event.localDate, { painScores: [], medicationCount: 0 });
+    if (!days.has(event.localDate)) days.set(event.localDate, { painScores: [], medicationCounts: new Map() });
     const day = days.get(event.localDate);
     if (event.type === 'pain' && typeof event.painScore === 'number' && Number.isFinite(event.painScore)) day.painScores.push(event.painScore);
-    if (event.type === 'medication') day.medicationCount += 1;
+    if (event.type === 'medication') {
+      let optionId = event.medicationOptionId && activeIds.has(event.medicationOptionId) ? event.medicationOptionId : '';
+      if (!optionId && event.medicationLabel) optionId = activeLabels.get(event.medicationLabel) || '';
+      if (optionId) day.medicationCounts.set(optionId, (day.medicationCounts.get(optionId) || 0) + 1);
+    }
   });
   return days;
 }
@@ -1608,20 +1662,20 @@ function tideTraceDailyHealthSummary() {
 function buildHealthHistoryRows(heartwatchData) {
   const today = nowParts().localDate;
   const tideDays = tideTraceDailyHealthSummary();
-  const dates = new Set([...tideDays.keys(), ...heartwatchData.keys()]);
-  return [...dates].filter((date) => date < today).sort().map((date) => {
-    const tide = tideDays.get(date) || { painScores: [], medicationCount: 0 };
+  const medicationOptions = healthHistoryMedicationOptions();
+  return [...heartwatchData.keys()].filter((date) => date < today).sort().map((date) => {
+    const tide = tideDays.get(date) || { painScores: [], medicationCounts: new Map() };
     const heart = heartwatchData.get(date) || {};
     const painCount = tide.painScores.length;
+    const medicationCounts = Object.fromEntries(medicationOptions.map((option) => [option.id, String(tide.medicationCounts.get(option.id) || 0)]));
     const painMax = painCount ? Math.max(...tide.painScores) : '';
     const painAverage = painCount ? (tide.painScores.reduce((total, score) => total + score, 0) / painCount).toFixed(1) : '';
-    return { date, painMax, painAverage, painCount: painCount ? String(painCount) : '', medicationCount: tide.medicationCount ? String(tide.medicationCount) : '', steps: heart.steps || '', sleep: heart.sleep || '', sleepHrv: heart.sleepHrv || '', normalAvgHr: heart.normalAvgHr || '', normalHighHr: heart.normalHighHr || '', restingHighHr: heart.restingHighHr || '' };
+    return { date, painMax, painAverage, medicationCounts, steps: heart.steps || '', sleep: heart.sleep || '', sleepBpm: heart.sleepBpm || '', sleepHrv: heart.sleepHrv || '', wakeHrv: heart.wakeHrv || '' };
   });
 }
 
 function hasMissingHeartWatchDates(rows, heartwatchData) {
   const heartDates = new Set(heartwatchData.keys());
-  if (rows.some((row) => !heartDates.has(row.date))) return true;
   const csvDates = [...heartDates].sort();
   if (csvDates.length < 2) return false;
   for (let date = csvDates[0]; date <= csvDates[csvDates.length - 1]; date = addDays(date, 1)) {
@@ -1630,8 +1684,8 @@ function hasMissingHeartWatchDates(rows, heartwatchData) {
   return false;
 }
 
-function healthHistoryValues(row) {
-  return [row.date, row.painMax, row.painAverage, row.painCount, row.medicationCount, row.steps, row.sleep, row.sleepHrv, row.normalAvgHr, row.normalHighHr, row.restingHighHr];
+function healthHistoryValues(row, columns = healthHistoryColumns()) {
+  return columns.map((column) => column.medicationOption ? (row.medicationCounts[column.medicationOption.id] || '0') : row[column.key]);
 }
 
 function renderHealthHistoryRows(rows, missingHeartWatchDates) {
@@ -1652,15 +1706,16 @@ function renderHealthHistoryRows(rows, missingHeartWatchDates) {
     empty.textContent = '表示できる過去の日ごとの記録はありません。';
     block.appendChild(empty);
   } else {
+    const columns = healthHistoryColumns();
     const wrap = document.createElement('div');
     wrap.className = 'health-history-table-wrap';
     const table = document.createElement('table');
     table.className = 'health-history-table';
-    table.innerHTML = `<thead><tr>${['日付','痛み最大','痛み平均','記録数','服薬回数','歩数','睡眠','睡眠HRV','平常平均','平常最高','安静最高'].map((h) => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>`;
+    table.innerHTML = `<thead><tr>${columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join('')}</tr></thead>`;
     const tbody = document.createElement('tbody');
     rows.forEach((row) => {
       const tr = document.createElement('tr');
-      tr.innerHTML = healthHistoryValues(row).map((value) => `<td>${escapeHtml(value)}</td>`).join('');
+      tr.innerHTML = healthHistoryValues(row, columns).map((value) => `<td>${escapeHtml(value)}</td>`).join('');
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
@@ -1676,18 +1731,19 @@ function healthHistoryRangeText(rows) {
 }
 
 function buildHealthHistoryText(rows) {
+  const columns = healthHistoryColumns();
   const lines = [`日ごとのまとめ${healthHistoryRangeText(rows)}`];
-  const labels = ['日付', '痛み最大', '痛み平均', '痛み記録数', '服薬回数', '歩数', '睡眠時間', '睡眠HRV(ms)', '平常時心拍 平均', '平常時心拍 最高', '安静時心拍 最高'];
   rows.forEach((row) => {
-    const values = healthHistoryValues(row);
+    const values = healthHistoryValues(row, columns);
     lines.push('', row.date);
-    values.slice(1).forEach((value, index) => { if (value !== '') lines.push(`${labels[index + 1]}：${value}`); });
+    values.slice(1).forEach((value, index) => { if (value !== '') lines.push(`${columns[index + 1].label}：${value}`); });
   });
   return lines.join('\n');
 }
 
 function buildHealthHistoryTsv(rows) {
-  return [HEALTH_HISTORY_TSV_HEADERS.join('\t'), ...rows.map((row) => healthHistoryValues(row).join('\t'))].join('\n');
+  const columns = healthHistoryColumns();
+  return [columns.map((column) => column.label).join('\t'), ...rows.map((row) => healthHistoryValues(row, columns).join('\t'))].join('\n');
 }
 
 async function copyHealthHistoryText() {

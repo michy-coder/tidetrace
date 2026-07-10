@@ -149,13 +149,15 @@ The view excludes today’s date because the day is not complete. Today is deter
 
 HeartWatch rows are joined by date using the first 10 characters of the CSV `ISO` value (`YYYY-MM-DD`). The implementation does not convert the `ISO` value to a JavaScript `Date` or UTC date before creating the join key. TideTrace records are joined by the event `localDate` field.
 
-The daily summary table shows dates that exist in either TideTrace records or the imported HeartWatch CSV, excluding today, sorted oldest first. Columns are: date, maximum pain, average pain, pain record count, medication count, steps, sleep duration, sleep HRV, normal heart-rate average, normal heart-rate high, and resting heart-rate high. Missing values remain blank and are not converted to zero. Note contents are not shown.
+The daily summary table shows only dates that exist in the imported HeartWatch CSV, excluding today, sorted oldest first. TideTrace-only dates are not added as rows. Columns are: date (`日付`), maximum TideTrace pain score (`最大`), average TideTrace pain score rounded to one decimal place (`平均`), one medication-event count column for each active medication option, steps (`歩数`), sleep duration (`睡眠`), sleep bpm (`睡bpm`), sleep HRV (`睡HRV`), and waking HRV (`起HRV`). Pain cells remain blank when there are no pain records for a HeartWatch date. Missing HeartWatch values remain blank and are not converted to zero. Note contents are not shown.
+
+Medication count columns use active medication options sorted by the medication-button order: `sortOrder`, then `label`, then `id`. Column headers use short labels derived from the trimmed medication label, normally the first two visible characters. If short labels duplicate, the implementation extends labels where possible and then appends numeric suffixes if needed. Medication events are counted by `medicationOptionId` when available, with fallback exact matching against the recorded medication label snapshot for older events without an option id. The counts describe recorded medication events only and do not assess effects, timing, or treatment.
 
 Available actions are:
 
-- Copy readable plain text for the daily summary.
-- Copy TSV with full column labels, including `睡眠HRV(ms)`, for spreadsheet paste.
-- Show a print-friendly display; users can save PDF files through the browser’s share or print feature.
+- Copy readable plain text for the daily summary using the same HeartWatch-date filtering, columns, medication short labels, and blank-value handling as the table.
+- Copy TSV for spreadsheet paste. TSV headers match the displayed table headers.
+- Show a print-friendly display with the same rows and columns; users can save PDF files through the browser’s share or print feature.
 
 ## Import/export behavior
 
