@@ -17,6 +17,8 @@
   --danger-text: #ffffff;
   --divider: #d9e1e5;
   --focus-ring: #6fa5ad;
+  --health-history-column-bg: rgba(94, 133, 142, 0.06);
+  --health-history-column-header-bg: rgba(94, 133, 142, 0.1);
   --shadow: rgba(31, 41, 51, 0.06);
 }
 
@@ -39,6 +41,8 @@
     --danger-text: #ffffff;
     --divider: #344047;
     --focus-ring: #7da9af;
+    --health-history-column-bg: rgba(125, 169, 175, 0.08);
+    --health-history-column-header-bg: rgba(125, 169, 175, 0.12);
     --shadow: rgba(0, 0, 0, 0.3);
   }
 }
@@ -280,6 +284,7 @@ button,
 .primary-button {
   min-height: 48px;
   border: 0;
+  border-radius: 12px;
   background: var(--button-bg);
   color: var(--button-text);
   font-weight: 700;
@@ -884,6 +889,12 @@ summary { font-weight: 700; padding: 8px 0; }
   font-size: 1.1rem;
 }
 
+.health-history-card .visit-summary-result-block h3 {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
 .file-action-label {
   align-items: center;
   cursor: pointer;
@@ -916,6 +927,14 @@ summary { font-weight: 700; padding: 8px 0; }
   background: var(--surface-muted);
   border-bottom: 1px solid var(--divider);
   font-weight: 700;
+}
+
+.health-history-table th:nth-child(even) {
+  background: var(--health-history-column-header-bg);
+}
+
+.health-history-table td:nth-child(even) {
+  background: var(--health-history-column-bg);
 }
 
 @media print {
