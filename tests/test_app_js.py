@@ -1,5 +1,6 @@
 import json
 import subprocess
+import tempfile
 import textwrap
 from pathlib import Path
 
@@ -11,7 +12,13 @@ def run_app_js(assertions: str) -> None:
     source = APP_JS.read_text()
     source = source[: source.rfind("wireEvents();")]
     script = source + "\n" + textwrap.dedent(assertions)
-    subprocess.run(["node", "-e", script], check=True, text=True)
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as handle:
+        handle.write(script)
+        script_path = handle.name
+    try:
+        subprocess.run(["node", script_path], check=True, text=True)
+    finally:
+        Path(script_path).unlink(missing_ok=True)
 
 
 def test_backup_validation_rejects_legacy_option_completion() -> None:
@@ -1280,5 +1287,58 @@ def test_health_history_medication_short_label_duplicates_and_blank_heartwatch_v
         assert.deepEqual(rows[0].medicationCounts, { med_a: '1', med_b: '1', med_c: '0', med_d: '0' });
         assert.deepEqual([rows[0].steps, rows[0].sleep, rows[0].sleepBpm, rows[0].sleepHrv, rows[0].wakeHrv], ['', '', '', '', '']);
         assert.equal(buildHealthHistoryTsv(rows).split('\\n')[0], healthHistoryColumns().map((column) => column.label).join('\t'));
+        """
+    )
+
+def test_health_history_configurable_columns_validation_and_calculations() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        nowParts = () => ({ iso: '2026-06-17T00:00:00.000Z', localDate: '2026-06-17', localTime: '09:00' });
+        appData = {
+          schemaVersion: 1,
+          appName: 'Tide Trace',
+          settings: {
+            painStateOptions: [
+              { id: 'rest', label: '安静時', active: true, sortOrder: 1 },
+              { id: 'hidden', label: '歩行時', active: false, sortOrder: 2 }
+            ],
+            medicationOptions: [
+              { id: 'med_a', label: '鎮痛薬A', active: true, sortOrder: 1 },
+              { id: 'med_b', label: '鎮痛薬B', active: false, sortOrder: 2 }
+            ],
+            lastJsonExportedAtUtc: null,
+            lastCsvExportedAtUtc: null,
+            healthReviewColumns: [
+              { columnId: 'date', shortLabel: '日付', shortLabelMode: 'custom' },
+              { columnId: 'tidetrace:pain:min', shortLabel: ' 最小 ', shortLabelMode: 'custom' },
+              { columnId: 'tidetrace:pain:count', shortLabel: '痛回', shortLabelMode: 'auto' },
+              { columnId: 'tidetrace:pain-state:rest:average', shortLabel: '安静平', shortLabelMode: 'auto' },
+              { columnId: 'tidetrace:medication:med_b:count', shortLabel: '非薬', shortLabelMode: 'custom' },
+              { columnId: 'tidetrace:note:count', shortLabel: 'メモ', shortLabelMode: 'auto' },
+              { columnId: 'heartwatch:bp-am-systolic', shortLabel: '朝収縮', shortLabelMode: 'auto' }
+            ]
+          },
+          periods: [],
+          events: [
+            { id: 'p1', type: 'pain', localDate: '2026-06-15', painScore: 8, stateOptionId: 'rest' },
+            { id: 'p2', type: 'pain', localDate: '2026-06-15', painScore: 4, stateOptionId: 'rest', note: 'attached' },
+            { id: 'm1', type: 'medication', localDate: '2026-06-15', medicationOptionId: 'med_b', medicationLabel: '鎮痛薬B', note: 'attached' },
+            { id: 'm2', type: 'medication', localDate: '2026-06-15', medicationLabel: '鎮痛薬B' },
+            { id: 'n1', type: 'note', localDate: '2026-06-15', note: 'standalone' }
+          ]
+        };
+        ensureHealthReviewColumns();
+        const columns = selectedHealthHistoryColumns();
+        assert.equal(columns[0].shortLabel, '日付');
+        assert.equal(appData.settings.healthReviewColumns.some((column) => column.columnId === 'date'), false);
+        assert.deepEqual(columns.map((column) => column.shortLabel), ['日付', '最小', '痛回', '安静平', '非薬', 'メモ', '朝収縮']);
+        assert.equal(validateHealthHistoryColumns([{ shortLabel: 'HRV' }, { shortLabel: 'ｈｒｖ' }]).message, '短縮名が重複しています。');
+        assert.equal(validateHealthHistoryColumns([{ shortLabel: '123456789' }]).message, '短縮名は8文字以内で入力してください。');
+        assert.equal(validateHealthHistoryColumns([{ shortLabel: '   ' }]).message, '短縮名を入力してください。');
+        const parsed = parseHeartWatchCsv('ISO,血圧 (am)-収縮\\n2026-06-15T23:00:00+09:00,120');
+        const rows = buildHealthHistoryRows(parsed.data);
+        assert.deepEqual(healthHistoryValues(rows[0], columns), ['2026-06-15', '4', '2', '6.0', '2', '1', '120']);
+        assert.equal(buildHealthHistoryTsv(rows).split('\\n')[0], '日付\t最小\t痛回\t安静平\t非薬\tメモ\t朝収縮');
         """
     )

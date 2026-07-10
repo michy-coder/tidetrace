@@ -50,7 +50,8 @@ Initial settings are created with this shape:
   "painStateOptions": [],
   "setupCompletedAtUtc": "2026-07-04T00:00:00.000Z",
   "lastJsonExportedAtUtc": null,
-  "lastCsvExportedAtUtc": null
+  "lastCsvExportedAtUtc": null,
+  "healthReviewColumns": []
 }
 ```
 
@@ -62,12 +63,38 @@ Validated settings fields:
 | `painStateOptions` | array | Required. Each item must match the pain-state option format. |
 | `lastJsonExportedAtUtc` | string or null | Required by validation. Updated before JSON backup download. |
 | `lastCsvExportedAtUtc` | string or null | Required by validation. Updated after CSV download is triggered. |
+| `healthReviewColumns` | array | Optional. Selected configurable daily-summary columns. Missing or malformed values are normalized without rejecting otherwise valid records. |
 
 Other settings fields used by current initial data:
 
 | Field | Type | Notes |
 | --- | --- | --- |
 | `setupCompletedAtUtc` | string | Set when initial app data is created or setup is completed. Current validation does not require this field. |
+
+
+## `healthReviewColumns`
+
+`settings.healthReviewColumns` stores the selected non-date columns for the “日ごとのまとめ” table. The fixed date column is not stored. The app keeps `schemaVersion: 1` because this is an optional backward-compatible settings addition.
+
+Each item has this shape:
+
+```json
+{
+  "columnId": "heartwatch:steps",
+  "shortLabel": "歩数",
+  "shortLabelMode": "auto"
+}
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `columnId` | string | Stable column id. Examples: `tidetrace:pain:max`, `tidetrace:pain:average`, `tidetrace:pain:min`, `tidetrace:pain:count`, `tidetrace:pain-state:{painStateOptionId}:max`, `tidetrace:pain-state:{painStateOptionId}:average`, `tidetrace:pain-state:{painStateOptionId}:count`, `tidetrace:medication:{medicationOptionId}:count`, `tidetrace:note:count`, and `heartwatch:{stableMetricId}`. |
+| `shortLabel` | string | Trimmed short table/TSV header label. Validation requires 1 to 8 visible Unicode characters and uniqueness after NFKC normalization and case-insensitive comparison. |
+| `shortLabelMode` | string | `auto` or `custom`. Editing a short-label input stores `custom`; automatic medication and pain-state labels may be regenerated when option names change or duplicates need repair. |
+
+The array order is the display order after the fixed date column. Missing settings are filled with the current default selected columns. Malformed values are repaired by discarding invalid items, removing duplicate column ids, repairing invalid automatic labels when possible, and resetting only this setting to defaults if the remaining result is unusable. Stored columns that reference deleted medication or pain-state options may remain in the setting but are skipped when rendering. Pain records, medication records, note records, periods, option settings, and export timestamps are preserved during this normalization.
+
+JSON backup export includes `healthReviewColumns` as part of the settings object. Old JSON backups without the field restore normally and receive the default setting during normalization. Imported HeartWatch CSV data remains temporary, is not saved to `localStorage`, and is not included in JSON backups. TideTrace CSV export format is unchanged.
 
 ## `medicationOptions`
 
