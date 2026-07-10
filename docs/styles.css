@@ -271,12 +271,13 @@ input[type="date"].form-control {
   min-inline-size: 0;
 }
 
-input:focus, select:focus, textarea:focus, button:focus-visible {
+input:focus, select:focus, textarea:focus, button:focus-visible, .file-action-label:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
-button {
+button,
+.primary-button {
   min-height: 48px;
   border: 0;
   background: var(--button-bg);
@@ -286,11 +287,13 @@ button {
   padding: 12px 14px;
 }
 
-button:not(.secondary-button):not(.danger):not(.toast-undo-button):not(.edit-event-button):not(.delete-event-button):hover {
+button:not(.secondary-button):not(.danger):not(.toast-undo-button):not(.edit-event-button):not(.delete-event-button):hover,
+.primary-button:hover {
   background: var(--button-hover-bg, var(--button-bg));
 }
 
-button:active { background: var(--button-active-bg); }
+button:active,
+.primary-button:active { background: var(--button-active-bg); }
 
 button.danger { background: var(--danger-bg); color: var(--danger-text); }
 button.danger:active { background: var(--danger-active-bg); }
@@ -883,6 +886,7 @@ summary { font-weight: 700; padding: 8px 0; }
 
 .file-action-label {
   align-items: center;
+  cursor: pointer;
   display: inline-flex;
   justify-content: center;
   margin: 8px 0 12px;
@@ -897,20 +901,20 @@ summary { font-weight: 700; padding: 8px 0; }
 
 .health-history-table {
   border-collapse: collapse;
-  min-width: 760px;
-  width: 100%;
+  font-variant-numeric: tabular-nums;
+  width: max-content;
 }
 
 .health-history-table th,
 .health-history-table td {
-  border-bottom: 1px solid var(--divider);
-  padding: 8px 10px;
+  padding: 4px 6px;
   text-align: left;
   white-space: nowrap;
 }
 
 .health-history-table th {
   background: var(--surface-muted);
+  border-bottom: 1px solid var(--divider);
   font-weight: 700;
 }
 

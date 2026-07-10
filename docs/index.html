@@ -144,10 +144,9 @@
       <section class="card health-history-card" aria-labelledby="health-history-title">
         <details id="health-history-details">
           <summary id="health-history-title">過去の記録とヘルスケアデータ</summary>
-          <p>TideTraceの過去の記録と、HeartWatchなどのヘルスケアデータを日ごとに並べます。<br>原因や効果は判定しません。</p>
-          <p class="supplemental-text">今日のデータは、1日が終わっていないため表示しません。</p>
-          <p class="supplemental-text">読み込んだヘルスケアデータは、この画面内だけで使います。</p>
-          <label class="file-action-label secondary-button" for="heartwatch-csv-file">HeartWatch CSVを読み込む</label>
+          <p>記録とヘルスケアデータを日ごとに表示します。</p>
+          <p class="supplemental-text">今日のデータは対象外です。<br>読み込んだデータは保存せず、表示・印刷・コピーにだけ使います。</p>
+          <label class="file-action-label primary-button" for="heartwatch-csv-file">HeartWatch CSVを読み込む</label>
           <input id="heartwatch-csv-file" class="visually-hidden-file-input" type="file" accept=".csv,text/csv" tabindex="-1">
           <p id="health-history-message" class="message" role="alert"></p>
           <div id="health-history-actions" class="visit-summary-actions" aria-label="過去の記録とヘルスケアデータの操作" hidden>
