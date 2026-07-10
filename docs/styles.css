@@ -1045,12 +1045,17 @@ summary { font-weight: 700; padding: 8px 0; }
 
 .column-selected-row {
   display: grid;
-  gap: 3px;
-  padding: 5px 0;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.column-selected-row + .column-selected-row {
+  margin-top: 3px;
 }
 
 .column-selected-name {
   color: var(--text);
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1.25;
   overflow-wrap: anywhere;
@@ -1065,17 +1070,24 @@ summary { font-weight: 700; padding: 8px 0; }
 
 .column-short-label {
   align-items: center;
+  color: var(--muted);
   display: flex;
   flex: 1 1 auto;
+  font-size: 0.8rem;
+  font-weight: 500;
   gap: 5px;
   line-height: 1.2;
+  margin: 0;
   min-height: 30px;
   min-width: 0;
   white-space: nowrap;
 }
 
 .column-short-label input {
+  color: var(--text);
   flex: 1 1 5.5em;
+  font-size: 0.95rem;
+  font-weight: 500;
   max-width: 7em;
   min-height: 30px;
   min-width: 0;
@@ -1130,22 +1142,30 @@ summary { font-weight: 700; padding: 8px 0; }
 }
 
 .health-column-check {
-  align-items: flex-start;
-  display: flex;
-  gap: 5px;
+  align-items: center;
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  column-gap: 8px;
+  font-weight: 400;
   line-height: 1.25;
-  min-height: 28px;
+  margin: 0;
+  min-height: 32px;
   padding: 2px 0;
+  width: 100%;
 }
 
-.health-column-check input {
-  flex: 0 0 auto;
-  margin: 1px 0 0;
+.health-column-check input[type="checkbox"] {
+  height: 1.25rem;
+  margin: 0;
+  max-width: 1.25rem;
+  min-width: 1.25rem;
+  width: 1.25rem;
 }
 
 .health-column-check span {
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .state-column-group {
@@ -1168,6 +1188,7 @@ summary { font-weight: 700; padding: 8px 0; }
 .state-column-checks .health-column-check {
   min-height: 28px;
   padding: 0;
+  width: auto;
 }
 
 .health-column-buttons {
