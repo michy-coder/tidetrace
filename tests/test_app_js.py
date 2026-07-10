@@ -1206,6 +1206,14 @@ def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> No
 
 
 
+def test_static_asset_versions_are_current_for_column_editor_fix() -> None:
+    html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
+    assert 'href="styles.css?v=14"' in html
+    assert 'src="app.js?v=14"' in html
+    assert 'styles.css?v=13' not in html
+    assert 'app.js?v=13' not in html
+
+
 def test_heartwatch_csv_uses_iso_prefix_and_keeps_import_temporary() -> None:
     run_app_js(
         """
