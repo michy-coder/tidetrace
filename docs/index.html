@@ -149,6 +149,10 @@
           <label class="file-action-label primary-button" for="heartwatch-csv-file">HeartWatch CSVを読み込む</label>
           <input id="heartwatch-csv-file" class="visually-hidden-file-input" type="file" accept=".csv,text/csv" tabindex="-1">
           <p id="health-history-message" class="message" role="alert"></p>
+          <details id="health-history-columns-panel" class="health-history-columns-panel">
+            <summary>表示項目</summary>
+            <div id="health-history-columns-editor"></div>
+          </details>
           <div id="health-history-actions" class="visit-summary-actions" aria-label="過去の記録とヘルスケアデータの操作" hidden>
             <button id="copy-health-history-text" class="secondary-button" type="button">テキストをコピー</button>
             <button id="copy-health-history-tsv" class="secondary-button" type="button">TSVをコピー</button>

@@ -1029,3 +1029,78 @@ summary { font-weight: 700; padding: 8px 0; }
   padding: 8px 12px;
   width: auto;
 }
+
+.health-history-columns-panel {
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  margin: 12px 0;
+  padding: 10px 12px;
+}
+
+.health-history-columns-panel summary,
+.health-history-columns-panel details summary {
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.column-selected-row {
+  align-items: center;
+  border-top: 1px solid var(--divider);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 10px 0;
+}
+
+.column-selected-row label,
+.health-column-check {
+  display: flex;
+  gap: 8px;
+  min-height: 36px;
+}
+
+.column-selected-row input {
+  max-width: 8em;
+  width: 100%;
+}
+
+.column-selected-row button,
+.health-column-buttons button {
+  min-height: 36px;
+}
+
+.fixed-date-column {
+  background: var(--surface-muted);
+  border-radius: 8px;
+  font-weight: 700;
+  margin: 6px 0;
+  padding: 8px;
+}
+
+.health-column-checks,
+.state-column-group {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+
+.state-column-group {
+  border-top: 1px solid var(--divider);
+  padding-top: 8px;
+}
+
+.health-column-buttons {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (min-width: 520px) {
+  .column-selected-row {
+    grid-template-columns: minmax(10em, 1fr) auto auto auto auto;
+  }
+
+  .health-column-buttons {
+    grid-template-columns: max-content max-content;
+  }
+}

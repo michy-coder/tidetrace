@@ -55,6 +55,11 @@ function parseJson(text) {
 }
 
 function normalizeImportedData(data) {
+  if (data && data.settings && typeof data.settings === 'object') {
+    const copy = data;
+    try { copy.settings.healthReviewColumns = normalizeHealthReviewColumns(copy.settings); }
+    catch { delete copy.settings.healthReviewColumns; }
+  }
   return data;
 }
 
@@ -161,6 +166,7 @@ function validateData(data) {
   if (typeof data.appName !== 'string') return false;
   if (!data.settings || typeof data.settings !== 'object' || Array.isArray(data.settings)) return false;
   if (!Array.isArray(data.settings.painStateOptions) || !Array.isArray(data.settings.medicationOptions)) return false;
+  if (data.settings.healthReviewColumns !== undefined && !Array.isArray(data.settings.healthReviewColumns)) return false;
   if (![null, 'string'].includes(data.settings.lastJsonExportedAtUtc === null ? null : typeof data.settings.lastJsonExportedAtUtc)) return false;
   if (![null, 'string'].includes(data.settings.lastCsvExportedAtUtc === null ? null : typeof data.settings.lastCsvExportedAtUtc)) return false;
   if (!Array.isArray(data.periods) || !Array.isArray(data.events)) return false;
@@ -241,6 +247,8 @@ function showApp() {
   startElapsedRefresh();
   $('setup-screen').classList.add('hidden');
   $('app-screen').classList.remove('hidden');
+  ensureHealthReviewColumns();
+  renderHealthHistoryColumnEditor();
   render();
 }
 
@@ -336,6 +344,7 @@ function completeInitialSetup() {
   appData.settings.medicationOptions = setupSettings.medicationOptions;
   appData.settings.painStateOptions = setupSettings.painStateOptions;
   appData.settings.setupCompletedAtUtc = new Date().toISOString();
+  appData.settings.healthReviewColumns = defaultHealthHistoryColumns();
   clearSaveFeedback();
   saveData();
   showApp();
@@ -347,6 +356,7 @@ function initializeFromText(text, errorElement) {
   const normalized = normalizeImportedData(parsed.data);
   if (!validateData(normalized)) { errorElement.textContent = SCHEMA_ERROR; return false; }
   appData = normalized;
+  ensureHealthReviewColumns();
   clearSaveFeedback();
   saveData();
   errorElement.textContent = '';
@@ -1533,269 +1543,67 @@ function runVisitSummary() {
 }
 
 
-const HEARTWATCH_COLUMNS = ['ISO', '歩数', '睡眠時間', '睡眠-bpm', '睡眠-心拍変動-ms', '起床-心拍変動-ms'];
+
+const HEARTWATCH_CATALOG = [
+  ['sleep-duration','睡眠時間','睡眠時間','睡眠','睡眠・起床'],['sleep-bpm','睡眠-bpm','睡眠時心拍 平均','睡bpm','睡眠・起床'],['sleep-low-bpm','睡眠-低-bpm','睡眠時心拍 最低','睡低','睡眠・起床'],['sleep-high-bpm','睡眠-高-bpm','睡眠時心拍 最高','睡高','睡眠・起床'],['sleep-hrv','睡眠-心拍変動-ms','睡眠時HRV','睡HRV','睡眠・起床'],['wake-bpm','起床-bpm','起床時心拍','起bpm','睡眠・起床'],['wake-hrv','起床-心拍変動-ms','起床時HRV','起HRV','睡眠・起床'],
+  ['normal-average-bpm','平常-平均-bpm','平常時心拍 平均','平常平均','心拍'],['normal-low-bpm','平常-低-bpm','平常時心拍 最低','平常低','心拍'],['normal-high-bpm','平常-高-bpm','平常時心拍 最高','平常高','心拍'],['rest-average-bpm','安静-平均-bpm','安静時心拍 平均','安静平均','心拍'],['rest-low-bpm','安静-低-bpm','安静時心拍 最低','安静低','心拍'],['rest-under-50-percent','安静-<50bpm-%','安静時50bpm未満の割合','安静<50','心拍'],['rest-high-bpm','安静-高-bpm','安静時心拍 最高','安静高','心拍'],['rest-over-120-percent','安静->120bpm-%','安静時120bpm超の割合','安静>120','心拍'],
+  ['active-cals','動き-Cals','活動カロリー','活動Cal','活動'],['steps','歩数','歩数','歩数','活動'],['distance-km','距離-km','距離','距離','活動'],['workout-min','トレーニング-分','トレーニング時間','運動分','活動'],['workout-bpm','トレーニング-bpm','トレーニング心拍','運動bpm','活動'],['workout-percent','トレーニング-%','トレーニング割合','運動%','活動'],['workout-high-bpm','トレーニング-高-bpm','トレーニング高心拍','運動高bpm','活動'],['workout-high-percent','トレーニング-高-%','トレーニング高心拍割合','運動高%','活動'],['two-minute-recovery-bpm','２分間回復-bpm','2分間回復心拍','2分回復','活動'],['workout-cals','トレーニング-Cals','トレーニングカロリー','運動Cal','活動'],['workout-load','トレーニング-ロード','トレーニング負荷','運動負荷','活動'],['workout-km','トレーニング-km','トレーニング距離','運動km','活動'],
+  ['bp-am-systolic','血圧 (am)-収縮','朝の血圧 収縮','朝収縮','血圧・体温・SpO2'],['bp-am-diastolic','血圧 (am)-拡張','朝の血圧 拡張','朝拡張','血圧・体温・SpO2'],['bp-pm-systolic','血圧 (pm)-収縮','午後の血圧 収縮','午後収縮','血圧・体温・SpO2'],['bp-pm-diastolic','血圧 (pm)-拡張','午後の血圧 拡張','午後拡張','血圧・体温・SpO2'],['temperature','温度-°','体温','体温','血圧・体温・SpO2'],['daily-spo2','日々SpO2-%','日々SpO2','日SpO2','血圧・体温・SpO2'],['sleep-spo2','睡眠SpO2-%','睡眠時SpO2','睡SpO2','血圧・体温・SpO2'],
+  ['wake-glucose','覚醒時血糖値-','覚醒時血糖値','起血糖','血糖値'],['daily-glucose','日々血糖値-','日々血糖値','日血糖','血糖値'],['daily-glucose-low','日々血糖値-低','日々血糖値 最低','日血糖低','血糖値'],['daily-glucose-high','日々血糖値-高','日々血糖値 最高','日血糖高','血糖値'],['sleep-glucose','睡眠時血糖値-','睡眠時血糖値','睡血糖','血糖値'],['sleep-glucose-low','睡眠時血糖値-低','睡眠時血糖値 最低','睡血糖低','血糖値'],['sleep-glucose-high','睡眠時血糖値-高','睡眠時血糖値 最高','睡血糖高','血糖値'],
+  ['weight-kg','体重-kg','体重','体重','体重・体組成'],['waist-cm','ウエスト-cm','ウエスト','ウエスト','体重・体組成'],['fat-percent','脂肪-%','体脂肪率','体脂肪','体重・体組成']
+].map(([id, sourceHeader, fullName, defaultShortLabel, category]) => ({ id, columnId: `heartwatch:${id}`, sourceHeader, fullName, defaultShortLabel, category, type: 'heartwatch' }));
+const HEARTWATCH_COLUMNS = ['ISO', ...HEARTWATCH_CATALOG.map((item) => item.sourceHeader)];
+const HEALTH_HISTORY_DATE_COLUMN = { columnId: 'date', shortLabel: '日付', fullName: '日付' };
 let currentHealthHistoryRows = [];
+let currentHeartWatchData = null;
+let healthHistoryColumnDraft = null;
 
 function parseCsv(text) {
-  const source = String(text || '').replace(/^\uFEFF/, '');
-  const rows = [];
-  let row = [];
-  let field = '';
-  let quoted = false;
-  for (let i = 0; i < source.length; i += 1) {
-    const char = source[i];
-    if (quoted) {
-      if (char === '"') {
-        if (source[i + 1] === '"') { field += '"'; i += 1; }
-        else quoted = false;
-      } else field += char;
-    } else if (char === '"') {
-      quoted = true;
-    } else if (char === ',') {
-      row.push(field); field = '';
-    } else if (char === '\n') {
-      row.push(field); rows.push(row); row = []; field = '';
-    } else if (char !== '\r') {
-      field += char;
-    }
-  }
-  if (field || row.length) { row.push(field); rows.push(row); }
-  return rows;
+  const source = String(text || '').replace(/^\uFEFF/, ''); const rows = []; let row = []; let field = ''; let quoted = false;
+  for (let i = 0; i < source.length; i += 1) { const char = source[i]; if (quoted) { if (char === '"') { if (source[i + 1] === '"') { field += '"'; i += 1; } else quoted = false; } else field += char; } else if (char === '"') quoted = true; else if (char === ',') { row.push(field); field = ''; } else if (char === '\n') { row.push(field); rows.push(row); row = []; field = ''; } else if (char !== '\r') field += char; }
+  if (field || row.length) { row.push(field); rows.push(row); } return rows;
 }
-
-function formatSleepDuration(value) {
-  if (!value) return '';
-  const match = String(value).trim().match(/^(\d{1,3}):(\d{2})(?::\d{2})?$/);
-  return match ? `${Number(match[1])}:${match[2]}` : String(value).trim();
-}
-
+function formatSleepDuration(value) { if (!value) return ''; const match = String(value).trim().match(/^(\d{1,3}):(\d{2})(?::\d{2})?$/); return match ? `${Number(match[1])}:${match[2]}` : String(value).trim(); }
 function parseHeartWatchCsv(text) {
-  const rows = parseCsv(text).filter((row) => row.some((cell) => cell.trim() !== ''));
-  if (!rows.length) return { data: null, error: true };
-  const headers = rows[0].map((header) => header.trim().replace(/^\uFEFF/, ''));
-  if (!HEARTWATCH_COLUMNS.every((column) => headers.includes(column))) return { data: null, error: true };
-  const indexes = Object.fromEntries(HEARTWATCH_COLUMNS.map((column) => [column, headers.indexOf(column)]));
-  const data = new Map();
-  rows.slice(1).forEach((row) => {
-    const iso = (row[indexes.ISO] || '').trim();
-    const dateKey = iso.slice(0, 10);
-    if (!isValidDateString(dateKey)) return;
-    data.set(dateKey, {
-      steps: (row[indexes['歩数']] || '').trim(),
-      sleep: formatSleepDuration(row[indexes['睡眠時間']] || ''),
-      sleepBpm: (row[indexes['睡眠-bpm']] || '').trim(),
-      sleepHrv: (row[indexes['睡眠-心拍変動-ms']] || '').trim(),
-      wakeHrv: (row[indexes['起床-心拍変動-ms']] || '').trim()
-    });
-  });
+  const rows = parseCsv(text).filter((row) => row.some((cell) => cell.trim() !== '')); if (!rows.length) return { data: null, error: true };
+  const headers = rows[0].map((header) => header.trim().replace(/^\uFEFF/, '')); if (!headers.includes('ISO')) return { data: null, error: true };
+  const indexes = Object.fromEntries(headers.map((header, index) => [header, index])); const data = new Map();
+  rows.slice(1).forEach((row) => { const iso = (row[indexes.ISO] || '').trim(); const dateKey = iso.slice(0, 10); if (!isValidDateString(dateKey)) return; const values = {}; HEARTWATCH_CATALOG.forEach((metric) => { const raw = indexes[metric.sourceHeader] === undefined ? '' : (row[indexes[metric.sourceHeader]] || '').trim(); values[metric.id] = metric.sourceHeader === '睡眠時間' ? formatSleepDuration(raw) : raw; }); values.steps = values['steps']; values.sleep = values['sleep-duration']; values.sleepBpm = values['sleep-bpm']; values.sleepHrv = values['sleep-hrv']; values.wakeHrv = values['wake-hrv']; data.set(dateKey, values); });
   return { data, error: false };
 }
-
-function healthHistoryMedicationOptions() {
-  return sortedMedicationOptions((appData.settings && appData.settings.medicationOptions || []).filter((option) => option.active));
-}
-
-function visiblePrefix(value, length) {
-  return Array.from(String(value || '').trim()).slice(0, length).join('');
-}
-
-function healthHistoryMedicationLabels(options) {
-  const labels = options.map((option) => visiblePrefix(option.label, 2) || option.id || '薬');
-  const maxLengths = options.map((option) => Math.max(2, Array.from(String(option.label || '').trim()).length));
-  let changed = true;
-  while (changed) {
-    changed = false;
-    labels.forEach((label, index) => {
-      const duplicate = labels.some((other, otherIndex) => otherIndex !== index && other === label);
-      if (duplicate && Array.from(labels[index]).length < maxLengths[index]) {
-        const nextLabel = visiblePrefix(options[index].label, Array.from(labels[index]).length + 1) || labels[index];
-        if (nextLabel !== labels[index]) {
-          labels[index] = nextLabel;
-          changed = true;
-        }
-      }
-    });
-  }
-  const seen = new Map();
-  return labels.map((label) => {
-    const count = seen.get(label) || 0;
-    seen.set(label, count + 1);
-    return count ? `${label}${count + 1}` : label;
-  });
-}
-
-function healthHistoryColumns() {
-  const medicationOptions = healthHistoryMedicationOptions();
-  const medicationLabels = healthHistoryMedicationLabels(medicationOptions);
-  return [
-    { key: 'date', label: '日付' },
-    { key: 'painMax', label: '最大' },
-    { key: 'painAverage', label: '平均' },
-    ...medicationOptions.map((option, index) => ({ key: `medication:${option.id}`, label: medicationLabels[index], medicationOption: option })),
-    { key: 'steps', label: '歩数' },
-    { key: 'sleep', label: '睡眠' },
-    { key: 'sleepBpm', label: '睡bpm' },
-    { key: 'sleepHrv', label: '睡HRV' },
-    { key: 'wakeHrv', label: '起HRV' }
-  ];
-}
-
-function tideTraceDailyHealthSummary() {
-  const days = new Map();
-  const medicationOptions = healthHistoryMedicationOptions();
-  const activeIds = new Set(medicationOptions.map((option) => option.id));
-  const activeLabels = new Map(medicationOptions.map((option) => [option.label, option.id]));
-  appData.events.forEach((event) => {
-    if (!isValidDateString(event.localDate)) return;
-    if (!days.has(event.localDate)) days.set(event.localDate, { painScores: [], medicationCounts: new Map() });
-    const day = days.get(event.localDate);
-    if (event.type === 'pain' && typeof event.painScore === 'number' && Number.isFinite(event.painScore)) day.painScores.push(event.painScore);
-    if (event.type === 'medication') {
-      let optionId = event.medicationOptionId && activeIds.has(event.medicationOptionId) ? event.medicationOptionId : '';
-      if (!optionId && event.medicationLabel) optionId = activeLabels.get(event.medicationLabel) || '';
-      if (optionId) day.medicationCounts.set(optionId, (day.medicationCounts.get(optionId) || 0) + 1);
-    }
-  });
-  return days;
-}
-
-function buildHealthHistoryRows(heartwatchData) {
-  const today = nowParts().localDate;
-  const tideDays = tideTraceDailyHealthSummary();
-  const medicationOptions = healthHistoryMedicationOptions();
-  return [...heartwatchData.keys()].filter((date) => date < today).sort().map((date) => {
-    const tide = tideDays.get(date) || { painScores: [], medicationCounts: new Map() };
-    const heart = heartwatchData.get(date) || {};
-    const painCount = tide.painScores.length;
-    const medicationCounts = Object.fromEntries(medicationOptions.map((option) => [option.id, String(tide.medicationCounts.get(option.id) || 0)]));
-    const painMax = painCount ? Math.max(...tide.painScores) : '';
-    const painAverage = painCount ? (tide.painScores.reduce((total, score) => total + score, 0) / painCount).toFixed(1) : '';
-    return { date, painMax, painAverage, medicationCounts, steps: heart.steps || '', sleep: heart.sleep || '', sleepBpm: heart.sleepBpm || '', sleepHrv: heart.sleepHrv || '', wakeHrv: heart.wakeHrv || '' };
-  });
-}
-
-function hasMissingHeartWatchDates(rows, heartwatchData) {
-  const heartDates = new Set(heartwatchData.keys());
-  const csvDates = [...heartDates].sort();
-  if (csvDates.length < 2) return false;
-  for (let date = csvDates[0]; date <= csvDates[csvDates.length - 1]; date = addDays(date, 1)) {
-    if (!heartDates.has(date)) return true;
-  }
-  return false;
-}
-
-function healthHistoryValues(row, columns = healthHistoryColumns()) {
-  return columns.map((column) => column.medicationOption ? (row.medicationCounts[column.medicationOption.id] || '0') : row[column.key]);
-}
-
-function renderHealthHistoryRows(rows, missingHeartWatchDates) {
-  const result = $('health-history-result');
-  result.innerHTML = '';
-  const block = document.createElement('div');
-  block.className = 'visit-summary-result-block';
-  block.innerHTML = '<h3>日ごとのまとめ</h3>';
-  if (missingHeartWatchDates) {
-    const notice = document.createElement('p');
-    notice.className = 'visit-summary-notice supplemental-text';
-    notice.textContent = 'HeartWatch CSVに含まれない日があります。必要に応じてCSVを書き出し直してください。';
-    block.appendChild(notice);
-  }
-  if (!rows.length) {
-    const empty = document.createElement('p');
-    empty.className = 'empty';
-    empty.textContent = '表示できる過去の日ごとの記録はありません。';
-    block.appendChild(empty);
-  } else {
-    const columns = healthHistoryColumns();
-    const wrap = document.createElement('div');
-    wrap.className = 'health-history-table-wrap';
-    const table = document.createElement('table');
-    table.className = 'health-history-table';
-    table.innerHTML = `<thead><tr>${columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join('')}</tr></thead>`;
-    const tbody = document.createElement('tbody');
-    rows.forEach((row) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = healthHistoryValues(row, columns).map((value) => `<td>${escapeHtml(value)}</td>`).join('');
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    wrap.appendChild(table);
-    block.appendChild(wrap);
-  }
-  result.appendChild(block);
-  $('health-history-actions').hidden = rows.length === 0;
-}
-
-function healthHistoryRangeText(rows) {
-  return rows.length ? `（${rows[0].date}〜${rows[rows.length - 1].date}）` : '';
-}
-
-function buildHealthHistoryText(rows) {
-  const columns = healthHistoryColumns();
-  const lines = [`日ごとのまとめ${healthHistoryRangeText(rows)}`];
-  rows.forEach((row) => {
-    const values = healthHistoryValues(row, columns);
-    lines.push('', row.date);
-    values.slice(1).forEach((value, index) => { if (value !== '') lines.push(`${columns[index + 1].label}：${value}`); });
-  });
-  return lines.join('\n');
-}
-
-function buildHealthHistoryTsv(rows) {
-  const columns = healthHistoryColumns();
-  return [columns.map((column) => column.label).join('\t'), ...rows.map((row) => healthHistoryValues(row, columns).join('\t'))].join('\n');
-}
-
-async function copyHealthHistoryText() {
-  if (!currentHealthHistoryRows.length || !navigator.clipboard) return showToast('コピーできませんでした');
-  try { await navigator.clipboard.writeText(buildHealthHistoryText(currentHealthHistoryRows)); showToast('テキストをコピーしました'); }
-  catch { showToast('コピーできませんでした'); }
-}
-
-async function copyHealthHistoryTsv() {
-  if (!currentHealthHistoryRows.length || !navigator.clipboard) return showToast('コピーできませんでした');
-  try { await navigator.clipboard.writeText(buildHealthHistoryTsv(currentHealthHistoryRows)); showToast('TSVをコピーしました'); }
-  catch { showToast('コピーできませんでした'); }
-}
-
-function showHealthHistoryPrint() {
-  if (!currentHealthHistoryRows.length) return;
-  $('health-history-print-help').hidden = false;
-  $('health-history-details').open = true;
-  document.body.classList.add('health-history-print-mode');
-  window.print();
-}
-
-function handleHeartWatchCsvSelected(event) {
-  const input = event.target;
-  const file = input.files && input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const parsed = parseHeartWatchCsv(String(reader.result));
-    const message = $('health-history-message');
-    message.textContent = '';
-    message.classList.remove('error');
-    currentHealthHistoryRows = [];
-    $('health-history-actions').hidden = true;
-    if (parsed.error) {
-      message.textContent = 'HeartWatch CSVとして読み込めませんでした。';
-      message.classList.add('error');
-      $('health-history-result').innerHTML = '';
-    } else {
-      currentHealthHistoryRows = buildHealthHistoryRows(parsed.data);
-      renderHealthHistoryRows(currentHealthHistoryRows, hasMissingHeartWatchDates(currentHealthHistoryRows, parsed.data));
-      showToast('HeartWatch CSVを読み込みました');
-    }
-    input.value = '';
-  };
-  reader.onerror = () => {
-    $('health-history-message').textContent = 'HeartWatch CSVとして読み込めませんでした。';
-    $('health-history-message').classList.add('error');
-    input.value = '';
-  };
-  reader.readAsText(file);
-}
+function normalizeColumnLabel(value) { return String(value || '').trim().normalize('NFKC').toLocaleLowerCase('ja'); }
+function visibleLength(value) { return Array.from(String(value || '').trim()).length; }
+function visiblePrefix(value, length) { return Array.from(String(value || '').trim()).slice(0, length).join(''); }
+function uniqueGeneratedLabel(base, used) { let label = base || '項目'; let n = 2; while (used.has(normalizeColumnLabel(label))) { label = `${base || '項目'}${n}`; n += 1; } used.add(normalizeColumnLabel(label)); return label; }
+function healthHistoryMedicationLabel(option, used = new Set()) { const trimmed = String(option.label || '').trim() || '薬'; const chars = Array.from(trimmed); for (let len = 2; len <= Math.max(2, chars.length); len += 1) { const candidate = chars.slice(0, len).join(''); if (!used.has(normalizeColumnLabel(candidate))) { used.add(normalizeColumnLabel(candidate)); return candidate; } } return uniqueGeneratedLabel(chars.join('') || option.id || '薬', used); }
+function healthHistoryMedicationLabels(options) { const labels = options.map((option) => visiblePrefix(option.label, 2) || option.id || '薬'); const maxLengths = options.map((option) => Math.max(2, Array.from(String(option.label || '').trim()).length)); let changed = true; while (changed) { changed = false; labels.forEach((label, index) => { const duplicate = labels.some((other, otherIndex) => otherIndex !== index && other === label); if (duplicate && Array.from(labels[index]).length < maxLengths[index]) { const nextLabel = visiblePrefix(options[index].label, Array.from(labels[index]).length + 1) || labels[index]; if (nextLabel !== labels[index]) { labels[index] = nextLabel; changed = true; } } }); } const seen = new Map(); return labels.map((label) => { const count = seen.get(label) || 0; seen.set(label, count + 1); return count ? `${label}${count + 1}` : label; }); }
+function healthHistoryPainStateLabel(option, kind, used = new Set()) { const suffix = { max: '最', average: '平', count: '回' }[kind]; const name = String(option.label || '').trim() || '状態'; const chars = Array.from(name); for (let len = 1; len <= chars.length; len += 1) { const candidate = `${chars.slice(0, len).join('')}${suffix}`; if (!used.has(normalizeColumnLabel(candidate))) { used.add(normalizeColumnLabel(candidate)); return candidate; } } return uniqueGeneratedLabel(`${name}${suffix}`, used); }
+function defaultHealthHistoryColumns() { const used = new Set(['日付'].map(normalizeColumnLabel)); const cols = [ ['tidetrace:pain:max','最大'], ['tidetrace:pain:average','平均'] ].map(([columnId, shortLabel]) => ({ columnId, shortLabel, shortLabelMode: 'auto' })); cols.forEach((c) => used.add(normalizeColumnLabel(c.shortLabel))); { const meds = sortedMedicationOptions((appData.settings?.medicationOptions || []).filter((o) => o.active)); const labels = healthHistoryMedicationLabels(meds); meds.forEach((option, index) => { cols.push({ columnId: `tidetrace:medication:${option.id}:count`, shortLabel: labels[index], shortLabelMode: 'auto' }); used.add(normalizeColumnLabel(labels[index])); }); } ['steps','sleep-duration','sleep-bpm','sleep-hrv','wake-hrv'].forEach((id) => { const m = HEARTWATCH_CATALOG.find((x) => x.id === id); cols.push({ columnId: m.columnId, shortLabel: m.defaultShortLabel, shortLabelMode: 'auto' }); used.add(normalizeColumnLabel(m.defaultShortLabel)); }); return cols; }
+function normalizeHealthReviewColumns(settings = appData.settings) { const source = Array.isArray(settings.healthReviewColumns) ? settings.healthReviewColumns : defaultHealthHistoryColumns(); const seen = new Set(); const out = []; source.forEach((item) => { if (!item || typeof item !== 'object' || typeof item.columnId !== 'string' || item.columnId === 'date' || seen.has(item.columnId)) return; const metric = healthHistoryMetricById(item.columnId); if (!metric && !/^tidetrace:(medication|pain-state):/.test(item.columnId)) return; seen.add(item.columnId); out.push({ columnId: item.columnId, shortLabel: String(item.shortLabel || (metric && metric.defaultShortLabel) || '').trim(), shortLabelMode: item.shortLabelMode === 'custom' ? 'custom' : 'auto' }); }); if (!out.length) return defaultHealthHistoryColumns(); return refreshAutomaticHealthHistoryLabels(out); }
+function refreshAutomaticHealthHistoryLabels(columns) { const used = new Set(); return columns.map((item) => { const metric = healthHistoryMetricById(item.columnId); let shortLabel = String(item.shortLabel || '').trim(); if (!shortLabel) shortLabel = metric ? metric.defaultShortLabel : shortLabel; const normalized = normalizeColumnLabel(shortLabel); if (item.shortLabelMode !== 'custom' && (used.has(normalized) || !shortLabel)) shortLabel = metric ? metric.generateShortLabel(used) : uniqueGeneratedLabel('項目', used); else used.add(normalized); return { columnId: item.columnId, shortLabel, shortLabelMode: item.shortLabelMode === 'custom' ? 'custom' : 'auto' }; }); }
+function ensureHealthReviewColumns() { appData.settings.healthReviewColumns = normalizeHealthReviewColumns(appData.settings); }
+function healthHistoryMetricById(columnId) { return healthHistoryMetricCatalog().find((m) => m.columnId === columnId) || null; }
+function healthHistoryMetricCatalog() { const metrics = [ { columnId: 'tidetrace:pain:max', type: 'pain', kind: 'max', fullName: '日ごとの痛み 最大', defaultShortLabel: '最大', category: 'TideTrace', subsection: '日ごとの痛み' }, { columnId: 'tidetrace:pain:average', type: 'pain', kind: 'average', fullName: '日ごとの痛み 平均', defaultShortLabel: '平均', category: 'TideTrace', subsection: '日ごとの痛み' }, { columnId: 'tidetrace:pain:min', type: 'pain', kind: 'min', fullName: '日ごとの痛み 最小', defaultShortLabel: '最小', category: 'TideTrace', subsection: '日ごとの痛み' }, { columnId: 'tidetrace:pain:count', type: 'pain', kind: 'count', fullName: '日ごとの痛み 記録数', defaultShortLabel: '痛回', category: 'TideTrace', subsection: '日ごとの痛み' }, { columnId: 'tidetrace:note:count', type: 'note', fullName: '単独メモ数', defaultShortLabel: 'メモ', category: 'TideTrace', subsection: '薬・メモ' } ]; sortedPainOptions(appData.settings?.painStateOptions || []).forEach((option) => ['max','average','count'].forEach((kind) => metrics.push({ columnId: `tidetrace:pain-state:${option.id}:${kind}`, type: 'pain-state', kind, option, fullName: `${option.label}${option.active ? '' : '（非表示中）'} ${kind === 'max' ? '最大' : kind === 'average' ? '平均' : '回数'}`, defaultShortLabel: healthHistoryPainStateLabel(option, kind, new Set()), generateShortLabel: (used) => healthHistoryPainStateLabel(option, kind, used), category: 'TideTrace', subsection: '状態別の痛み' }))); sortedMedicationOptions(appData.settings?.medicationOptions || []).forEach((option) => metrics.push({ columnId: `tidetrace:medication:${option.id}:count`, type: 'medication', option, fullName: `${option.label}${option.active ? '' : '（非表示中）'} 服薬回数`, defaultShortLabel: healthHistoryMedicationLabel(option, new Set()), generateShortLabel: (used) => healthHistoryMedicationLabel(option, used), category: 'TideTrace', subsection: '薬・メモ' })); HEARTWATCH_CATALOG.forEach((h) => metrics.push({ ...h, fullName: h.fullName, defaultShortLabel: h.defaultShortLabel, generateShortLabel: (used) => uniqueGeneratedLabel(h.defaultShortLabel, used) })); return metrics; }
+function selectedHealthHistoryColumns() { ensureHealthReviewColumns(); return [HEALTH_HISTORY_DATE_COLUMN, ...appData.settings.healthReviewColumns.map((item) => { const metric = healthHistoryMetricById(item.columnId); return metric ? { ...metric, shortLabel: item.shortLabel } : null; }).filter(Boolean)].map((column) => ({ ...column, label: column.shortLabel })); }
+function healthHistoryColumns() { return selectedHealthHistoryColumns(); }
+function validateHealthHistoryColumns(columns) { const seen = new Map(); for (let i = 0; i < columns.length; i += 1) { const label = String(columns[i].shortLabel || '').trim(); if (!label) return { ok: false, index: i, message: '短縮名を入力してください。' }; if (visibleLength(label) > 8) return { ok: false, index: i, message: '短縮名は8文字以内で入力してください。' }; const key = normalizeColumnLabel(label); if (seen.has(key)) return { ok: false, index: i, message: '短縮名が重複しています。' }; seen.set(key, i); } return { ok: true }; }
+function tideTraceDailyHealthSummary() { const days = new Map(); const meds = appData.settings?.medicationOptions || []; const medIds = new Set(meds.map((o) => o.id)); const medLabels = new Map(meds.map((o) => [o.label, o.id])); appData.events.forEach((event) => { if (!isValidDateString(event.localDate)) return; if (!days.has(event.localDate)) days.set(event.localDate, { painScores: [], painStates: new Map(), medicationCounts: new Map(), noteCount: 0 }); const day = days.get(event.localDate); if (event.type === 'pain' && typeof event.painScore === 'number' && Number.isFinite(event.painScore)) { day.painScores.push(event.painScore); const stateId = event.stateOptionId || ''; if (stateId) { if (!day.painStates.has(stateId)) day.painStates.set(stateId, []); day.painStates.get(stateId).push(event.painScore); } } if (event.type === 'medication') { let optionId = event.medicationOptionId && medIds.has(event.medicationOptionId) ? event.medicationOptionId : ''; if (!optionId && event.medicationLabel) optionId = medLabels.get(event.medicationLabel) || ''; if (optionId) day.medicationCounts.set(optionId, (day.medicationCounts.get(optionId) || 0) + 1); } if (event.type === 'note') day.noteCount += 1; }); return days; }
+function summaryScoreValue(scores, kind) { if (kind === 'count') return String(scores.length); if (!scores.length) return ''; if (kind === 'max') return String(Math.max(...scores)); if (kind === 'min') return String(Math.min(...scores)); return (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1); }
+function buildHealthHistoryRows(heartwatchData) { const today = nowParts().localDate; const tideDays = tideTraceDailyHealthSummary(); return [...heartwatchData.keys()].filter((date) => date < today).sort().map((date) => { const tide = tideDays.get(date) || { painScores: [], painStates: new Map(), medicationCounts: new Map(), noteCount: 0 }; const heart = heartwatchData.get(date) || {}; const medicationOptions = sortedMedicationOptions((appData.settings?.medicationOptions || []).filter((option) => option.active)); const medicationCounts = Object.fromEntries(medicationOptions.map((option) => [option.id, String(tide.medicationCounts.get(option.id) || 0)])); const painMax = summaryScoreValue(tide.painScores, 'max'); const painAverage = summaryScoreValue(tide.painScores, 'average'); return { date, tide, heart, medicationCounts, painMax: painMax === '' ? '' : Number(painMax), painAverage, steps: heart.steps || '', sleep: heart.sleep || '', sleepBpm: heart.sleepBpm || '', sleepHrv: heart.sleepHrv || '', wakeHrv: heart.wakeHrv || '' }; }); }
+function healthHistoryCell(row, column) { if (column.columnId === 'date') return row.date; if (column.type === 'heartwatch') return row.heart[column.id] || ''; if (column.type === 'pain') return summaryScoreValue(row.tide.painScores, column.kind); if (column.type === 'pain-state') return summaryScoreValue(row.tide.painStates.get(column.option.id) || [], column.kind); if (column.type === 'medication') return String(row.tide.medicationCounts.get(column.option.id) || 0); if (column.type === 'note') return String(row.tide.noteCount || 0); return ''; }
+function hasMissingHeartWatchDates(rows, heartwatchData) { const heartDates = new Set(heartwatchData.keys()); const csvDates = [...heartDates].sort(); if (csvDates.length < 2) return false; for (let date = csvDates[0]; date <= csvDates[csvDates.length - 1]; date = addDays(date, 1)) if (!heartDates.has(date)) return true; return false; }
+function healthHistoryValues(row, columns = selectedHealthHistoryColumns()) { return columns.map((column) => healthHistoryCell(row, column)); }
+function renderHealthHistoryColumnEditor() { const root = $('health-history-columns-editor'); if (!root) return; if (!healthHistoryColumnDraft) healthHistoryColumnDraft = normalizeHealthReviewColumns(appData.settings).map((x) => ({ ...x })); const selectedIds = new Set(healthHistoryColumnDraft.map((x) => x.columnId)); const metrics = healthHistoryMetricCatalog(); const rowHtml = healthHistoryColumnDraft.map((item, index) => { const metric = healthHistoryMetricById(item.columnId); const name = metric ? metric.fullName : item.columnId; return `<div class="column-selected-row"><span>${escapeHtml(name)}</span><label>短縮名<input data-column-label-index="${index}" value="${escapeHtml(item.shortLabel)}" maxlength="16"></label><button type="button" data-column-move-up="${index}" aria-label="${escapeHtml(name)}を上へ移動">↑</button><button type="button" data-column-move-down="${index}" aria-label="${escapeHtml(name)}を下へ移動">↓</button><button type="button" data-column-remove="${index}" aria-label="${escapeHtml(name)}を削除">削除</button></div>`; }).join(''); const checkbox = (m) => `<label class="health-column-check"><input type="checkbox" data-column-toggle="${escapeHtml(m.columnId)}" ${selectedIds.has(m.columnId) ? 'checked' : ''}> ${escapeHtml(m.fullName)}</label>`; const painKinds = ['tidetrace:pain:max','tidetrace:pain:average','tidetrace:pain:min','tidetrace:pain:count'].map((id) => checkbox(metrics.find((m) => m.columnId === id))).join(''); const states = sortedPainOptions(appData.settings?.painStateOptions || []).map((o) => `<div class="state-column-group"><div>${escapeHtml(o.label)}${o.active ? '' : '（非表示中）'}</div>${['max','average','count'].map((k) => checkbox(metrics.find((m) => m.columnId === `tidetrace:pain-state:${o.id}:${k}`))).join('')}</div>`).join(''); const meds = sortedMedicationOptions(appData.settings?.medicationOptions || []).map((o) => checkbox(metrics.find((m) => m.columnId === `tidetrace:medication:${o.id}:count`))).join('') + checkbox(metrics.find((m) => m.columnId === 'tidetrace:note:count')); const cats = ['睡眠・起床','心拍','活動','血圧・体温・SpO2','血糖値','体重・体組成'].map((cat) => `<details><summary>${cat}</summary><div class="health-column-checks">${metrics.filter((m) => m.category === cat).map(checkbox).join('')}</div></details>`).join(''); root.innerHTML = `<h4>表示中の項目</h4><div class="fixed-date-column">日付（先頭固定）</div>${rowHtml || '<p class="empty">表示項目がありません。</p>'}<p id="health-history-columns-error" class="message error"></p><h4>項目を追加</h4><details><summary>TideTrace</summary><h5>日ごとの痛み</h5><div class="health-column-checks">${painKinds}</div><h5>状態別の痛み</h5>${states}<h5>薬・メモ</h5><div class="health-column-checks">${meds}</div></details>${cats}<div class="health-column-buttons"><button id="save-health-history-columns" type="button" class="primary-button">保存</button><button id="reset-health-history-columns" type="button" class="secondary-button">初期表示に戻す</button></div>`; }
+function syncDraftLabels() { document.querySelectorAll('[data-column-label-index]').forEach((input) => { const i = Number(input.dataset.columnLabelIndex); if (healthHistoryColumnDraft[i]) { healthHistoryColumnDraft[i].shortLabel = input.value; healthHistoryColumnDraft[i].shortLabelMode = 'custom'; } }); }
+function handleHealthHistoryColumnEditorClick(event) { const t = event.target; if (t.dataset.columnToggle) { syncDraftLabels(); const id = t.dataset.columnToggle; const i = healthHistoryColumnDraft.findIndex((x) => x.columnId === id); if (t.checked && i < 0) { const m = healthHistoryMetricById(id); healthHistoryColumnDraft.push({ columnId: id, shortLabel: m.defaultShortLabel, shortLabelMode: 'auto' }); } if (!t.checked && i >= 0) healthHistoryColumnDraft.splice(i, 1); renderHealthHistoryColumnEditor(); return; } for (const [key, action] of [['columnRemove','remove'],['columnMoveUp','up'],['columnMoveDown','down']]) if (t.dataset[key] !== undefined) { syncDraftLabels(); const i = Number(t.dataset[key]); if (action === 'remove') healthHistoryColumnDraft.splice(i, 1); if (action === 'up' && i > 0) [healthHistoryColumnDraft[i - 1], healthHistoryColumnDraft[i]] = [healthHistoryColumnDraft[i], healthHistoryColumnDraft[i - 1]]; if (action === 'down' && i < healthHistoryColumnDraft.length - 1) [healthHistoryColumnDraft[i + 1], healthHistoryColumnDraft[i]] = [healthHistoryColumnDraft[i], healthHistoryColumnDraft[i + 1]]; renderHealthHistoryColumnEditor(); return; } if (t.id === 'reset-health-history-columns') { healthHistoryColumnDraft = defaultHealthHistoryColumns(); renderHealthHistoryColumnEditor(); return; } if (t.id === 'save-health-history-columns') { syncDraftLabels(); healthHistoryColumnDraft.forEach((x) => { x.shortLabel = String(x.shortLabel || '').trim(); }); const validation = validateHealthHistoryColumns(healthHistoryColumnDraft); if (!validation.ok) { const error = $('health-history-columns-error'); if (error) error.textContent = validation.message; const input = document.querySelector(`[data-column-label-index="${validation.index}"]`); if (input) input.focus(); return; } appData.settings.healthReviewColumns = normalizeHealthReviewColumns({ ...appData.settings, healthReviewColumns: healthHistoryColumnDraft }); saveData(); healthHistoryColumnDraft = appData.settings.healthReviewColumns.map((x) => ({ ...x })); if (currentHeartWatchData) { currentHealthHistoryRows = buildHealthHistoryRows(currentHeartWatchData); renderHealthHistoryRows(currentHealthHistoryRows, hasMissingHeartWatchDates(currentHealthHistoryRows, currentHeartWatchData)); } renderHealthHistoryColumnEditor(); showToast('表示項目を保存しました'); } }
+function renderHealthHistoryRows(rows, missingHeartWatchDates) { const result = $('health-history-result'); result.innerHTML = ''; const block = document.createElement('div'); block.className = 'visit-summary-result-block'; block.innerHTML = '<h3>日ごとのまとめ</h3>'; if (missingHeartWatchDates) { const notice = document.createElement('p'); notice.className = 'visit-summary-notice supplemental-text'; notice.textContent = 'HeartWatch CSVに含まれない日があります。必要に応じてCSVを書き出し直してください。'; block.appendChild(notice); } if (!rows.length) { const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = '表示できる過去の日ごとの記録はありません。'; block.appendChild(empty); } else { const columns = selectedHealthHistoryColumns(); const wrap = document.createElement('div'); wrap.className = 'health-history-table-wrap'; const table = document.createElement('table'); table.className = 'health-history-table'; table.innerHTML = `<thead><tr>${columns.map((column) => `<th title="${escapeHtml(column.fullName || column.shortLabel)}" aria-label="${escapeHtml(column.fullName || column.shortLabel)}">${escapeHtml(column.shortLabel)}</th>`).join('')}</tr></thead>`; const tbody = document.createElement('tbody'); rows.forEach((row) => { const tr = document.createElement('tr'); tr.innerHTML = healthHistoryValues(row, columns).map((value) => `<td>${escapeHtml(value)}</td>`).join(''); tbody.appendChild(tr); }); table.appendChild(tbody); wrap.appendChild(table); block.appendChild(wrap); } result.appendChild(block); $('health-history-actions').hidden = rows.length === 0; }
+function healthHistoryRangeText(rows) { return rows.length ? `（${rows[0].date}〜${rows[rows.length - 1].date}）` : ''; }
+function buildHealthHistoryText(rows) { const columns = selectedHealthHistoryColumns(); const lines = [`日ごとのまとめ${healthHistoryRangeText(rows)}`]; rows.forEach((row) => { const values = healthHistoryValues(row, columns); lines.push('', row.date); values.slice(1).forEach((value, index) => { if (value !== '') lines.push(`${columns[index + 1].shortLabel}（${columns[index + 1].fullName}）：${value}`); }); }); return lines.join('\n'); }
+function buildHealthHistoryTsv(rows) { const columns = selectedHealthHistoryColumns(); return [columns.map((column) => column.shortLabel).join('\t'), ...rows.map((row) => healthHistoryValues(row, columns).join('\t'))].join('\n'); }
+async function copyHealthHistoryText() { if (!currentHealthHistoryRows.length || !navigator.clipboard) return showToast('コピーできませんでした'); try { await navigator.clipboard.writeText(buildHealthHistoryText(currentHealthHistoryRows)); showToast('テキストをコピーしました'); } catch { showToast('コピーできませんでした'); } }
+async function copyHealthHistoryTsv() { if (!currentHealthHistoryRows.length || !navigator.clipboard) return showToast('コピーできませんでした'); try { await navigator.clipboard.writeText(buildHealthHistoryTsv(currentHealthHistoryRows)); showToast('TSVをコピーしました'); } catch { showToast('コピーできませんでした'); } }
+function showHealthHistoryPrint() { if (!currentHealthHistoryRows.length) return; $('health-history-print-help').hidden = false; $('health-history-details').open = true; document.body.classList.add('health-history-print-mode'); window.print(); }
+function handleHeartWatchCsvSelected(event) { const input = event.target; const file = input.files && input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { const parsed = parseHeartWatchCsv(String(reader.result)); const message = $('health-history-message'); message.textContent = ''; message.classList.remove('error'); currentHealthHistoryRows = []; currentHeartWatchData = null; $('health-history-actions').hidden = true; if (parsed.error) { message.textContent = 'HeartWatch CSVとして読み込めませんでした。'; message.classList.add('error'); $('health-history-result').innerHTML = ''; } else { currentHeartWatchData = parsed.data; currentHealthHistoryRows = buildHealthHistoryRows(parsed.data); renderHealthHistoryRows(currentHealthHistoryRows, hasMissingHeartWatchDates(currentHealthHistoryRows, parsed.data)); showToast('HeartWatch CSVを読み込みました'); } input.value = ''; }; reader.onerror = () => { $('health-history-message').textContent = 'HeartWatch CSVとして読み込めませんでした。'; $('health-history-message').classList.add('error'); input.value = ''; }; reader.readAsText(file); }
 
 function nextPeriodStartSuggestion() {
   if (!appData.periods.length) return '';
@@ -2697,6 +2505,8 @@ function wireEvents() {
   $('copy-health-history-text').addEventListener('click', copyHealthHistoryText);
   $('copy-health-history-tsv').addEventListener('click', copyHealthHistoryTsv);
   $('show-health-history-print').addEventListener('click', showHealthHistoryPrint);
+  $('health-history-columns-editor').addEventListener('click', handleHealthHistoryColumnEditorClick);
+  $('health-history-columns-panel').addEventListener('toggle', () => { if ($('health-history-columns-panel').open) { healthHistoryColumnDraft = normalizeHealthReviewColumns(appData.settings).map((item) => ({ ...item })); renderHealthHistoryColumnEditor(); } });
   $('history-details').addEventListener('toggle', () => {
     if ($('history-details').open) {
       historyRange = recentHistoryRange(nowParts().localDate);
