@@ -1205,7 +1205,7 @@ def test_heartwatch_csv_uses_iso_prefix_and_keeps_import_temporary() -> None:
         const assert = require('node:assert/strict');
         let storageWrites = 0;
         global.localStorage = { getItem() { return null; }, setItem() { storageWrites += 1; } };
-        const csv = '\\uFEFFISO,日付,睡眠時間,睡眠-心拍変動-ms,平常-平均-bpm,平常-高-bpm,安静-高-bpm,歩数\\n2026-06-15T23:00:00+09:00,6/15,09:51:22,34,83.5,132,97,5757\\n2026-06-16T04:00:00+09:00,6/16,,29,76.1,120,94,2384';
+        const csv = '\uFEFFISO,日付,歩数,睡眠時間,睡眠-bpm,睡眠-心拍変動-ms,起床-心拍変動-ms\\n2026-06-15T23:00:00+09:00,6/15,5757,09:51:22,61,34,45\\n2026-06-16T04:00:00+09:00,6/16,2384,,58,29,';
         const parsed = parseHeartWatchCsv(csv);
         assert.equal(parsed.error, false);
         assert.equal(parsed.data.has('2026-06-15'), true);
@@ -1218,28 +1218,67 @@ def test_heartwatch_csv_uses_iso_prefix_and_keeps_import_temporary() -> None:
     )
 
 
-def test_health_history_daily_summary_joins_local_dates_and_excludes_today() -> None:
+def test_health_history_daily_summary_uses_heartwatch_dates_dynamic_medications_and_outputs() -> None:
     run_app_js(
         """
         const assert = require('node:assert/strict');
         nowParts = () => ({ iso: '2026-06-17T00:00:00.000Z', localDate: '2026-06-16', localTime: '09:00' });
-        appData = { events: [
-          { type: 'pain', localDate: '2026-06-15', painScore: 8 },
-          { type: 'pain', localDate: '2026-06-15', painScore: 5 },
-          { type: 'medication', localDate: '2026-06-15' },
-          { type: 'pain', localDate: '2026-06-16', painScore: 9 },
-          { type: 'medication', localDate: '2026-06-14' }
-        ] };
-        const parsed = parseHeartWatchCsv('ISO,睡眠時間,睡眠-心拍変動-ms,平常-平均-bpm,平常-高-bpm,安静-高-bpm,歩数\\n2026-06-15T23:00:00+09:00,09:51:00,34,83.5,132,97,5757\\n2026-06-16T04:00:00+09:00,08:04:00,29,76.1,120,94,2384');
+        appData = {
+          settings: { medicationOptions: [
+            { id: 'inactive', label: '非表示', active: false, sortOrder: 0 },
+            { id: 'med_b', label: 'カロナール', active: true, sortOrder: 2 },
+            { id: 'med_a', label: 'ロキソニン', active: true, sortOrder: 1 }
+          ] },
+          events: [
+            { type: 'pain', localDate: '2026-06-15', painScore: 8 },
+            { type: 'pain', localDate: '2026-06-15', painScore: 5 },
+            { type: 'pain', localDate: '2026-06-16', painScore: 9 },
+            { type: 'medication', localDate: '2026-06-15', medicationOptionId: 'med_a', medicationLabel: 'ロキソニン' },
+            { type: 'medication', localDate: '2026-06-15', medicationOptionId: 'med_a', medicationLabel: 'ロキソニン' },
+            { type: 'medication', localDate: '2026-06-15', medicationLabel: 'カロナール' },
+            { type: 'medication', localDate: '2026-06-15', medicationOptionId: 'inactive', medicationLabel: '非表示' },
+            { type: 'pain', localDate: '2026-06-14', painScore: 10 },
+            { type: 'medication', localDate: '2026-06-14', medicationOptionId: 'med_a', medicationLabel: 'ロキソニン' }
+          ]
+        };
+        const parsed = parseHeartWatchCsv('ISO,歩数,睡眠時間,睡眠-bpm,睡眠-心拍変動-ms,起床-心拍変動-ms\\n2026-06-15T23:00:00+09:00,5757,09:51:00,61,34,45\\n2026-06-16T04:00:00+09:00,,08:04:00,,29,');
         const rows = buildHealthHistoryRows(parsed.data);
-        assert.deepEqual(rows.map((row) => row.date), ['2026-06-14', '2026-06-15']);
-        assert.equal(rows[1].painMax, 8);
-        assert.equal(rows[1].painAverage, '6.5');
-        assert.equal(rows[1].painCount, '2');
-        assert.equal(rows[1].medicationCount, '1');
-        assert.equal(rows[1].steps, '5757');
-        assert.match(buildHealthHistoryTsv(rows), /^日付\t痛み最大\t痛み平均\t痛み記録数\t服薬回数\t歩数\t睡眠時間\t睡眠HRV\\(ms\\)/);
-        assert.match(buildHealthHistoryText(rows), /日ごとのまとめ（2026-06-14〜2026-06-15）/);
-        assert.equal(hasMissingHeartWatchDates(rows, parsed.data), true);
+        assert.deepEqual(rows.map((row) => row.date), ['2026-06-15']);
+        assert.equal(rows[0].painMax, 8);
+        assert.equal(rows[0].painAverage, '6.5');
+        assert.deepEqual(rows[0].medicationCounts, { med_a: '2', med_b: '1' });
+        assert.equal(rows[0].steps, '5757');
+        assert.equal(rows[0].sleepBpm, '61');
+        assert.deepEqual(healthHistoryColumns().map((column) => column.label), ['日付', '最大', '平均', 'ロキ', 'カロ', '歩数', '睡眠', '睡bpm', '睡HRV', '起HRV']);
+        assert.match(buildHealthHistoryTsv(rows), /^日付\t最大\t平均\tロキ\tカロ\t歩数\t睡眠\t睡bpm\t睡HRV\t起HRV\\n2026-06-15\t8\t6.5\t2\t1\t5757\t9:51\t61\t34\t45$/);
+        assert.match(buildHealthHistoryText(rows), /日ごとのまとめ（2026-06-15〜2026-06-15）/);
+        assert.equal(hasMissingHeartWatchDates(rows, parsed.data), false);
+        """
+    )
+
+
+def test_health_history_medication_short_label_duplicates_and_blank_heartwatch_values() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        nowParts = () => ({ iso: '2026-06-17T00:00:00.000Z', localDate: '2026-06-17', localTime: '09:00' });
+        appData = {
+          settings: { medicationOptions: [
+            { id: 'med_a', label: 'ロキA', active: true, sortOrder: 1 },
+            { id: 'med_b', label: 'ロキB', active: true, sortOrder: 2 },
+            { id: 'med_c', label: '同', active: true, sortOrder: 3 },
+            { id: 'med_d', label: '同', active: true, sortOrder: 4 }
+          ] },
+          events: [
+            { type: 'medication', localDate: '2026-06-15', medicationOptionId: 'med_a', medicationLabel: '古い名前' },
+            { type: 'medication', localDate: '2026-06-15', medicationLabel: 'ロキB' }
+          ]
+        };
+        const parsed = parseHeartWatchCsv('ISO,歩数,睡眠時間,睡眠-bpm,睡眠-心拍変動-ms,起床-心拍変動-ms\\n2026-06-15T23:00:00+09:00,,,,,');
+        const rows = buildHealthHistoryRows(parsed.data);
+        assert.deepEqual(healthHistoryColumns().map((column) => column.label), ['日付', '最大', '平均', 'ロキA', 'ロキ', '同', '同2', '歩数', '睡眠', '睡bpm', '睡HRV', '起HRV']);
+        assert.deepEqual(rows[0].medicationCounts, { med_a: '1', med_b: '1', med_c: '0', med_d: '0' });
+        assert.deepEqual([rows[0].steps, rows[0].sleep, rows[0].sleepBpm, rows[0].sleepHrv, rows[0].wakeHrv], ['', '', '', '', '']);
+        assert.equal(buildHealthHistoryTsv(rows).split('\\n')[0], healthHistoryColumns().map((column) => column.label).join('\t'));
         """
     )
