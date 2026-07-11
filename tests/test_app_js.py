@@ -1207,10 +1207,10 @@ def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> No
 
 
 
-def test_static_asset_versions_are_current_for_button_role_refactor() -> None:
+def test_static_asset_versions_are_current_for_note_spacing_fix() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=17"' in html
-    assert 'styles.css?v=16' not in html
+    assert 'href="styles.css?v=18"' in html
+    assert 'styles.css?v=17' not in html
 
 
 def test_app_js_asset_version_is_unchanged_for_css_cleanup() -> None:
