@@ -1058,13 +1058,30 @@ summary { font-weight: 700; padding: 8px 0; }
 }
 
 .health-history-columns-panel {
-  border: 1px solid var(--divider);
-  border-radius: 12px;
   margin: 12px 0;
-  padding: 10px 12px;
 }
 
-.health-history-columns-panel summary,
+.health-history-columns-panel > summary {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  line-height: 1.35;
+  min-height: 44px;
+  padding: 12px;
+  overflow-wrap: anywhere;
+}
+
+.health-history-columns-panel > summary:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.health-history-columns-panel[open] > summary {
+  margin-bottom: 12px;
+}
+
 .health-history-columns-panel details summary {
   cursor: pointer;
   min-height: 36px;
@@ -1097,11 +1114,11 @@ summary { font-weight: 700; padding: 8px 0; }
 
 .column-short-label {
   align-items: center;
-  color: var(--muted);
+  color: var(--text-muted);
   display: flex;
   flex: 1 1 auto;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.78rem;
+  font-weight: 400;
   gap: 5px;
   line-height: 1.2;
   margin: 0;
@@ -1149,6 +1166,16 @@ summary { font-weight: 700; padding: 8px 0; }
   font-weight: 700;
   margin: 4px 0 5px;
   padding: 0;
+}
+
+.health-column-add-section {
+  border-top: 1px solid var(--divider);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.health-column-add-section h4 {
+  margin-top: 0;
 }
 
 .health-column-checks {
