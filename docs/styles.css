@@ -234,11 +234,6 @@ p { margin: 0 0 10px; }
   margin: 12px 0 6px;
 }
 
-button {
-  width: 100%;
-  border-radius: 12px;
-  font: inherit;
-}
 
 .form-control-base {
   box-sizing: border-box;
@@ -298,28 +293,69 @@ input[type="time"].form-control-full {
   outline-offset: 2px;
 }
 
-button,
-.primary-button {
-  min-height: 48px;
-  border: 0;
+.button-base {
   border-radius: 12px;
-  background: var(--button-bg);
-  color: var(--button-text);
+  font: inherit;
   font-weight: 700;
-  margin: 10px 0 0;
+  min-height: 48px;
   padding: 12px 14px;
 }
 
-button:not(.secondary-button):not(.danger):not(.toast-undo-button):not(.edit-event-button):not(.delete-event-button):not(.column-reorder-button):hover,
+.button-full {
+  width: 100%;
+}
+
+.record-input-section > .button-full,
+.management > .button-full,
+.medication-form-actions .button-full,
+.pain-state-form-actions .button-full,
+.comparison-period-form-actions .button-full,
+.health-column-buttons .button-full,
+#run-visit-summary {
+  margin: 10px 0 0;
+}
+
+.button-compact {
+  margin: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  width: auto;
+}
+
+.button-icon {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  line-height: 1;
+  margin: 0;
+  min-height: 2rem;
+  min-width: 2rem;
+  padding: 0;
+  text-align: center;
+  width: 2rem;
+}
+
+.primary-button {
+  background: var(--button-bg);
+  border: 0;
+  color: var(--button-text);
+}
+
 .primary-button:hover {
   background: var(--button-hover-bg, var(--button-bg));
 }
 
-button:active,
 .primary-button:active { background: var(--button-active-bg); }
 
-button.danger { background: var(--danger-bg); color: var(--danger-text); }
-button.danger:active { background: var(--danger-active-bg); }
+.danger {
+  background: var(--danger-bg);
+  border: 0;
+  color: var(--danger-text);
+}
+
+.danger:active { background: var(--danger-active-bg); }
 
 .secondary-button {
   background: var(--surface-muted);
@@ -492,44 +528,17 @@ hr {
 }
 
 .edit-event-button {
-  align-items: center;
   align-self: flex-start;
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text);
-  display: inline-flex;
   flex: 0 0 auto;
   font-size: 1.1rem;
-  height: 2rem;
-  justify-content: center;
-  line-height: 1;
-  margin: 0;
-  min-height: 2rem;
-  min-width: 2rem;
-  padding: 0;
-  width: 2rem;
 }
 
 .edit-event-button:active { background: var(--surface); }
 
 .delete-event-button {
-  align-items: center;
   align-self: flex-start;
-  background: var(--danger-bg);
-  border-radius: 999px;
-  color: var(--danger-text);
-  display: inline-flex;
   flex: 0 0 auto;
   font-size: 1.2rem;
-  height: 2rem;
-  justify-content: center;
-  line-height: 1;
-  margin: 0;
-  min-height: 2rem;
-  min-width: 2rem;
-  padding: 0;
-  width: 2rem;
 }
 
 .delete-event-button:active { background: var(--danger-active-bg); }
@@ -1122,18 +1131,7 @@ summary { font-weight: 700; padding: 8px 0; }
 
 .column-reorder-button,
 .column-remove-button.delete-event-button {
-  align-items: center;
-  border-radius: 999px;
-  display: inline-flex;
   font-size: 1rem;
-  height: 2rem;
-  justify-content: center;
-  line-height: 1;
-  margin: 0;
-  min-height: 2rem;
-  min-width: 2rem;
-  padding: 0;
-  width: 2rem;
 }
 
 .column-reorder-button {
