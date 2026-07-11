@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <link rel="manifest" href="./site.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=14">
+  <link rel="stylesheet" href="styles.css?v=15">
 </head>
 <body>
   <header class="app-header">
@@ -83,20 +83,20 @@
           <h3 class="record-input-heading">痛み</h3>
           <div class="pain-input-grid">
             <div class="field-row pain-score-field">
-              <label for="pain-score">スコア</label>
-              <select id="pain-score"></select>
+              <label for="pain-score" class="form-field-label">スコア</label>
+              <select id="pain-score" class="form-control-base form-control-full"></select>
             </div>
             <div class="field-row pain-state-field">
-              <label for="pain-state">状態</label>
-              <select id="pain-state"></select>
+              <label for="pain-state" class="form-field-label">状態</label>
+              <select id="pain-state" class="form-control-base form-control-full"></select>
             </div>
           </div>
           <button id="save-pain" type="button">痛みを記録</button>
         </div>
 
         <div class="record-input-section">
-          <label for="record-note-input">メモ（任意）</label>
-          <textarea id="record-note-input" rows="4" placeholder="薬や痛みの補足、または単独メモ"></textarea>
+          <label for="record-note-input" class="form-field-label">メモ（任意）</label>
+          <textarea id="record-note-input" class="form-control-base form-control-full" rows="4" placeholder="薬や痛みの補足、または単独メモ"></textarea>
           <button id="save-note" class="secondary-button note-save-button" type="button">メモだけ保存</button>
         </div>
       </section>
@@ -117,20 +117,20 @@
         <details id="visit-summary-details">
           <summary id="visit-summary-title">診察用サマリー</summary>
           <div id="summary-period-picker"></div>
-          <label for="summary-start-date">集計開始日</label>
-          <input id="summary-start-date" class="form-control" type="date">
+          <label for="summary-start-date" class="form-field-label">集計開始日</label>
+          <input id="summary-start-date" class="form-control-base form-control" type="date">
           <fieldset class="summary-end-mode">
             <legend>集計終了日</legend>
             <label class="radio-row" for="summary-end-yesterday">
-              <input id="summary-end-yesterday" name="summary-end-mode" type="radio" value="yesterday" checked>
+              <input id="summary-end-yesterday" name="summary-end-mode" type="radio" class="radio-control" value="yesterday" checked>
               <span id="summary-end-yesterday-label">昨日</span>
             </label>
             <label class="radio-row" for="summary-end-custom">
-              <input id="summary-end-custom" name="summary-end-mode" type="radio" value="custom">
+              <input id="summary-end-custom" name="summary-end-mode" type="radio" class="radio-control" value="custom">
               <span>任意の日付</span>
             </label>
           </fieldset>
-          <input id="summary-end-date" class="form-control" type="date">
+          <input id="summary-end-date" class="form-control-base form-control" type="date">
           <button id="run-visit-summary" type="button">集計する</button>
           <div id="visit-summary-actions" class="visit-summary-actions" aria-label="診察用サマリーの操作" hidden>
             <button id="copy-visit-summary" class="secondary-button" type="button">コピー</button>
@@ -183,8 +183,8 @@
           <p>最終CSV出力：<span id="last-csv-exported-at"></span></p>
         </div>
         <div class="field-row">
-          <label for="csv-export-type">CSV書き出し</label>
-          <select id="csv-export-type">
+          <label for="csv-export-type" class="form-field-label">CSV書き出し</label>
+          <select id="csv-export-type" class="form-control-base form-control-full">
             <option value="all">全記録</option>
             <option value="pain">痛みのみ</option>
             <option value="medication">服薬のみ</option>
@@ -199,17 +199,17 @@
           <p class="notice-text">別の薬に変更する場合は、名前を上書きせず、元の薬を非表示にしてから、新しい薬を追加してください。非表示にした薬は新規記録ボタンに表示されませんが、過去の記録は残ります。再開するときは、表示に戻せます。</p>
           <form id="medication-option-form">
             <input id="medication-option-id" type="hidden">
-            <label for="medication-label">薬名</label>
-            <input id="medication-label" class="form-control" type="text" autocomplete="off" required>
-            <label for="medication-default-amount">よく使う量</label>
-            <input id="medication-default-amount" class="form-control" type="number" inputmode="decimal" step="any" value="1" required>
-            <label for="medication-unit">単位</label>
-            <input id="medication-unit" class="form-control" type="text" autocomplete="off" placeholder="例：錠、包、回" aria-describedby="medication-unit-help">
+            <label for="medication-label" class="form-field-label">薬名</label>
+            <input id="medication-label" class="form-control-base form-control" type="text" autocomplete="off" required>
+            <label for="medication-default-amount" class="form-field-label">よく使う量</label>
+            <input id="medication-default-amount" class="form-control-base form-control" type="number" inputmode="decimal" step="any" value="1" required>
+            <label for="medication-unit" class="form-field-label">単位</label>
+            <input id="medication-unit" class="form-control-base form-control" type="text" autocomplete="off" placeholder="例：錠、包、回" aria-describedby="medication-unit-help">
             <p id="medication-unit-help" class="field-help supplemental-text">単位が違う記録は、診察用サマリーで別に集計されます。</p>
-            <label for="medication-sort-order">表示順</label>
-            <input id="medication-sort-order" class="form-control" type="number" inputmode="decimal" step="any" required>
+            <label for="medication-sort-order" class="form-field-label">表示順</label>
+            <input id="medication-sort-order" class="form-control-base form-control" type="number" inputmode="decimal" step="any" required>
             <label class="checkbox-row" for="medication-active">
-              <input id="medication-active" type="checkbox" checked>
+              <input id="medication-active" type="checkbox" class="checkbox-control" checked>
               <span>表示中</span>
             </label>
             <div class="medication-form-actions">
@@ -230,12 +230,12 @@
 名前を上書きすると、過去の記録や診察用サマリーの状態別集計が分かりにくくなることがあります。非表示にしても過去の記録は残り、再開するときは表示に戻せます。</p>
           <form id="pain-state-option-form">
             <input id="pain-state-option-id" type="hidden">
-            <label for="pain-state-label">状態名</label>
-            <input id="pain-state-label" class="form-control" type="text" autocomplete="off" required>
-            <label for="pain-state-sort-order">表示順</label>
-            <input id="pain-state-sort-order" class="form-control" type="number" inputmode="decimal" step="any" required>
+            <label for="pain-state-label" class="form-field-label">状態名</label>
+            <input id="pain-state-label" class="form-control-base form-control" type="text" autocomplete="off" required>
+            <label for="pain-state-sort-order" class="form-field-label">表示順</label>
+            <input id="pain-state-sort-order" class="form-control-base form-control" type="number" inputmode="decimal" step="any" required>
             <label class="checkbox-row" for="pain-state-active">
-              <input id="pain-state-active" type="checkbox" checked>
+              <input id="pain-state-active" type="checkbox" class="checkbox-control" checked>
               <span>表示中</span>
             </label>
             <div class="pain-state-form-actions">
@@ -251,14 +251,14 @@
         <details class="comparison-period-settings settings-disclosure">
           <summary id="comparison-period-title"><span id="comparison-period-summary">体調比較用期間の設定</span></summary>
           <form id="comparison-period-form">
-            <label for="comparison-period-label">期間名</label>
-            <input id="comparison-period-label" class="form-control" type="text" autocomplete="off">
-            <label for="comparison-period-start">開始日</label>
-            <input id="comparison-period-start" class="form-control" type="date">
-            <label for="comparison-period-end">終了日</label>
-            <input id="comparison-period-end" class="form-control" type="date">
-            <label for="comparison-period-note">メモ</label>
-            <textarea id="comparison-period-note" class="form-control" rows="3"></textarea>
+            <label for="comparison-period-label" class="form-field-label">期間名</label>
+            <input id="comparison-period-label" class="form-control-base form-control" type="text" autocomplete="off">
+            <label for="comparison-period-start" class="form-field-label">開始日</label>
+            <input id="comparison-period-start" class="form-control-base form-control" type="date">
+            <label for="comparison-period-end" class="form-field-label">終了日</label>
+            <input id="comparison-period-end" class="form-control-base form-control" type="date">
+            <label for="comparison-period-note" class="form-field-label">メモ</label>
+            <textarea id="comparison-period-note" class="form-control-base form-control" rows="3"></textarea>
             <div class="comparison-period-form-actions">
               <button type="submit">体調比較用期間を追加</button>
               <button id="cancel-comparison-period-edit" class="secondary-button" type="button" hidden>キャンセル</button>
@@ -275,7 +275,7 @@
     </div>
   </main>
 
-  <script src="app.js?v=14" defer></script>
+  <script src="app.js?v=15" defer></script>
   <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fcd3243fc5f04e899f9d5c8b46a3bc8e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

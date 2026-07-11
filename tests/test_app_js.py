@@ -899,9 +899,9 @@ def test_open_edit_event_panel_shows_fields_without_focus() -> None:
         assert.equal(focused, false);
         assert.match(fields.innerHTML, /type="date" value="2026-06-27"/);
         assert.match(fields.innerHTML, /type="time" value="23:45"/);
-        assert.equal(fields.innerHTML.includes('<label for="edit-medication-option">薬</label>'), true);
-        assert.equal(fields.innerHTML.includes('<select id="edit-medication-option">'), true);
-        assert.equal(fields.innerHTML.includes('<textarea id="edit-note" rows="4" placeholder="メモを入力"></textarea>'), true);
+        assert.equal(fields.innerHTML.includes('<label class="form-field-label" for="edit-medication-option">薬</label>'), true);
+        assert.equal(fields.innerHTML.includes('<select id="edit-medication-option" class="form-control-base form-control">'), true);
+        assert.equal(fields.innerHTML.includes('<textarea id="edit-note" class="form-control-base form-control" rows="4" placeholder="メモを入力"></textarea>'), true);
         assert.equal(fields.innerHTML.includes('日時を変更'), false);
         assert.equal(fields.innerHTML.includes('内容を変更'), false);
         assert.equal(fields.innerHTML.includes('メモを追加'), false);
@@ -1032,8 +1032,8 @@ def test_edit_note_section_uses_single_memo_label_and_empty_textarea() -> None:
         const assert = require('node:assert/strict');
         const html = editEventSectionHtml(editTextareaHtml(''));
 
-        assert.equal((html.match(/<label for="edit-note">メモ<\/label>/g) || []).length, 1);
-        assert.match(html, /<textarea id="edit-note" rows="4" placeholder="メモを入力"><\/textarea>/);
+        assert.equal((html.match(/<label class="form-field-label" for="edit-note">メモ<\/label>/g) || []).length, 1);
+        assert.match(html, /<textarea id="edit-note" class="form-control-base form-control" rows="4" placeholder="メモを入力"><\/textarea>/);
         assert.doesNotMatch(html, /<h3>メモ<\/h3>/);
         assert.doesNotMatch(html, /なし/);
         """
@@ -1206,13 +1206,49 @@ def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> No
 
 
 
-def test_static_asset_versions_are_current_for_column_editor_fix() -> None:
+def test_static_asset_versions_are_current_for_form_control_refactor() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=14"' in html
-    assert 'src="app.js?v=14"' in html
-    assert 'styles.css?v=13' not in html
-    assert 'app.js?v=13' not in html
+    assert 'href="styles.css?v=15"' in html
+    assert 'src="app.js?v=15"' in html
+    assert 'styles.css?v=14' not in html
+    assert 'app.js?v=14' not in html
 
+
+
+def test_form_control_classification_regression() -> None:
+    root = Path(__file__).parents[1]
+    html = (root / "docs" / "index.html").read_text()
+    app_js = (root / "docs" / "app.js").read_text()
+    css = (root / "docs" / "styles.css").read_text()
+
+    assert '<label for="pain-score" class="form-field-label">スコア</label>' in html
+    assert '<select id="pain-score" class="form-control-base form-control-full">' in html
+    assert '<textarea id="record-note-input" class="form-control-base form-control-full"' in html
+    assert '<input id="summary-start-date" class="form-control-base form-control" type="date">' in html
+    assert '<input id="summary-end-yesterday" name="summary-end-mode" type="radio" class="radio-control"' in html
+    assert '<input id="medication-active" type="checkbox" class="checkbox-control" checked>' in html
+    assert '<input id="import-file" class="visually-hidden-file-input" type="file"' in html
+    assert 'visually-hidden-file-input form-control' not in html
+    assert '<input id="medication-option-id" type="hidden">' in html
+
+    assert '<label class="form-field-label" for="edit-local-date">日付</label>' in app_js
+    assert '<input id="edit-local-time" class="form-control-base form-control" type="time"' in app_js
+    assert '<select id="edit-pain-score" class="form-control-base form-control">' in app_js
+    assert '<textarea id="edit-note" class="form-control-base form-control"' in app_js
+    assert "select.className = 'form-control-base form-control';" in app_js
+    assert '<input class="form-control-base form-control-compact" data-column-label-index="${index}"' in app_js
+    assert '<input class="checkbox-control" type="checkbox" data-column-toggle=' in app_js
+    assert 'form-control-compact form-control' not in app_js
+
+    assert 'input, select, textarea' not in css
+    assert 'input, select, textarea, button' not in css
+    assert '\nlabel {' not in css
+    assert '.form-field-label {' in css
+    assert '.form-control-base {' in css
+    assert '.form-control-full {' in css or '.form-control-full' in css
+    assert '.form-control-compact {' in css
+    assert '.checkbox-control,' in css
+    assert '.radio-control {' in css
 
 def test_heartwatch_csv_uses_iso_prefix_and_keeps_import_temporary() -> None:
     run_app_js(
