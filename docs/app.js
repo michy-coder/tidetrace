@@ -521,15 +521,33 @@ function sortedEventsDescending(events) {
   return [...events].sort((a, b) => (b.localDate + b.localTime + b.createdAtUtc).localeCompare(a.localDate + a.localTime + a.createdAtUtc));
 }
 
-function eventText(event) {
-  const parts = [`${event.localTime}`, event.type];
-  if (event.type === 'pain') parts.push(`score ${event.painScore}`, painEventLabel(event));
-  if (event.type === 'medication') {
-    parts.push(medicationEventLabel(event) || '不明な薬');
-    if (event.amount !== undefined || event.unit) parts.push(`${event.amount ?? ''}${event.unit || ''}`);
+function eventDisplayInfo(event) {
+  if (event.type === 'pain') {
+    const summaryParts = [event.painScore, painEventLabel(event)].filter((part) => part !== undefined && part !== null && part !== '');
+    return { icon: '😖', typeLabel: '痛みの記録', summary: summaryParts.join('・'), note: event.note || '' };
   }
-  if (event.note) parts.push(event.note);
-  return parts.filter(Boolean).join(' / ');
+  if (event.type === 'medication') {
+    const medication = medicationEventLabel(event) || '不明な薬';
+    const amount = event.amount !== undefined && event.amount !== null ? String(event.amount) : '';
+    const unit = event.unit || '';
+    const dose = `${amount}${unit}`;
+    return { icon: '💊', typeLabel: '服薬の記録', summary: [medication, dose].filter(Boolean).join(' '), note: event.note || '' };
+  }
+  return { icon: '🗒️', typeLabel: 'メモ', summary: event.note || '', note: '' };
+}
+
+function appendEventBodyText(body, info) {
+  const summary = document.createElement('span');
+  summary.className = 'event-summary';
+  summary.textContent = info.summary;
+  body.appendChild(summary);
+  if (info.note) {
+    const note = document.createElement('span');
+    note.className = 'event-note';
+    note.textContent = info.note;
+    if (info.summary) body.appendChild(document.createTextNode('　'));
+    body.appendChild(note);
+  }
 }
 
 function renderEventList(container, events, sortEvents = sortedEvents, options = {}) {
@@ -540,15 +558,25 @@ function renderEventList(container, events, sortEvents = sortedEvents, options =
   }
   const showDate = options.showDate !== false;
   sortEvents(events).forEach((event) => {
+    const info = eventDisplayInfo(event);
     const item = document.createElement('div');
     item.className = 'event';
-    const content = document.createElement('div');
-    content.className = 'event-content';
+    const time = document.createElement('div');
+    time.className = 'event-time';
+    time.textContent = showDate ? `${event.localDate} ${event.localTime}` : event.localTime;
+    const type = document.createElement('div');
+    type.className = 'event-type';
+    const icon = document.createElement('span');
+    icon.className = 'event-type-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = info.icon;
+    const typeLabel = document.createElement('span');
+    typeLabel.className = 'visually-hidden';
+    typeLabel.textContent = info.typeLabel;
+    type.append(icon, typeLabel);
     const body = document.createElement('div');
-    body.textContent = eventText(event);
-    const meta = document.createElement('div');
-    meta.className = 'event-meta';
-    meta.textContent = event.localDate;
+    body.className = 'event-body';
+    appendEventBodyText(body, info);
     const actions = document.createElement('div');
     actions.className = 'event-actions';
     const editButton = document.createElement('button');
@@ -564,9 +592,7 @@ function renderEventList(container, events, sortEvents = sortedEvents, options =
     button.setAttribute('aria-label', '記録を削除');
     button.addEventListener('click', () => deleteEvent(event.id));
     actions.append(editButton, button);
-    if (showDate) content.append(meta);
-    content.append(body);
-    item.append(content, actions);
+    item.append(time, type, body, actions);
     container.appendChild(item);
   });
 }

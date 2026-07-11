@@ -51,6 +51,8 @@ After setup, the app shows:
 - A collapsed visit-summary section.
 - Management controls for backup, CSV export, settings, periods, and deleting all data.
 
+Today's records and expanded past-record details use the same record-row display. Each row separates the time, record type, record body, and edit/delete actions. Pain, medication, and standalone note rows are visually distinguished with `😖`, `💊`, and `🗒️` icons, and each row also includes an accessible type name (`痛みの記録`, `服薬の記録`, or `メモ`) separate from the icon. Pain rows show the body as `スコア・状態`, followed by any memo text. Medication rows show the body as `薬名 量単位`, followed by any memo text. Standalone note rows show the note text as the body. Memo text is not truncated and wraps within the body column. Edit and delete actions are shown on the right side of each record row.
+
 ## Pain recording
 
 - Pain score is selected from integers `0` through `10`.
