@@ -155,7 +155,7 @@ Selectable HeartWatch metrics use a stable internal catalog and exclude `index`,
 
 Each selected metric has a short label shown in the table header and TSV header. Short labels are trimmed, must contain 1 to 8 visible Unicode characters, and must be unique after Unicode NFKC normalization and case-insensitive comparison. Invalid saves keep the draft and show a Japanese inline error. Table headers also expose the full metric name through accessible labels and titles.
 
-The default configuration for new users and existing data without `settings.healthReviewColumns` is: `日付`, daily pain maximum, daily pain average, one medication count column for each currently active medication option, steps, sleep duration, sleep bpm, sleep HRV, and waking HRV. Inactive medications, pain-state metrics, daily pain minimum/count, standalone note count, and the other HeartWatch metrics are available but unchecked by default.
+The default configuration for new users and existing data without `settings.healthReviewColumns` is: `日付`, daily pain maximum, daily pain average, one medication count column for each currently active medication option, steps, sleep duration, sleep bpm, sleep HRV, and waking HRV. Defaults are built from the settings object being created, loaded, or imported. Inactive medications, pain-state metrics, daily pain minimum/count, standalone note count, and the other HeartWatch metrics are available but unchecked by default. Valid saved configurations preserve selected and unselected columns, display order, custom short labels, label modes, HeartWatch selections, TideTrace metric selections, and references to active or inactive medication and pain-state options.
 
 The on-screen table, readable text copy, TSV copy, and print view all use the same saved selected columns, order, short labels, date rows, blank handling, and calculated TideTrace values. TSV headers exactly match the visible short labels, with fixed first header `日付`.
 
@@ -169,10 +169,10 @@ The on-screen table, readable text copy, TSV copy, and print view all use the sa
 ### JSON backup restore/import
 
 - Backup restore is available both during initial setup and from the management section.
-- The app parses JSON, validates the schema, replaces the current in-memory app data, and saves it to `localStorage`.
+- The app parses JSON, normalizes optional daily-summary display columns using the imported backup’s own medication and pain-state settings, validates the schema, replaces the current in-memory app data, and saves it to `localStorage`.
 - Management-section restore asks for confirmation and warns that current browser records will be replaced.
 - Invalid JSON or invalid data is rejected and does not replace current data.
-- `normalizeImportedData` currently returns imported data unchanged.
+- `normalizeImportedData` repairs missing or malformed optional `settings.healthReviewColumns` without dropping records, periods, option settings, export timestamps, or other unrelated settings. Valid saved column configurations are preserved, and JSON restore keeps the saved column configuration.
 
 ### CSV export
 

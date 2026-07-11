@@ -1210,9 +1210,9 @@ def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> No
 def test_static_asset_versions_are_current_for_button_role_refactor() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
     assert 'href="styles.css?v=16"' in html
-    assert 'src="app.js?v=16"' in html
+    assert 'src="app.js?v=17"' in html
     assert 'styles.css?v=15' not in html
-    assert 'app.js?v=15' not in html
+    assert 'app.js?v=16"' not in html
 
 
 
@@ -1390,6 +1390,173 @@ def test_health_history_medication_short_label_duplicates_and_blank_heartwatch_v
         """
     )
 
+
+def test_health_review_columns_persist_save_reload_and_heartwatch_selection() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        let stored = '';
+        global.localStorage = {
+          setItem(key, value) { assert.equal(key, STORAGE_KEY); stored = value; },
+          getItem(key) { assert.equal(key, STORAGE_KEY); return stored; }
+        };
+        appData = {
+          schemaVersion: 1,
+          appName: 'Tide Trace',
+          settings: {
+            painStateOptions: [{ id: 'state_a', label: '状態A', active: true, sortOrder: 1 }],
+            medicationOptions: [{ id: 'med_a', label: '薬A', active: true, defaultAmount: 1, unit: '錠', sortOrder: 1 }],
+            lastJsonExportedAtUtc: null,
+            lastCsvExportedAtUtc: null,
+            healthReviewColumns: [
+              { columnId: 'heartwatch:bp-am-systolic', shortLabel: '朝血', shortLabelMode: 'custom' },
+              { columnId: 'tidetrace:note:count', shortLabel: 'メモ', shortLabelMode: 'auto' },
+              { columnId: 'heartwatch:steps', shortLabel: '歩', shortLabelMode: 'custom' },
+              { columnId: 'tidetrace:medication:med_a:count', shortLabel: '薬A', shortLabelMode: 'custom' }
+            ]
+          },
+          periods: [],
+          events: []
+        };
+        const savedColumns = structuredClone(appData.settings.healthReviewColumns);
+        saveData();
+        appData = null;
+        const loaded = loadStoredData();
+        assert.deepEqual(loaded.settings.healthReviewColumns, savedColumns);
+        assert.equal(loaded.settings.healthReviewColumns.some((column) => column.columnId === 'heartwatch:sleep-duration'), false);
+        assert.deepEqual(loaded.settings.healthReviewColumns.map((column) => column.columnId), savedColumns.map((column) => column.columnId));
+        assert.deepEqual(loaded.settings.healthReviewColumns.map((column) => column.shortLabel), ['朝血', 'メモ', '歩', '薬A']);
+        """
+    )
+
+
+def test_health_review_import_uses_backup_settings_and_round_trip() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: {
+            painStateOptions: [{ id: 'old_state', label: '旧状態', active: true, sortOrder: 1 }],
+            medicationOptions: [{ id: 'old_med', label: '旧薬', active: true, defaultAmount: 1, unit: '錠', sortOrder: 1 }]
+          },
+          periods: [],
+          events: []
+        };
+        const backup = {
+          schemaVersion: 1,
+          appName: 'Tide Trace',
+          settings: {
+            painStateOptions: [{ id: 'backup_state', label: '復元状態', active: false, sortOrder: 1 }],
+            medicationOptions: [{ id: 'backup_med', label: '復元薬', active: false, defaultAmount: 1, unit: '錠', sortOrder: 1 }],
+            lastJsonExportedAtUtc: '2026-06-20T00:00:00.000Z',
+            lastCsvExportedAtUtc: null,
+            healthReviewColumns: [
+              { columnId: 'tidetrace:medication:backup_med:count', shortLabel: '復薬', shortLabelMode: 'custom' },
+              { columnId: 'tidetrace:pain-state:backup_state:average', shortLabel: '復平', shortLabelMode: 'custom' },
+              { columnId: 'heartwatch:rest-high-bpm', shortLabel: '安HR', shortLabelMode: 'custom' }
+            ]
+          },
+          periods: [],
+          events: []
+        };
+        const normalized = normalizeImportedData(structuredClone(backup));
+        assert.equal(validateData(normalized), true);
+        assert.deepEqual(normalized.settings.healthReviewColumns, backup.settings.healthReviewColumns);
+        appData = null;
+        const roundTrip = normalizeImportedData(JSON.parse(JSON.stringify(normalized)));
+        assert.deepEqual(roundTrip.settings.healthReviewColumns, backup.settings.healthReviewColumns);
+        assert.equal(healthHistoryMetricById('tidetrace:medication:backup_med:count', roundTrip.settings).option.label, '復元薬');
+        assert.equal(healthHistoryMetricById('tidetrace:pain-state:backup_state:average', roundTrip.settings).option.label, '復元状態');
+        """
+    )
+
+
+def test_health_review_old_backup_and_malformed_columns_are_repaired_only() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const base = {
+          schemaVersion: 1,
+          appName: 'Tide Trace',
+          settings: {
+            painStateOptions: [{ id: 'state_a', label: '状態A', active: true, sortOrder: 1 }],
+            medicationOptions: [
+              { id: 'med_a', label: '薬A', active: true, defaultAmount: 1, unit: '錠', sortOrder: 1 },
+              { id: 'med_b', label: '薬B', active: false, defaultAmount: 1, unit: '錠', sortOrder: 2 }
+            ],
+            lastJsonExportedAtUtc: '2026-06-20T00:00:00.000Z',
+            lastCsvExportedAtUtc: '2026-06-21T00:00:00.000Z'
+          },
+          periods: [{ id: 'period', label: '期間', startDate: '2026-06-01', endDate: '2026-06-02', note: '' }],
+          events: [{ id: 'event', type: 'note', recordedAtUtc: '2026-06-19T00:00:00.000Z', localDate: '2026-06-19', localTime: '09:00', timezone: 'Asia/Tokyo', createdAtUtc: '2026-06-19T00:00:00.000Z', updatedAtUtc: '2026-06-19T00:00:00.000Z', note: '記録' }]
+        };
+        const oldBackup = normalizeImportedData(structuredClone(base));
+        assert.equal(validateData(oldBackup), true);
+        assert.deepEqual(oldBackup.settings.healthReviewColumns.map((column) => column.columnId).slice(0, 3), ['tidetrace:pain:max', 'tidetrace:pain:average', 'tidetrace:medication:med_a:count']);
+        assert.deepEqual(oldBackup.events, base.events);
+        assert.deepEqual(oldBackup.periods, base.periods);
+        const malformed = structuredClone(base);
+        malformed.settings.healthReviewColumns = [
+          null,
+          { columnId: 'date', shortLabel: '日付', shortLabelMode: 'custom' },
+          { columnId: 'tidetrace:unknown', shortLabel: '不明', shortLabelMode: 'custom' },
+          { columnId: 'tidetrace:medication:med_b:count', shortLabel: '非薬', shortLabelMode: 'custom' },
+          { columnId: 'tidetrace:medication:med_b:count', shortLabel: '重複', shortLabelMode: 'custom' },
+          { columnId: 'tidetrace:pain-state:state_a:max', shortLabel: '', shortLabelMode: 'weird' }
+        ];
+        const repaired = normalizeImportedData(malformed);
+        assert.equal(validateData(repaired), true);
+        assert.deepEqual(repaired.settings.healthReviewColumns, [
+          { columnId: 'tidetrace:medication:med_b:count', shortLabel: '非薬', shortLabelMode: 'custom' },
+          { columnId: 'tidetrace:pain-state:state_a:max', shortLabel: '状最', shortLabelMode: 'auto' }
+        ]);
+        assert.deepEqual(repaired.events, base.events);
+        assert.deepEqual(repaired.periods, base.periods);
+        assert.deepEqual(repaired.settings.medicationOptions, base.settings.medicationOptions);
+        assert.deepEqual(repaired.settings.painStateOptions, base.settings.painStateOptions);
+        assert.equal(repaired.settings.lastJsonExportedAtUtc, base.settings.lastJsonExportedAtUtc);
+        assert.equal(repaired.settings.lastCsvExportedAtUtc, base.settings.lastCsvExportedAtUtc);
+        """
+    )
+
+
+def test_health_review_startup_persists_normalization_and_source_has_no_silent_delete() -> None:
+    source = APP_JS.read_text()
+    assert "catch { delete copy.settings.healthReviewColumns; }" not in source
+    assert "delete data.settings.healthReviewColumns" not in source
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const storedObject = {
+          schemaVersion: 1,
+          appName: 'Tide Trace',
+          settings: {
+            painStateOptions: [{ id: 'state_a', label: '状態A', active: true, sortOrder: 1 }],
+            medicationOptions: [{ id: 'med_a', label: '薬A', active: true, defaultAmount: 1, unit: '錠', sortOrder: 1 }],
+            lastJsonExportedAtUtc: null,
+            lastCsvExportedAtUtc: null
+          },
+          periods: [],
+          events: []
+        };
+        let stored = JSON.stringify(storedObject);
+        let writes = 0;
+        global.localStorage = {
+          getItem() { return stored; },
+          setItem(key, value) { writes += 1; stored = value; }
+        };
+        const loaded = loadStoredData();
+        assert.equal(writes, 1);
+        assert.equal(JSON.parse(stored).settings.healthReviewColumns.some((column) => column.columnId === 'tidetrace:medication:med_a:count'), true);
+        appData = loaded;
+        appData = null;
+        const loadedAgain = loadStoredData();
+        assert.equal(writes, 1);
+        assert.deepEqual(loadedAgain.settings.healthReviewColumns, loaded.settings.healthReviewColumns);
+        """
+    )
+
+
 def test_health_history_configurable_columns_validation_and_calculations() -> None:
     run_app_js(
         """
@@ -1428,7 +1595,7 @@ def test_health_history_configurable_columns_validation_and_calculations() -> No
             { id: 'n1', type: 'note', localDate: '2026-06-15', note: 'standalone' }
           ]
         };
-        ensureHealthReviewColumns();
+        ensureHealthReviewColumns(appData.settings);
         const columns = selectedHealthHistoryColumns();
         assert.equal(columns[0].shortLabel, '日付');
         assert.equal(appData.settings.healthReviewColumns.some((column) => column.columnId === 'date'), false);

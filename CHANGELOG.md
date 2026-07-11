@@ -20,6 +20,7 @@ All notable changes to TideTrace will be documented in this file.
 - Added maximum-pain day counts to state and dose pain sections in visit summaries.
 
 ### Fixed
+- Saved daily-summary display columns, order, and short labels now remain after reload and JSON restore.
 - Past record navigation skips empty gaps and moves to the next range with records.
 
 ## v0.1.0 - 2026-06-26
