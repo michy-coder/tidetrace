@@ -228,31 +228,30 @@ p { margin: 0 0 10px; }
   min-height: 50px;
 }
 
-label {
+.form-field-label {
   display: block;
   font-weight: 700;
   margin: 12px 0 6px;
 }
 
-input, select, textarea, button {
+button {
   width: 100%;
   border-radius: 12px;
   font: inherit;
 }
 
-input, select, textarea {
+.form-control-base {
   box-sizing: border-box;
-  display: block;
-  max-width: 100%;
-  min-width: 0;
   border: 1px solid var(--input-border);
+  border-radius: 12px;
   padding: 12px;
   background: var(--input-bg);
   color: var(--text);
+  font: inherit;
 }
 
-.form-control {
-  box-sizing: border-box;
+.form-control,
+.form-control-full {
   display: block;
   width: 100%;
   max-width: 100%;
@@ -262,7 +261,26 @@ input, select, textarea {
   min-inline-size: 0;
 }
 
-input[type="date"].form-control {
+.form-control-compact {
+  min-width: 0;
+}
+
+.checkbox-control,
+.radio-control {
+  box-sizing: border-box;
+  display: inline-block;
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+input[type="date"].form-control,
+input[type="date"].form-control-full,
+input[type="time"].form-control,
+input[type="time"].form-control-full {
   -webkit-appearance: none;
   appearance: none;
   box-sizing: border-box;
@@ -275,7 +293,7 @@ input[type="date"].form-control {
   min-inline-size: 0;
 }
 
-input:focus, select:focus, textarea:focus, button:focus-visible, .file-action-label:focus-visible {
+.form-control-base:focus, .checkbox-control:focus, .radio-control:focus, button:focus-visible, .file-action-label:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
@@ -741,7 +759,7 @@ summary { font-weight: 700; padding: 8px 0; }
   margin: 12px 0 6px;
 }
 
-.checkbox-row input {
+.checkbox-row .checkbox-control {
   flex: 0 0 auto;
   margin: 0;
   width: auto;
@@ -834,7 +852,7 @@ summary { font-weight: 700; padding: 8px 0; }
   margin: 8px 12px 0 0;
 }
 
-.radio-row input {
+.radio-row .radio-control {
   flex: 0 0 auto;
   margin: 0;
   width: auto;
@@ -1154,7 +1172,7 @@ summary { font-weight: 700; padding: 8px 0; }
   width: 100%;
 }
 
-.health-column-check input[type="checkbox"] {
+.health-column-check .checkbox-control {
   height: 1.25rem;
   margin: 0;
   max-width: 1.25rem;

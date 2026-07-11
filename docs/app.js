@@ -89,12 +89,12 @@ function dateTimeInputHtml(event) {
   return `
     <div class="edit-datetime-row">
       <div class="edit-datetime-field">
-        <label for="edit-local-date">日付</label>
-        <input id="edit-local-date" type="date" value="${escapeHtml(value.localDate)}" required>
+        <label class="form-field-label" for="edit-local-date">日付</label>
+        <input id="edit-local-date" class="form-control-base form-control" type="date" value="${escapeHtml(value.localDate)}" required>
       </div>
       <div class="edit-datetime-field">
-        <label for="edit-local-time">時刻</label>
-        <input id="edit-local-time" type="time" value="${escapeHtml(value.localTime)}" required>
+        <label class="form-field-label" for="edit-local-time">時刻</label>
+        <input id="edit-local-time" class="form-control-base form-control" type="time" value="${escapeHtml(value.localTime)}" required>
       </div>
     </div>`;
 }
@@ -260,16 +260,16 @@ function renderInitialSetupOptions() {
       .map((option, index) => `
         <li class="setup-medication-item">
           <div class="setup-medication-field">
-            <label for="setup-medication-label-${index}">薬名</label>
-            <input id="setup-medication-label-${index}" class="setup-medication-label" type="text" value="${escapeHtml(option.label)}" autocomplete="off">
+            <label class="form-field-label" for="setup-medication-label-${index}">薬名</label>
+            <input id="setup-medication-label-${index}" class="setup-medication-label form-control-base form-control-full" type="text" value="${escapeHtml(option.label)}" autocomplete="off">
           </div>
           <div class="setup-medication-field">
-            <label for="setup-medication-amount-${index}">量</label>
-            <input id="setup-medication-amount-${index}" class="setup-medication-amount" type="number" inputmode="decimal" min="0.01" step="any" value="${escapeHtml(option.defaultAmount)}">
+            <label class="form-field-label" for="setup-medication-amount-${index}">量</label>
+            <input id="setup-medication-amount-${index}" class="setup-medication-amount form-control-base form-control-full" type="number" inputmode="decimal" min="0.01" step="any" value="${escapeHtml(option.defaultAmount)}">
           </div>
           <div class="setup-medication-field">
-            <label for="setup-medication-unit-${index}">単位</label>
-            <input id="setup-medication-unit-${index}" class="setup-medication-unit" type="text" value="${escapeHtml(option.unit)}" autocomplete="off">
+            <label class="form-field-label" for="setup-medication-unit-${index}">単位</label>
+            <input id="setup-medication-unit-${index}" class="setup-medication-unit form-control-base form-control-full" type="text" value="${escapeHtml(option.unit)}" autocomplete="off">
           </div>
         </li>`)
       .join('');
@@ -280,7 +280,7 @@ function renderInitialSetupOptions() {
       .map((option, index) => `
         <li class="setup-pain-state-item">
           <label class="visually-hidden" for="setup-pain-state-label-${index}">痛み状態 ${index + 1}</label>
-          <input id="setup-pain-state-label-${index}" class="setup-pain-state-label" type="text" value="${escapeHtml(option.label)}" autocomplete="off">
+          <input id="setup-pain-state-label-${index}" class="setup-pain-state-label form-control-base form-control-full" type="text" value="${escapeHtml(option.label)}" autocomplete="off">
         </li>`)
       .join('');
     painStateList.dataset.rendered = 'true';
@@ -608,21 +608,21 @@ function medicationEditOptions(event) {
 }
 
 function editTextareaHtml(value = '') {
-  return `<label for="edit-note">メモ</label><textarea id="edit-note" rows="4" placeholder="メモを入力">${escapeHtml(value)}</textarea>`;
+  return `<label class="form-field-label" for="edit-note">メモ</label><textarea id="edit-note" class="form-control-base form-control" rows="4" placeholder="メモを入力">${escapeHtml(value)}</textarea>`;
 }
 
 function editContentHtml(event) {
   if (event.type === 'pain') {
     return `
-      <label for="edit-pain-score">痛みスコア</label>
-      <select id="edit-pain-score">${Array.from({ length: 11 }, (_, value) => `<option value="${value}"${value === event.painScore ? ' selected' : ''}>${value}</option>`).join('')}</select>
-      <label for="edit-pain-state">痛みの状態</label>
-      <select id="edit-pain-state">${optionHtml(painEditOptions(event), event.stateOptionId)}</select>`;
+      <label class="form-field-label" for="edit-pain-score">痛みスコア</label>
+      <select id="edit-pain-score" class="form-control-base form-control">${Array.from({ length: 11 }, (_, value) => `<option value="${value}"${value === event.painScore ? ' selected' : ''}>${value}</option>`).join('')}</select>
+      <label class="form-field-label" for="edit-pain-state">痛みの状態</label>
+      <select id="edit-pain-state" class="form-control-base form-control">${optionHtml(painEditOptions(event), event.stateOptionId)}</select>`;
   }
   if (event.type === 'medication') {
     return `
-      <label for="edit-medication-option">薬</label>
-      <select id="edit-medication-option">${optionHtml(medicationEditOptions(event), event.medicationOptionId)}</select>`;
+      <label class="form-field-label" for="edit-medication-option">薬</label>
+      <select id="edit-medication-option" class="form-control-base form-control">${optionHtml(medicationEditOptions(event), event.medicationOptionId)}</select>`;
   }
   return '';
 }
@@ -824,10 +824,11 @@ function renderSummaryPeriodPicker() {
   if (!appData.periods.length) return;
   const label = document.createElement('label');
   label.setAttribute('for', 'summary-period-select');
+  label.className = 'form-field-label';
   label.textContent = '体調比較用期間から選択';
   const select = document.createElement('select');
   select.id = 'summary-period-select';
-  select.className = 'form-control';
+  select.className = 'form-control-base form-control';
   select.innerHTML = '<option value="">選択してください</option>' + sortedPeriods().map((period) =>
     `<option value="${escapeHtml(period.id)}">${escapeHtml(period.label)}（${escapeHtml(period.startDate)}〜${escapeHtml(period.endDate)}）</option>`
   ).join('');
@@ -1617,9 +1618,9 @@ function renderHealthHistoryColumnEditor() {
   const rowHtml = healthHistoryColumnDraft.map((item, index) => {
     const metric = healthHistoryMetricById(item.columnId);
     const name = metric ? healthHistoryColumnEditorName(metric) : item.columnId;
-    return `<div class="column-selected-row"><div class="column-selected-name">${escapeHtml(name)}</div><div class="column-selected-controls"><label class="column-short-label">短縮名<input data-column-label-index="${index}" value="${escapeHtml(item.shortLabel)}" maxlength="16"></label><div class="column-selected-actions"><button type="button" class="column-reorder-button" data-column-move-up="${index}" aria-label="${escapeHtml(name)}を上へ移動" title="上へ移動">↑</button><button type="button" class="column-reorder-button" data-column-move-down="${index}" aria-label="${escapeHtml(name)}を下へ移動" title="下へ移動">↓</button><button type="button" class="delete-event-button column-remove-button" data-column-remove="${index}" aria-label="${escapeHtml(name)}を表示項目から削除" title="表示項目から削除">×</button></div></div></div>`;
+    return `<div class="column-selected-row"><div class="column-selected-name">${escapeHtml(name)}</div><div class="column-selected-controls"><label class="column-short-label">短縮名<input class="form-control-base form-control-compact" data-column-label-index="${index}" value="${escapeHtml(item.shortLabel)}" maxlength="16"></label><div class="column-selected-actions"><button type="button" class="column-reorder-button" data-column-move-up="${index}" aria-label="${escapeHtml(name)}を上へ移動" title="上へ移動">↑</button><button type="button" class="column-reorder-button" data-column-move-down="${index}" aria-label="${escapeHtml(name)}を下へ移動" title="下へ移動">↓</button><button type="button" class="delete-event-button column-remove-button" data-column-remove="${index}" aria-label="${escapeHtml(name)}を表示項目から削除" title="表示項目から削除">×</button></div></div></div>`;
   }).join('');
-  const checkbox = (m, label = null) => `<label class="health-column-check"><input type="checkbox" data-column-toggle="${escapeHtml(m.columnId)}" ${selectedIds.has(m.columnId) ? 'checked' : ''}><span>${escapeHtml(label || healthHistoryColumnEditorName(m))}</span></label>`;
+  const checkbox = (m, label = null) => `<label class="health-column-check"><input class="checkbox-control" type="checkbox" data-column-toggle="${escapeHtml(m.columnId)}" ${selectedIds.has(m.columnId) ? 'checked' : ''}><span>${escapeHtml(label || healthHistoryColumnEditorName(m))}</span></label>`;
   const painKinds = ['tidetrace:pain:max','tidetrace:pain:average','tidetrace:pain:min','tidetrace:pain:count'].map((id) => checkbox(metrics.find((m) => m.columnId === id))).join('');
   const states = sortedPainOptions(appData.settings?.painStateOptions || []).map((o) => `<div class="state-column-group"><div class="state-column-name">${escapeHtml(o.label)}${o.active ? '' : '（非表示中）'}</div><div class="state-column-checks">${['max','average','count'].map((k) => checkbox(metrics.find((m) => m.columnId === `tidetrace:pain-state:${o.id}:${k}`), k === 'max' ? '最大' : k === 'average' ? '平均' : '回数')).join('')}</div></div>`).join('');
   const meds = sortedMedicationOptions(appData.settings?.medicationOptions || []).map((o) => checkbox(metrics.find((m) => m.columnId === `tidetrace:medication:${o.id}:count`))).join('') + checkbox(metrics.find((m) => m.columnId === 'tidetrace:note:count'));
