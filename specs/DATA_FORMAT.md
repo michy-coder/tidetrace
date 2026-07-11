@@ -92,7 +92,7 @@ Each item has this shape:
 | `shortLabel` | string | Trimmed short table/TSV header label. Validation requires 1 to 8 visible Unicode characters and uniqueness after NFKC normalization and case-insensitive comparison. |
 | `shortLabelMode` | string | `auto` or `custom`. Editing a short-label input stores `custom`; automatic medication and pain-state labels may be regenerated when option names change or duplicates need repair. |
 
-The array order is the display order after the fixed date column. Missing settings are filled with the current default selected columns. Malformed values are repaired by discarding invalid items, removing duplicate column ids, repairing invalid automatic labels when possible, and resetting only this setting to defaults if the remaining result is unusable. Stored columns that reference deleted medication or pain-state options may remain in the setting but are skipped when rendering. Pain records, medication records, note records, periods, option settings, and export timestamps are preserved during this normalization.
+The array order is the display order after the fixed date column. Missing settings are filled with the default selected columns built from the same stored or imported settings object. Malformed values are repaired by discarding invalid items, removing duplicate column ids, repairing invalid automatic labels when possible, and resetting only this setting to defaults if the remaining result is unusable. Stored columns that reference active or inactive medication or pain-state options remain available. Stored columns that reference deleted medication or pain-state options may remain in the setting but are skipped when rendering. Pain records, medication records, note records, periods, option settings, and export timestamps are preserved during this normalization.
 
 JSON backup export includes `healthReviewColumns` as part of the settings object. Old JSON backups without the field restore normally and receive the default setting during normalization. Imported HeartWatch CSV data remains temporary, is not saved to `localStorage`, and is not included in JSON backups. TideTrace CSV export format is unchanged.
 
@@ -332,7 +332,7 @@ Current implementation behavior:
 
 - `loadStoredData()` ignores invalid stored data and shows setup instead.
 - JSON import rejects invalid data and leaves current data unchanged.
-- `normalizeImportedData()` currently returns data unchanged; no migrations are implemented.
+- `normalizeImportedData()` normalizes optional `settings.healthReviewColumns` using the candidate stored/imported settings object; no schema-version migration is implemented.
 - Validation requires schema version `1`.
 - Validation requires known required fields but does not explicitly strip unknown extra fields.
 - Event display falls back to current option labels when snapshot labels are absent, and to “unknown” Japanese labels when an option cannot be found.
