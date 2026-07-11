@@ -2,8 +2,10 @@
 
 ## 1. 監査対象と前提
 
-- 監査ブランチ: `css-redundant-declaration-audit`
-- 監査開始時点: ローカルの最新作業基点 `de8bffa`（`Merge pull request #142 from michy-coder/codex/ui-5n8724`）。`origin` リモートは設定されていなかったため、ネットワーク経由の `main` 更新確認はできなかった。
+- 監査 PR の base branch: `main`
+- 監査 PR の base commit: `de8bffa10a7fe3f0f6688164d284552eb59f93d0`（`Merge pull request #142 from michy-coder/codex/ui-5n8724`）
+- 監査 PR の head branch: `codex/audit-css-for-redundant-declarations`
+- Codex 作業環境では `origin` リモートが設定されていなかったためネットワーク経由の `main` 更新確認はできなかったが、GitHub 上の Draft PR #143 の base は上記 commit として識別されている。
 - 監査したファイル:
   - `docs/styles.css`
   - `docs/index.html`
@@ -29,12 +31,14 @@
 
 ## 2. 結論
 
-| 分類 | 件数 |
-| --- | ---: |
-| A. 安全に削除できる候補 | 16 |
-| B. 維持すべき指定 | 40 |
-| C. 実機確認が必要な候補 | 18 |
-| D. 未使用セレクタまたは到達不能ルール | 0 |
+件数の単位は、原則として個別 CSS 宣言（`property: value`）である。複数セレクタに同じ宣言ブロックが適用されている場合は、CSS 上の宣言 1 件として数える。表内で複数プロパティを 1 行にまとめている場合も、件数は列挙された個別プロパティ数で集計する。
+
+| 分類 | 個別 CSS 宣言数 | 備考 |
+| --- | ---: | --- |
+| A. 安全に削除できる候補 | 17 | section 3 の 17 行すべて。すべて高信頼度。 |
+| B. 維持すべき指定 | 95 | section 4 の表で列挙した候補宣言。dark-mode 変数の説明行は通常の色源説明であり、この候補宣言数には含めない。 |
+| C. 実機確認が必要な候補 | 18 | section 5 の 18 行。 |
+| D. 未使用セレクタまたは到達不能ルール | 0 | section 6 の結論。 |
 
 ## 3. 安全に削除できる候補
 
@@ -52,13 +56,13 @@
 | 高 | `.history-nav-button` | `width` | `auto` | `docs/styles.css` 約 L1052-L1058 | 同上 | `.button-compact { width: auto; }` | `.button-full` なし。flex の `align-self` は別責任として残す。 | A | 共有責任に集約済み。 | 変化なし。 | 不要 |
 | 高 | `.edit-event-button:active` | `background` | `var(--surface)` | `docs/styles.css` 約 L530-L536 | 記録、期間、薬設定、痛み状態設定の編集アイコン。すべて `button-base button-icon secondary-button edit-event-button` | `.secondary-button:active { background: var(--surface); }` | 両方とも詳細度 0-2-0。`.edit-event-button:active` は後続だが同値。該当要素はすべて `.secondary-button` 付きで、`.danger` との併用なし。ダークモードは変数値を変えるだけで、宣言責任は同じ。 | A | コンポーネント固有 active 色ではなく secondary active と同一。 | active 時の背景変化なし。 | 不要 |
 | 高 | `.delete-event-button:active` | `background` | `var(--danger-active-bg)` | `docs/styles.css` 約 L538-L544 | 記録、期間、列削除の削除アイコン。すべて `button-base button-icon danger delete-event-button` | `.danger:active { background: var(--danger-active-bg); }` | 両方とも詳細度 0-2-0。後続同値。列削除は `.column-remove-button.delete-event-button` も付くが active background の別上書きなし。 | A | danger active と同一。 | active 時の背景変化なし。 | 不要 |
-| 中 | `.checkbox-row .checkbox-control` | `width` | `auto` | `docs/styles.css` 約 L771-L775 | 薬設定・痛み状態設定の有効チェックボックス。`checkbox-row` 内の `input.checkbox-control` | `.checkbox-control { width: auto; }` | `.checkbox-row .checkbox-control` は 0-2-0、共有は 0-1-0。後続・高詳細度だが同値。`height`、`max-width`、`min-width` はこの行では扱わない。`health-column-check .checkbox-control` は別セレクタで対象外。 | A | 行内チェックボックスの幅は共有の初期化と同一で、`flex` と `margin` は残せば責任が分離できる。 | 幅変化なし。 | 不要 |
-| 中 | `.radio-row .radio-control` | `width` | `auto` | `docs/styles.css` 約 L864-L868 | サマリー終了日の radio。`radio-row` 内の `input.radio-control` | `.radio-control { width: auto; }` | 0-2-0 が 0-1-0 より強いが同値。`flex` と `margin` は行レイアウト責任として残す。 | A | radio 幅は共有初期化と同一。 | 幅変化なし。 | 不要 |
-| 中 | `.column-reorder-button` | `background` | `var(--surface-muted)` | `docs/styles.css` 約 L1154-L1159 | 表示項目エディタの上下移動アイコン。`button-base button-icon secondary-button column-reorder-button` | `.secondary-button { background: var(--surface-muted); }` | `.column-reorder-button` と `.secondary-button` は 0-1-0。後続同値。すべての生成箇所で `.secondary-button` 付き。active は `.column-reorder-button:active` と `.secondary-button:active` が同値だが別候補。 | A | secondary visual role と同一。 | 通常時背景変化なし。 | 不要 |
-| 中 | `.column-reorder-button` | `border` | `1px solid var(--border)` | `docs/styles.css` 約 L1154-L1159 | 同上 | `.secondary-button { border: 1px solid var(--border); }` | ショートハンド同値。`.button-icon` は border を設定しない。 | A | secondary visual role と同一。 | 境界線変化なし。 | 不要 |
-| 中 | `.column-reorder-button` | `color` | `var(--text)` | `docs/styles.css` 約 L1154-L1159 | 同上 | `.secondary-button { color: var(--text); }` | 同詳細度、後続同値。ダークモードは変数で追従。 | A | secondary visual role と同一。 | 文字色変化なし。 | 不要 |
-| 中 | `.column-reorder-button` | `font-weight` | `700` | `docs/styles.css` 約 L1154-L1159 | 同上 | `.button-base { font-weight: 700; }` | 同詳細度、後続同値。`.button-icon` は font-weight を設定しない。 | A | button base の責任と同一。 | 太さ変化なし。 | 不要 |
-| 中 | `.column-reorder-button:active` | `background` | `var(--surface)` | `docs/styles.css` 約 L1161 | 同上 | `.secondary-button:active { background: var(--surface); }` | 両方 0-2-0、後続同値。該当要素はすべて `.secondary-button`。 | A | secondary active と同一。 | active 背景変化なし。 | 不要 |
+| 高 | `.checkbox-row .checkbox-control` | `width` | `auto` | `docs/styles.css` 約 L771-L775 | 薬設定・痛み状態設定の有効チェックボックス。`checkbox-row` 内の `input.checkbox-control` | `.checkbox-control { width: auto; }` | `.checkbox-row .checkbox-control` は 0-2-0、共有は 0-1-0。後続・高詳細度だが同値で、同じ selector 内の `flex` と `margin` は維持分類に分離済み。`height`、`max-width`、`min-width` はこの selector では指定されず、`health-column-check .checkbox-control` は別セレクタで対象外。 | A | 行内チェックボックスの幅は共有の初期化と同一で、`flex` と `margin` は残せば責任が分離できる。 | 幅変化なし。 | 不要 |
+| 高 | `.radio-row .radio-control` | `width` | `auto` | `docs/styles.css` 約 L864-L868 | サマリー終了日の radio。`radio-row` 内の `input.radio-control` | `.radio-control { width: auto; }` | 0-2-0 が 0-1-0 より強いが同値で、同じ selector 内の `flex` と `margin` は維持分類に分離済み。radio 固有の疑似クラス、属性状態、media/print/dark-mode 上書きは見つからない。 | A | radio 幅は共有初期化と同一。 | 幅変化なし。 | 不要 |
+| 高 | `.column-reorder-button` | `background` | `var(--surface-muted)` | `docs/styles.css` 約 L1154-L1159 | 表示項目エディタの上下移動アイコン。`button-base button-icon secondary-button column-reorder-button` | `.secondary-button { background: var(--surface-muted); }` | `.column-reorder-button` と `.secondary-button` は 0-1-0。後続同値。すべての生成箇所で `.secondary-button` 付き。active は別行で検証済み。該当 markup は `docs/app.js` の上下移動ボタン 2 箇所で、いずれも `.secondary-button` を同時に持つ。 | A | secondary visual role と同一。 | 通常時背景変化なし。 | 不要 |
+| 高 | `.column-reorder-button` | `border` | `1px solid var(--border)` | `docs/styles.css` 約 L1154-L1159 | 同上 | `.secondary-button { border: 1px solid var(--border); }` | ショートハンド同値。`.button-icon` は border を設定しない。 | A | secondary visual role と同一。 | 境界線変化なし。 | 不要 |
+| 高 | `.column-reorder-button` | `color` | `var(--text)` | `docs/styles.css` 約 L1154-L1159 | 同上 | `.secondary-button { color: var(--text); }` | 同詳細度、後続同値。ダークモードは変数で追従。 | A | secondary visual role と同一。 | 文字色変化なし。 | 不要 |
+| 高 | `.column-reorder-button` | `font-weight` | `700` | `docs/styles.css` 約 L1154-L1159 | 同上 | `.button-base { font-weight: 700; }` | 同詳細度、後続同値。`.button-icon` は font-weight を設定しない。 | A | button base の責任と同一。 | 太さ変化なし。 | 不要 |
+| 高 | `.column-reorder-button:active` | `background` | `var(--surface)` | `docs/styles.css` 約 L1161 | 同上 | `.secondary-button:active { background: var(--surface); }` | 両方 0-2-0、後続同値。該当要素はすべて `.secondary-button`。 | A | secondary active と同一。 | active 背景変化なし。 | 不要 |
 
 ## 4. 維持すべき指定
 
@@ -72,9 +76,9 @@
 | `.toast-undo-button` | `flex`, `width`, `min-height`, `margin`, `padding`, `border-radius`, `background`, `color`, `border` | 各値 | 約 L487-L497 | Toast 内の取り消しボタン。`button-base toast-undo-button` | B | 役割クラスを付けない専用ボタンで、toast 内の pill 形状・透明背景・枠線色を担う。 | toast 内の見た目と収まりが変わる。 |
 | `.history-detail-button` | `flex` | `0 0 auto` | 約 L1011-L1017 | 履歴詳細ボタン。`button-base button-compact secondary-button history-detail-button` | B | header flex 行でタイトルを圧迫しないための固有レイアウト。共有 compact は flex を持たない。 | 狭幅でボタンが伸縮する可能性。 |
 | `.history-nav-button` | `align-self` | `flex-start` | 約 L1052-L1058 | 履歴ナビボタン。`button-base button-compact secondary-button history-nav-button` | B | 縦横 flex コンテナ内でボタン幅を内容に合わせる配置責任。 | ボタンが行内で予期せず伸びる可能性。 |
-| `.medication-toggle-button, .pain-state-toggle-button` | `align-self`, `margin`, `min-height`, `padding`, `width` | 各値 | 約 L818-L825 | 設定リストの表示/非表示切替。`button-base button-compact secondary-button medication-toggle-button/pain-state-toggle-button` | B | compact よりさらに小さいリスト内 toggle の固有寸法。`margin:0` と `width:auto` は重複に見えるが一括指定としてコンポーネント寸法を文書化している。 | リスト行の高さとボタン密度が変わる。 |
-| `.file-action-label` | `align-items`, `cursor`, `display`, `justify-content`, `margin`, `min-height`, `width` | 各値 | 約 L925-L933 | HeartWatch CSV ファイル選択 label。`file-action-label button-base button-full primary-button` | B | button に見せる label のクリック可能性、inline-flex 中央揃え、配置余白を担う。`width:100%` は `.button-full` と重なるが label 固有の明示責任として維持。 | ファイル選択 label のクリック affordance と配置が弱くなる。 |
-| `.column-short-label input` | `color`, `flex`, `font-size`, `font-weight`, `max-width`, `min-height`, `min-width`, `padding` | 各値 | 約 L1130-L1139 | 表示項目エディタの短縮名入力。`form-control-base form-control-compact` | B | compact は `min-width:0` のみ。短縮名入力の最大幅、flex basis、低めの高さ、細い padding は固有責任。 | エディタ行が広がり、狭幅で折り返しやすくなる。 |
+| `.medication-toggle-button, .pain-state-toggle-button` | `align-self`, `min-height`, `padding` | `flex-start`, `2rem`, `0.2rem 0.55rem` | 約 L818-L825 | 設定リストの表示/非表示切替。`button-base button-compact secondary-button medication-toggle-button/pain-state-toggle-button` | B | compact よりさらに小さいリスト内 toggle の固有配置・高さ・padding。`margin` と `width` はここに含めず section 5 の C にのみ分類する。 | リスト行の高さ、密度、縦位置が変わる。 |
+| `.file-action-label` | `align-items`, `cursor`, `display`, `justify-content`, `margin`, `min-height` | 各値 | 約 L925-L933 | HeartWatch CSV ファイル選択 label。`file-action-label button-base button-full primary-button` | B | button に見せる label のクリック可能性、inline-flex 中央揃え、配置余白、component-specific minimum height を担う。`width` はここに含めず section 5 の C にのみ分類する。 | ファイル選択 label のクリック affordance、中央揃え、配置が弱くなる。 |
+| `.column-short-label input` | `color`, `flex`, `font-size`, `font-weight`, `max-width`, `min-height`, `padding` | 各値 | 約 L1130-L1139 | 表示項目エディタの短縮名入力。`form-control-base form-control-compact` | B | component-specific color、flex sizing、font、max-width、高さ、padding を担う。`min-width` はここに含めず section 5 の C にのみ分類する。 | エディタ行の幅、文字サイズ、密度が変わる。 |
 | `.health-column-check .checkbox-control` | `height`, `margin`, `max-width`, `min-width`, `width` | 各値 | 約 L1200-L1206 | 表示項目エディタの checkbox。`health-column-check > input.checkbox-control` | B | grid の 1.25rem 列に合わせた正方形サイズ。共有 checkbox は width auto で寸法固定しない。 | チェックボックスとラベルの整列が変わる。 |
 
 ### layout（レイアウト）
@@ -84,7 +88,7 @@
 | `.record-input-section > .button-full, .management > .button-full, .medication-form-actions .button-full, .pain-state-form-actions .button-full, .comparison-period-form-actions .button-full, .health-column-buttons .button-full, #run-visit-summary` | `margin` | `10px 0 0` | 約 L308-L316 | B | full width button の幅ではなく、各フォーム/管理領域での上余白責任。 | ボタン間隔が詰まる。 |
 | `.setup-actions button` | `margin-top` | `0` | 約 L219-L221 | B | `.setup-actions` grid gap を余白源にするための container 固有リセット。 | grid gap と既定/他ルール余白が重なる可能性。 |
 | `.edit-event-actions button` | `margin-top` | `0` | 約 L640 | B | edit dialog の 2 列 grid gap を余白源にする。 | 保存/キャンセル行の縦位置が変わる。 |
-| `.visit-summary-actions button` | `flex`, `margin`, `min-height` | `1 1 9rem`, `0`, `44px` | 約 L839-L843 | B | summary/action の折り返し可能な横並び layout。`.button-full` は `width:100%` を持つが、この flex 指定で 9rem 基準に分配する。 | action ボタンが全幅縦積み寄りになり、狭幅/広幅の挙動が変わる。 |
+| `.visit-summary-actions button` | `flex` | `1 1 9rem` | 約 L839-L843 | B | summary/action の折り返し可能な横並び layout。`.button-full` は `width:100%` を持つが、この flex 指定で 9rem 基準に分配する。`margin` と `min-height` はここに含めず section 5 の C にのみ分類する。 | action ボタンが全幅縦積み寄りになり、狭幅/広幅の挙動が変わる。 |
 | `.checkbox-row .checkbox-control` | `flex`, `margin` | `0 0 auto`, `0` | 約 L771-L775 | B | 行内 checkbox の伸縮防止と label 行の整列。 | checkbox が余白を持つ、または伸縮する可能性。 |
 | `.radio-row .radio-control` | `flex`, `margin` | `0 0 auto`, `0` | 約 L864-L868 | B | radio row の整列責任。 | radio とラベルの位置が変わる。 |
 | `.event-actions` | `align-self`, `display`, `flex`, `gap` | 各値 | 約 L523-L528 | B | 記録・期間リストの icon button container。 | アイコンボタン群の整列が変わる。 |
@@ -176,7 +180,7 @@
 
 ### すぐに削除できる最小 PR
 
-最初の cleanup PR は、次の 16 宣言だけを対象にするのが安全。
+最初の cleanup PR は、section 3 と完全に一致する次の 17 宣言だけを対象にするのが安全。ここには C 分類の宣言を含めない。
 
 - `.history-detail-button` の `margin`, `min-height`, `padding`, `width`
 - `.history-nav-button` の `margin`, `min-height`, `padding`, `width`
@@ -194,7 +198,7 @@
 - date/time input 関連の重複に見える宣言
 - `.edit-event-form input, .edit-event-form select` の高さ・padding
 - `.file-action-label` の `width`
-- `.visit-summary-actions button` の flex/margin/min-height
+- `.visit-summary-actions button` の `margin`, `min-height`（`flex` は B 分類として維持）
 - `.medication-toggle-button`, `.pain-state-toggle-button` の一括寸法定義
 - `.column-short-label input` の `min-width`
 - icon button の `font-size` 調整
