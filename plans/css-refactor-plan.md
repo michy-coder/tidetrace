@@ -26,16 +26,16 @@
 - `.checkbox-row`: チェックボックスとテキストを並べる行。既存の責務を維持しつつ、ラベル全体のインライン配置と余白だけを担当する。
 - `.radio-control`: ラジオボタン本体用。現在使われている `summary-end-mode` の radio input に適用し、全幅入力欄スタイルから独立させる。
 - `.radio-row`: radio とテキストを並べる行。既存の inline-flex と余白を維持する。
-- `.file-input-hidden`: ファイル input の視覚的非表示用。現在の `.visually-hidden-file-input` と同等の責務を明確にする。既存クラスを残すか rename する場合は互換リスクを低くするため段階的に行う。
+- `.visually-hidden-file-input`: ファイル input の視覚的非表示用。初回 refactor では rename せず、具体的な問題がない限り既存クラス名を維持する。
 - `.file-action-label`: input file を開くラベルの構造・カーソル・inline-flex を担当する。ボタン色や幅は別クラスで付ける。
-- `.button-base`: button とボタン風ラベルの共通見た目。`border-radius`、`font`、`font-weight`、`padding`、`min-height`、基本背景色を担当し、幅は担当しない。
-- `.button-full`: 全幅ボタンの sizing。`width: 100%` と標準の上余白を担当する。
-- `.button-primary`: primary 色を担当する。`.primary-button` を互換 alias として残すか、段階的に置き換える。
-- `.button-secondary`: secondary 色と border を担当する。既存 `.secondary-button` の責務を色・状態に絞る。
-- `.button-danger`: danger 色を担当する。既存 `.danger` は段階的に alias として扱う。
+- `.button-base`: button とボタン風ラベルの共通構造・外観。`font`、`border-radius`、配置、`padding`、標準の `min-height` など base sizing を担当する。primary、secondary、danger の背景色・文字色・border・interaction state は担当しない。
+- `.button-full`: 全幅ボタンの width behavior だけを担当する。所有してよいのは `width: 100%` で、標準の上余白は親 layout または component-specific rule の責務に残す。
+- `.button-primary` / 既存 `.primary-button`: primary の背景色・文字色・hover/active state を担当する。初回 refactor では `.primary-button` を rename せず、必要な場合のみ `.button-primary` を alias として併用する。
+- `.button-secondary` / 既存 `.secondary-button`: secondary の背景色・文字色・border・active state を担当する。初回 refactor では `.secondary-button` を rename しない。
+- `.button-danger` / 既存 `.danger`: danger の背景色・文字色・active state を担当する。初回 refactor では `.danger` を rename しない。
 - `.button-compact`: 設定リストの表示/非表示切替や履歴詳細など、文字付きの小型操作ボタン用。`width: auto`、小さい `min-height`、小さい padding、`margin: 0` を担当する。
 - `.button-icon`: 編集、削除、列の上下移動、削除などアイコン・1文字操作用。正方形サイズ、丸形または既存形状、中央揃え、`width: auto` を担当する。
-- 見た目と幅は分ける。例: 通常の保存ボタンは `.button-base .button-primary .button-full`、ヘルスケア CSV ラベルは `.file-action-label .button-base .button-primary .button-full`、短縮名 input は `.form-control-base .form-control-compact` とする。
+- 見た目と幅は分ける。複数 class は同じ要素に付ける。例: 通常の保存ボタンは `class="button-base primary-button button-full"`、ヘルスケア CSV ラベルは `class="file-action-label button-base primary-button button-full"`、短縮名 input は `class="form-control-base form-control-compact"` とする。
 
 ## 3. 移行手順
 
@@ -44,7 +44,7 @@
 3. すべての対象要素に、用途に合うラベル・入力・幅・ボタン種別・コンパクト/アイコンのクラスが付いたことを確認する。
 4. クラス付与が完了してから、広い `label`、`input, select, textarea, button`、`input, select, textarea`、`button` selector を狭める、または最小限のリセットだけにする。
 5. 新クラスで不要になった override だけを削除する。見た目変更を目的にした値の調整はこの refactor では行わない。
-6. 実装 PR では `docs/index.html` の静的 CSS cache-busting version を更新する。JavaScript を変更した場合は JS の cache-busting version も確認する。
+6. 実装 PR で `docs/styles.css` を変更した場合は必ず `docs/index.html` の CSS asset version を更新する。`docs/app.js` を変更した場合は必ず JS asset version も更新し、関連する static asset version test を更新または追加する。
 7. 利用可能なテスト、JavaScript syntax check、HTML/CSS の静的確認、`git diff --check`、selector/class coverage の確認を実行する。
 8. iPhone Safari の最終的な見た目確認は利用者に依頼する。Codex は実機ブラウザ確認を実施したとは主張しない。
 
@@ -52,23 +52,23 @@
 
 | 画面・機能 | 現在の selector / class | 提案 selector / class | 期待リスク | iPhone Safari確認 |
 | --- | --- | --- | --- | --- |
-| 初期設定 | 動的 `label`、`.setup-option-list input`、`.setup-start-button`、`.setup-restore-button` | `.form-field-label`、`.form-control-base`、`.form-control-full`、`.button-base`、`.button-full`、`.button-primary/.button-secondary` | 初期設定フォームの幅、360px以下の折り返し | 必要 |
+| 初期設定 | 動的 `label`、`.setup-option-list input`、`.setup-start-button`、`.setup-restore-button` | `.form-field-label`、`.form-control-base`、`.form-control-full`、`.button-base`、`.button-full`、既存 `.primary-button` / `.secondary-button` | 初期設定フォームの幅、360px以下の折り返し | 必要 |
 | 日次記録フォーム | `label`、`select`、`textarea`、`button`、`.pain-input-grid label` | `.form-field-label`、`.form-control-base`、`.form-control-full`、`.button-base`、`.button-full` | 痛み select とメモ textarea の高さ・余白 | 必要 |
-| 薬ボタン | `.button-list button` と広い `button` | `.button-base .button-primary .button-full` または `.medication-record-button` | 薬ボタンの全幅・タップ領域 | 必要 |
-| 痛みスコア・状態 controls | `#pain-score`、`#pain-state` がグローバル select 依存 | `.form-control-base .form-control-full` | select の幅と grid 内縮小 | 必要 |
-| メモ input | `#record-note-input` が textarea グローバル依存 | `.form-control-base .form-control-full` | textarea padding、高さ | 必要 |
+| 薬ボタン | `.button-list button` と広い `button` | `class="button-base primary-button button-full"` または `.medication-record-button` | 薬ボタンの全幅・タップ領域 | 必要 |
+| 痛みスコア・状態 controls | `#pain-score`、`#pain-state` がグローバル select 依存 | `class="form-control-base form-control-full"` | select の幅と grid 内縮小 | 必要 |
+| メモ input | `#record-note-input` が textarea グローバル依存 | `class="form-control-base form-control-full"` | textarea padding、高さ | 必要 |
 | 今日の記録 | `.edit-event-button`、`.delete-event-button` | `.button-icon` + 種別 class | アイコンボタンのサイズと並び | 必要 |
-| 過去の記録 | `.history-detail-button.secondary-button`、`.history-nav-button.secondary-button` | `.button-base .button-secondary` + 必要なら `.button-compact` / `.button-full` | 詳細・ナビボタンの幅と折り返し | 必要 |
+| 過去の記録 | `.history-detail-button.secondary-button`、`.history-nav-button.secondary-button` | `class="button-base secondary-button"` + 必要なら `.button-compact` / `.button-full` | 詳細・ナビボタンの幅と折り返し | 必要 |
 | 記録編集 | 動的 `label/input/select/textarea`、`.edit-event-actions button` | `.form-field-label`、`.form-control-base`、`.form-control-full`、`.button-base`、`.button-full`、`.button-secondary` | date/time input の iOS 幅、430px以下の dialog | 必要 |
-| 診察用サマリー | `.form-control`、`.radio-row input`、`.visit-summary-actions button` | `.form-control-base .form-control-full`、`.radio-control`、`.button-base`、`.button-secondary`、必要なら `.button-compact` | radio のサイズ、action ボタンの flex 幅 | 必要 |
-| 過去の記録とヘルスケアデータ | `.file-action-label.primary-button`、`.visit-summary-actions button` | `.file-action-label .button-base .button-primary .button-full`、`.button-secondary` | ファイルラベルのボタン風表示、印刷モード | 必要 |
-| 設定可能な日ごとサマリー列 | `.column-short-label input`、`.column-reorder-button`、`.column-remove-button.delete-event-button`、`.health-column-check input[type="checkbox"]` | `.form-control-base .form-control-compact`、`.button-icon`、`.checkbox-control` | 短縮名 input が全幅化しないこと、列操作ボタンの正方形維持 | 必要 |
-| 薬設定 | `.form-control`、`.checkbox-row input`、`.medication-toggle-button`、動的 `.edit-event-button` | `.form-control-base .form-control-full`、`.checkbox-control`、`.button-compact`、`.button-icon` | checkbox と小型ボタンの幅 | 必要 |
-| 痛み状態設定 | `.form-control`、`.checkbox-row input`、`.pain-state-toggle-button`、動的 `.edit-event-button` | `.form-control-base .form-control-full`、`.checkbox-control`、`.button-compact`、`.button-icon` | checkbox と小型ボタンの幅 | 必要 |
-| 期間設定 | `.form-control`、`.comparison-period-form-actions button`、動的 edit/delete | `.form-control-base .form-control-full`、`.button-base`、`.button-full`、`.button-icon` | date input 幅、削除ボタンサイズ | 必要 |
-| バックアップ・CSV controls | `#export-json`、`#import-json`、`#csv-export-type`、`#export-csv` | `.button-base .button-full`、`.form-control-base .form-control-full` | 管理画面ボタンの全幅 | 必要 |
-| ファイル選択 controls | `.visually-hidden-file-input`、`.file-action-label.primary-button` | `.file-input-hidden`、`.file-action-label .button-base .button-primary .button-full` | 隠し input の focus/クリック連携 | 必要 |
-| 削除確認 controls | `#delete-all.danger`、削除系 `.delete-event-button` | `.button-base .button-danger .button-full`、`.button-icon .button-danger` | danger 色とサイズの分離 | 必要 |
+| 診察用サマリー | `.form-control`、`.radio-row input`、`.visit-summary-actions button` | `class="form-control-base form-control-full"`、`.radio-control`、`.button-base`、`.button-secondary`、必要なら `.button-compact` | radio のサイズ、action ボタンの flex 幅 | 必要 |
+| 過去の記録とヘルスケアデータ | `.file-action-label.primary-button`、`.visit-summary-actions button` | `class="file-action-label button-base primary-button button-full"`、`.secondary-button` | ファイルラベルのボタン風表示、印刷モード | 必要 |
+| 設定可能な日ごとサマリー列 | `.column-short-label input`、`.column-reorder-button`、`.column-remove-button.delete-event-button`、`.health-column-check input[type="checkbox"]` | `class="form-control-base form-control-compact"`、`.button-icon`、`.checkbox-control` | 短縮名 input が全幅化しないこと、列操作ボタンの正方形維持 | 必要 |
+| 薬設定 | `.form-control`、`.checkbox-row input`、`.medication-toggle-button`、動的 `.edit-event-button` | `class="form-control-base form-control-full"`、`.checkbox-control`、`.button-compact`、`.button-icon` | checkbox と小型ボタンの幅 | 必要 |
+| 痛み状態設定 | `.form-control`、`.checkbox-row input`、`.pain-state-toggle-button`、動的 `.edit-event-button` | `class="form-control-base form-control-full"`、`.checkbox-control`、`.button-compact`、`.button-icon` | checkbox と小型ボタンの幅 | 必要 |
+| 期間設定 | `.form-control`、`.comparison-period-form-actions button`、動的 edit/delete | `class="form-control-base form-control-full"`、`.button-base`、`.button-full`、`.button-icon` | date input 幅、削除ボタンサイズ | 必要 |
+| バックアップ・CSV controls | `#export-json`、`#import-json`、`#csv-export-type`、`#export-csv` | `class="button-base button-full"`、`class="form-control-base form-control-full"` | 管理画面ボタンの全幅 | 必要 |
+| ファイル選択 controls | `.visually-hidden-file-input`、`.file-action-label.primary-button` | `.visually-hidden-file-input`、`class="file-action-label button-base primary-button button-full"` | 隠し input の focus/クリック連携 | 必要 |
+| 削除確認 controls | `#delete-all.danger`、削除系 `.delete-event-button` | `class="button-base danger button-full"`、`class="button-icon danger"` | danger 色とサイズの分離 | 必要 |
 | print view | `@media print body.health-history-print-mode ...` | 原則 selector 維持。必要なら操作ボタン分類後も print 対象が変わらないことを確認 | 操作要素が印刷に混入するリスク | 必要 |
 
 ## 5. 影響を受けやすい箇所
@@ -85,14 +85,14 @@
 - selector specificity: `.button-secondary` と `.button-primary` の状態 style は、広い `button:active` より明確に強いか、広い selector 自体を弱める。
 - source order: base → sizing → variant → component override の順に置き、後半の component override が必要最小限で済むようにする。
 - touch-target size: 標準ボタンは現状の `min-height: 48px`、ファイル action は `44px`、小型操作は既存値を維持し、意図せず小さくしない。
-- static asset caching: 実装 PR では CSS 変更後に `docs/index.html` の CSS version を更新する。JS の動的生成 class 変更がある場合は JS version も確認する。
+- static asset caching: `docs/styles.css` を変更するすべての実装 PR は CSS asset version を更新する。`docs/app.js` を変更するすべての実装 PR は JS asset version を更新する。関連する static asset version test も更新または追加する。
 
 ## 6. PRの分割案
 
 - 推奨は 2 PR。
   1. labels と input controls: `.form-field-label`、`.form-control-base`、`.form-control-full`、`.form-control-compact`、checkbox/radio/file input の分類を追加・移行する。
-  2. buttons と compact/icon operations: `.button-base`、`.button-full`、variant、compact/icon 操作ボタン、file-action label のボタン化を移行する。
-- 2 PR に分ける理由は、入力欄とボタンの影響範囲がどちらも広く、同時に狭めると見た目差分の原因を追いづらいため。入力欄の分類が先に必要なのは、file input と file-action label の責務を明確にしてからボタン側の分類を進める方が安全だから。
+  2. buttons と compact/icon operations: `.button-base`、`.button-full`、既存 `.primary-button` / `.secondary-button` / `.danger`、compact/icon 操作ボタン、file-action label のボタン化を移行する。
+- 2 PR に分ける理由は、入力欄とボタンの影響範囲がどちらも広く、同時に狭めると見た目差分の原因を追いづらいため。入力欄の分類が先に必要なのは、file input と file-action label の責務を明確にしてからボタン側の分類を進める方が安全だから。各 PR で自動確認と利用者による iPhone Safari 確認を完了してから、次の PR に進む。
 - 1 PR も可能だが、`docs/index.html` と `docs/app.js` の動的 HTML に多数の class 追加が集中し、review が重くなる。
 - 3 PR 以上は現時点では推奨しない。selector 分離そのものが目的であり、過度に細かく分けると cache-busting 更新と確認作業が重複する。
 
@@ -104,7 +104,7 @@
 - 差分確認: `git diff --check` を実行する。
 - class coverage: `rg` と簡単な script で、`label`、`input`、`select`、`textarea`、`button` のうち対象外を除いたものに新分類 class が付いているか確認する。動的 HTML 文字列も `docs/app.js` 内で確認する。
 - broad selector narrowing check: 実装時は、広い selector を狭める commit の前に新 class が付いていることを `git diff` と `rg` で確認する。
-- cache-busting check: CSS 変更がある実装 PR では `docs/index.html` の CSS version が更新されているか確認する。JS 変更もある場合は JS version も確認する。
+- cache-busting check: `docs/styles.css` 変更がある実装 PR では `docs/index.html` の CSS asset version が更新されていることを確認する。`docs/app.js` 変更がある実装 PR では JS asset version が更新されていることを確認する。関連する static asset version test も更新または追加されていることを確認する。
 - ブラウザ screenshot、実機 iPhone Safari、印刷ダイアログでの実レンダリングは Codex の自動確認としては主張しない。
 
 ## 8. 利用者による確認項目
@@ -142,18 +142,18 @@
 ## 10. 実装指示に必要な決定事項
 
 - 既存クラス名を alias として残すか
-  - 推奨: `.primary-button`、`.secondary-button`、`.danger` などは当面 alias として残し、新クラスを追加して段階的に整理する。
+  - 推奨: `.primary-button`、`.secondary-button`、`.danger`、`.file-action-label`、`.visually-hidden-file-input` など既存クラス名は初回 refactor で rename しない。全幅 sizing、compact input sizing、compact button sizing、icon button sizing、form-field label styling など、欠けている責務を分ける class だけを追加する。
   - 代替: 既存クラス名を一括で新名へ置換する。
-  - trade-off: alias 維持は互換性と review の安全性が高いが、CSS が一時的に冗長になる。一括置換は最終形が綺麗だが差分と回帰リスクが大きい。
+  - trade-off: rename 最小化は互換性と review の安全性が高いが、CSS が一時的に冗長になる。一括置換は最終形が綺麗だが差分と回帰リスクが大きい。
 - 実装 PR の分割数
   - 推奨: 2 PR（入力系 → ボタン系）。
   - 代替: 1 PR で一括実装。
-  - trade-off: 2 PR は review と原因切り分けが容易だが、cache-busting と確認が2回必要。1 PR は作業回数が少ないが影響範囲が広い。
+  - trade-off: 2 PR は review と原因切り分けが容易だが、cache-busting、自動確認、利用者による iPhone Safari 確認が各 PR で必要。1 PR は作業回数が少ないが影響範囲が広い。
 - class 命名の粒度
   - 推奨: base、width/sizing、variant、component を分ける。
   - 代替: `.form-control` や `.primary-button` に幅と見た目をまとめる。
   - trade-off: 分離は class 数が増えるが将来の override を減らせる。統合は短く書けるが、compact input や icon button で再び打ち消しが増える。
 - cache-busting の対象
-  - 推奨: CSS 変更時は CSS version を更新し、JS を変更した PR では JS version も確認して必要なら更新する。
+  - 推奨: `docs/styles.css` を変更するすべての実装 PR で CSS asset version を更新し、`docs/app.js` を変更するすべての実装 PR で JS asset version を更新する。関連する static asset version test も更新または追加する。
   - 代替: CSS version のみ更新する。
-  - trade-off: 必要な asset だけ更新する方が最小差分だが、動的 class 変更が JS 側にある場合は JS cache の影響を見落としやすい。
+  - trade-off: 必要な asset version と test を必ず更新することで cache の取り違えを防げる。CSS version のみ更新する案は、`app.js` 変更を含む PR では不可。
