@@ -43,9 +43,9 @@ Setup requires at least one medication option and at least one pain-state option
 After setup, the app shows:
 
 - Time since the last record for each active medication option.
-- Medication buttons.
-- Pain score and pain-state controls.
-- A shared optional memo field for medication, pain, or note records.
+- Medication buttons. The medication subsection heading remains in the markup for assistive technologies but is visually hidden.
+- Pain score and pain-state controls. The pain subsection heading remains in the markup for assistive technologies but is visually hidden. The pain score field is labeled `痛みスコア`, and the pain-state field is labeled `状態`.
+- A shared optional memo field for medication, pain, or note records. Its `メモ（任意）` label remains associated with the memo textarea for assistive technologies but is visually hidden.
 - Today's records.
 - A collapsed past-records section.
 - A collapsed visit-summary section.
