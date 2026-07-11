@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <link rel="manifest" href="./site.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="stylesheet" href="styles.css?v=19">
 </head>
 <body>
   <header class="app-header">
@@ -67,16 +67,15 @@
       </div>
 
       <section class="card last-medication-card" aria-labelledby="last-med-title">
-        <h2 id="last-med-title">前回服薬からの時間</h2>
+        <h2 id="last-med-title">前回の服薬から</h2>
         <div id="last-medication-list"></div>
       </section>
 
       <section class="card" aria-labelledby="input-title">
-        <h2 id="input-title">記録</h2>
+        <h2 id="input-title" class="visually-hidden">記録</h2>
         <div class="record-input-section">
           <h3 class="record-input-heading">薬</h3>
           <div id="medication-buttons" class="button-list"></div>
-          <p class="record-input-help supplemental-text">ボタンを押すと服薬を記録します。</p>
         </div>
 
         <div class="record-input-section">
@@ -275,7 +274,7 @@
     </div>
   </main>
 
-  <script src="app.js?v=17" defer></script>
+  <script src="app.js?v=18" defer></script>
   <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fcd3243fc5f04e899f9d5c8b46a3bc8e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

@@ -748,10 +748,8 @@ function formatFullDate(dateText) {
 
 function lastMedicationText(option, last) {
   if (!last) return `${option.label}：記録なし`;
-  if (elapsedMinutes(last.recordedAtUtc) >= 1440) {
-    return `${option.label}：前回 ${formatShortDate(last.localDate)} / 1日以上`;
-  }
-  return `${option.label}：前回 ${last.localTime} / 経過 ${elapsedText(last.recordedAtUtc)}`;
+  if (elapsedMinutes(last.recordedAtUtc) >= 1440) return `${option.label}：1日以上`;
+  return `${option.label}：${elapsedText(last.recordedAtUtc)}`;
 }
 
 function addDays(dateText, days) {
@@ -2019,6 +2017,16 @@ function renderMedicationSettingsList() {
   });
 }
 
+function createMedicationRecordButton(option) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'button-base button-full primary-button';
+  button.textContent = `💊 ${option.label}`;
+  button.setAttribute('aria-label', `${option.label}を記録`);
+  button.addEventListener('click', () => saveMedication(option.id));
+  return button;
+}
+
 function renderLastMedicationList() {
   const list = $('last-medication-list');
   list.innerHTML = '';
@@ -2071,12 +2079,7 @@ function render() {
   $('medication-buttons').innerHTML = '';
   const medicationOptions = activeMedicationOptions();
   medicationOptions.forEach((option) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'button-base button-full primary-button';
-    button.textContent = option.label;
-    button.addEventListener('click', () => saveMedication(option.id));
-    $('medication-buttons').appendChild(button);
+    $('medication-buttons').appendChild(createMedicationRecordButton(option));
   });
   if (medicationOptions.length === 0) {
     $('medication-buttons').innerHTML = '<p class="empty">有効な薬ボタンがありません。</p>';

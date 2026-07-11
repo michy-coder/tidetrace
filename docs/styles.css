@@ -386,10 +386,6 @@ input[type="time"].form-control-full {
   line-height: 1.4;
 }
 
-.record-input-help {
-  margin: 6px 0 0;
-}
-
 .pain-input-grid {
   display: grid;
   grid-template-columns: minmax(6.5rem, 35%) minmax(0, 1fr);
@@ -639,26 +635,18 @@ hr {
 .edit-event-actions button { margin-top: 0; }
 
 .last-medication-card {
-  padding-top: 12px;
-  padding-bottom: 12px;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .last-medication-card h2 {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   font-size: 1.15rem;
 }
 
 .last-medication-item {
-  border-top: 1px solid var(--divider);
-  padding: 6px 0;
+  padding: 2px 0;
 }
-
-.last-medication-item:first-child {
-  border-top: 0;
-  padding-top: 0;
-}
-
-.last-medication-item:last-child { padding-bottom: 0; }
 
 summary { font-weight: 700; padding: 8px 0; }
 
@@ -691,6 +679,7 @@ summary { font-weight: 700; padding: 8px 0; }
 @media (max-width: 430px) {
   .app-header, main { padding-left: 12px; padding-right: 12px; }
   .card { border-radius: 14px; padding: 14px; }
+  .card.last-medication-card { padding-top: 10px; padding-bottom: 10px; }
 }
 
 .comparison-period-settings h3 {
