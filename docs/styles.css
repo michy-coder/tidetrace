@@ -533,7 +533,6 @@ hr {
   font-size: 1.1rem;
 }
 
-.edit-event-button:active { background: var(--surface); }
 
 .delete-event-button {
   align-self: flex-start;
@@ -541,7 +540,6 @@ hr {
   font-size: 1.2rem;
 }
 
-.delete-event-button:active { background: var(--danger-active-bg); }
 
 .edit-event-panel {
   position: fixed;
@@ -771,7 +769,6 @@ summary { font-weight: 700; padding: 8px 0; }
 .checkbox-row .checkbox-control {
   flex: 0 0 auto;
   margin: 0;
-  width: auto;
 }
 
 .medication-form-actions,
@@ -864,7 +861,6 @@ summary { font-weight: 700; padding: 8px 0; }
 .radio-row .radio-control {
   flex: 0 0 auto;
   margin: 0;
-  width: auto;
 }
 
 .visit-summary-result-block {
@@ -1010,10 +1006,6 @@ summary { font-weight: 700; padding: 8px 0; }
 
 .history-detail-button {
   flex: 0 0 auto;
-  margin: 0;
-  min-height: 40px;
-  padding: 8px 12px;
-  width: auto;
 }
 
 .history-summary-row {
@@ -1051,10 +1043,6 @@ summary { font-weight: 700; padding: 8px 0; }
 
 .history-nav-button {
   align-self: flex-start;
-  margin: 0;
-  min-height: 40px;
-  padding: 8px 12px;
-  width: auto;
 }
 
 .health-history-columns-panel {
@@ -1151,14 +1139,6 @@ summary { font-weight: 700; padding: 8px 0; }
   font-size: 1rem;
 }
 
-.column-reorder-button {
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-weight: 700;
-}
-
-.column-reorder-button:active { background: var(--surface); }
 
 .fixed-date-column {
   background: transparent;
