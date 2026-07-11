@@ -683,11 +683,109 @@ def test_last_medication_list_uses_active_sorted_options_and_compact_elapsed_tex
         renderLastMedicationList();
 
         assert.deepEqual(list.children.map((item) => item.textContent), [
-          'A：前回 6/19 / 1日以上',
-          'B：前回 15:35 / 経過 5時間25分',
+          'A：1日以上',
+          'B：5時間25分',
           'No record：記録なし'
         ]);
         global.Date = RealDate;
+        """
+    )
+
+
+def test_last_medication_text_elapsed_boundaries_are_compact() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const RealDate = Date;
+        const fixedNow = new RealDate('2026-06-20T12:00:00.000Z').getTime();
+        global.Date = class extends RealDate {
+          constructor(...args) { super(...args); }
+          static now() { return fixedNow; }
+        };
+        const option = { label: 'Medication A' };
+        const cases = [
+          [null, 'Medication A：記録なし'],
+          ['2026-06-20T09:55:00.000Z', 'Medication A：2時間5分'],
+          ['2026-06-19T12:01:00.000Z', 'Medication A：23時間59分'],
+          ['2026-06-19T12:00:00.000Z', 'Medication A：1日以上'],
+          ['2026-06-19T11:59:00.000Z', 'Medication A：1日以上']
+        ];
+        cases.forEach(([recordedAtUtc, expected]) => {
+          const last = recordedAtUtc ? { recordedAtUtc, localDate: '2026-06-19', localTime: '21:01' } : null;
+          const actual = lastMedicationText(option, last);
+          assert.equal(actual, expected);
+          ['前回', '経過', '/', '21:01', '2026-06-19', '6/19'].forEach((forbidden) => {
+            assert.equal(actual.includes(forbidden), false, `${actual} should not include ${forbidden}`);
+          });
+        });
+        global.Date = RealDate;
+        """
+    )
+
+
+def test_medication_record_buttons_are_labeled_safely_and_click_save_medication() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const buttons = [];
+        const medicationButtons = {
+          innerHTML: '',
+          appendChild(button) { buttons.push(button); }
+        };
+        global.document = {
+          getElementById(id) { return id === 'medication-buttons' ? medicationButtons : { innerHTML: '', appendChild() {} }; },
+          createElement(tag) {
+            return {
+              tag, attributes: {}, listeners: {}, textContent: '', innerHTML: '',
+              setAttribute(name, value) { this.attributes[name] = value; },
+              getAttribute(name) { return this.attributes[name]; },
+              addEventListener(name, handler) { this.listeners[name] = handler; },
+              click() { this.listeners.click(); }
+            };
+          }
+        };
+        appData = {
+          settings: {
+            medicationOptions: [
+              { id: 'shown', label: 'Medication A', active: true, sortOrder: 1 },
+              { id: 'unsafe', label: '<img src=x onerror=alert(1)>', active: true, sortOrder: 2 },
+              { id: 'hidden', label: 'Hidden Medication', active: false, sortOrder: 3 }
+            ],
+            painStateOptions: []
+          },
+          events: [], periods: []
+        };
+        nowParts = () => ({ localDate: '2026-06-20', localTime: '12:00', iso: '2026-06-20T12:00:00.000Z' });
+        renderLastMedicationList = () => {};
+        renderToday = () => {};
+        renderPastDates = () => {};
+        renderPeriodSettings = () => {};
+        renderMedicationSettingsSummary = () => {};
+        renderMedicationSettingsList = () => {};
+        renderExportStatus = () => {};
+        renderPainStateSettingsSummary = () => {};
+        renderPainStateSettingsList = () => {};
+        renderComparisonPeriodSummary = () => {};
+        renderPeriodList = () => {};
+        renderEventList = () => {};
+        renderHistory = () => {};
+        ensureSummaryDefaults = () => {};
+        nextMedicationSortOrder = () => 1;
+        nextPainSortOrder = () => 1;
+        nextPeriodStartSuggestion = () => '2026-06-20';
+        const saved = [];
+        saveMedication = (id) => { saved.push(id); };
+
+        render();
+
+        assert.equal(buttons.length, 2);
+        assert.equal(buttons[0].textContent, '💊 Medication A');
+        assert.equal(buttons[0].getAttribute('aria-label'), 'Medication Aを記録');
+        assert.equal(buttons[1].textContent, '💊 <img src=x onerror=alert(1)>');
+        assert.equal(buttons[1].innerHTML, '');
+        assert.equal(buttons.some((button) => button.textContent.includes('Hidden Medication')), false);
+        buttons[0].click();
+        assert.deepEqual(saved, ['shown']);
         """
     )
 
@@ -1207,16 +1305,44 @@ def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> No
 
 
 
-def test_static_asset_versions_are_current_for_note_spacing_fix() -> None:
+
+def test_record_input_header_and_last_medication_html_structure() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=18"' in html
-    assert 'styles.css?v=17' not in html
+
+    assert '<h2 id="input-title" class="visually-hidden">記録</h2>' in html
+    assert 'aria-labelledby="input-title"' in html
+    assert '<h3 class="record-input-heading">薬</h3>' in html
+    assert '<h3 class="record-input-heading">痛み</h3>' in html
+    assert '<label for="record-note-input" class="form-field-label">メモ（任意）</label>' in html
+    assert 'ボタンを押すと服薬を記録します。' not in html
+    assert '<h2 id="last-med-title">前回の服薬から</h2>' in html
 
 
-def test_app_js_asset_version_is_unchanged_for_css_cleanup() -> None:
+def test_last_medication_css_is_compact_without_note_button_changes() -> None:
+    css = (Path(__file__).parents[1] / "docs" / "styles.css").read_text()
+    item_block = re.search(r"\.last-medication-item \{(?P<body>[^}]+)\}", css).group('body')
+    card_block = re.search(r"\.last-medication-card \{(?P<body>[^}]+)\}", css).group('body')
+    mobile_block = re.search(r"@media \(max-width: 430px\) \{(?P<body>.*?)\n\}", css, re.S).group('body')
+    note_block = re.search(r"\.note-save-button \{(?P<body>[^}]+)\}", css).group('body')
+
+    assert 'border-top' not in item_block
+    assert 'padding: 2px 0;' in item_block
+    assert 'padding-top: 10px;' in card_block
+    assert 'padding-bottom: 10px;' in card_block
+    assert '.card.last-medication-card { padding-top: 10px; padding-bottom: 10px; }' in mobile_block
+    assert 'margin-top: 10px;' in note_block
+    assert 'padding: 10px 14px;' in note_block
+
+def test_static_asset_versions_are_current_for_input_header_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=17"' in html
-    assert 'app.js?v=16"' not in html
+    assert 'href="styles.css?v=19"' in html
+    assert 'styles.css?v=18' not in html
+
+
+def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
+    html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
+    assert 'src="app.js?v=18"' in html
+    assert 'app.js?v=17"' not in html
 
 
 

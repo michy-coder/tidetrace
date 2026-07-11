@@ -62,12 +62,16 @@ After setup, the app shows:
 
 ## Medication recording
 
+- The record input card keeps the “記録” heading as an accessible heading, but it is visually hidden.
 - Active medication options are rendered as medication buttons, sorted by display order, label, and ID.
+- Each medication button displays `💊 薬名` and has the accessible name `薬名を記録`.
 - Pressing a medication button creates a medication event with the option ID, a snapshot of the current label, the option default amount, and unit.
 - The optional memo field is trimmed and saved as the event note.
 - After saving, the shared memo field is cleared.
 - A toast is shown and can undo the newly saved event for a short period.
 - The “time since last medication” section is based on the most recent medication event for each active option ID.
+- The last-medication section displays only one of: no record, elapsed hours/minutes under 24 hours, or `1日以上` for 1440 minutes or more.
+- The last-medication section does not display the previous medication date or time.
 
 ## Note recording
 
