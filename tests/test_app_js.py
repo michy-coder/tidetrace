@@ -1209,9 +1209,13 @@ def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> No
 
 def test_static_asset_versions_are_current_for_button_role_refactor() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=16"' in html
+    assert 'href="styles.css?v=17"' in html
+    assert 'styles.css?v=16' not in html
+
+
+def test_app_js_asset_version_is_unchanged_for_css_cleanup() -> None:
+    html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
     assert 'src="app.js?v=17"' in html
-    assert 'styles.css?v=15' not in html
     assert 'app.js?v=16"' not in html
 
 
@@ -1305,6 +1309,68 @@ def test_button_role_classification_regression() -> None:
     assert '.danger:active' in css
     assert '.button-compact {' in css
     assert '.button-icon {' in css
+
+
+def css_rule_body(css: str, selector: str) -> str:
+    match = re.search(rf"(^|\n){re.escape(selector)}\s*\{{(?P<body>.*?)\n\}}", css, re.S)
+    assert match, f"Missing CSS rule for {selector}"
+    return match.group("body")
+
+
+def assert_declarations(body: str, declarations: list[str]) -> None:
+    for declaration in declarations:
+        assert declaration in body
+
+
+def assert_no_declarations(body: str, declarations: list[str]) -> None:
+    for declaration in declarations:
+        assert declaration not in body
+
+
+def test_redundant_component_css_declarations_are_removed() -> None:
+    css = (Path(__file__).parents[1] / "docs" / "styles.css").read_text()
+
+    compact_declarations = [
+        "margin: 0;",
+        "min-height: 40px;",
+        "padding: 8px 12px;",
+        "width: auto;",
+    ]
+    history_detail = css_rule_body(css, ".history-detail-button")
+    assert_declarations(history_detail, ["flex: 0 0 auto;"])
+    assert_no_declarations(history_detail, compact_declarations)
+
+    history_nav = css_rule_body(css, ".history-nav-button")
+    assert_declarations(history_nav, ["align-self: flex-start;"])
+    assert_no_declarations(history_nav, compact_declarations)
+
+    checkbox_row_control = css_rule_body(css, ".checkbox-row .checkbox-control")
+    assert_declarations(checkbox_row_control, ["flex: 0 0 auto;", "margin: 0;"])
+    assert_no_declarations(checkbox_row_control, ["width: auto;"])
+
+    radio_row_control = css_rule_body(css, ".radio-row .radio-control")
+    assert_declarations(radio_row_control, ["flex: 0 0 auto;", "margin: 0;"])
+    assert_no_declarations(radio_row_control, ["width: auto;"])
+
+    assert re.search(r"(^|\n)\.edit-event-button:active\s*\{", css) is None
+    assert re.search(r"(^|\n)\.delete-event-button:active\s*\{", css) is None
+    assert re.search(r"(^|\n)\.column-reorder-button\s*\{", css) is None
+    assert re.search(r"(^|\n)\.column-reorder-button:active\s*\{", css) is None
+
+    assert_declarations(css_rule_body(css, ".button-compact"), compact_declarations)
+    assert "width: auto;" in css_rule_body(css, ".checkbox-control,\n.radio-control")
+    assert "width: auto;" in css_rule_body(css, ".radio-control")
+
+    secondary_button = css_rule_body(css, ".secondary-button")
+    assert_declarations(secondary_button, [
+        "background: var(--surface-muted);",
+        "color: var(--text);",
+        "border: 1px solid var(--border);",
+    ])
+    assert ".secondary-button:active { background: var(--surface); }" in css
+    assert ".danger:active { background: var(--danger-active-bg); }" in css
+    assert "font-weight: 700;" in css_rule_body(css, ".button-base")
+    assert re.search(r"\.column-reorder-button,\n\.column-remove-button\.delete-event-button\s*\{\n  font-size: 1rem;\n\}", css)
 
 def test_heartwatch_csv_uses_iso_prefix_and_keeps_import_temporary() -> None:
     run_app_js(
