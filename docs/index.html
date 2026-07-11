@@ -74,15 +74,15 @@
       <section class="card" aria-labelledby="input-title">
         <h2 id="input-title" class="visually-hidden">記録</h2>
         <div class="record-input-section">
-          <h3 class="record-input-heading">薬</h3>
+          <h3 class="record-input-heading visually-hidden">薬</h3>
           <div id="medication-buttons" class="button-list"></div>
         </div>
 
         <div class="record-input-section">
-          <h3 class="record-input-heading">痛み</h3>
+          <h3 class="record-input-heading visually-hidden">痛み</h3>
           <div class="pain-input-grid">
             <div class="field-row pain-score-field">
-              <label for="pain-score" class="form-field-label">スコア</label>
+              <label for="pain-score" class="form-field-label">痛みスコア</label>
               <select id="pain-score" class="form-control-base form-control-full"></select>
             </div>
             <div class="field-row pain-state-field">
@@ -94,7 +94,7 @@
         </div>
 
         <div class="record-input-section">
-          <label for="record-note-input" class="form-field-label">メモ（任意）</label>
+          <label for="record-note-input" class="form-field-label visually-hidden">メモ（任意）</label>
           <textarea id="record-note-input" class="form-control-base form-control-full" rows="4" placeholder="薬や痛みの補足、または単独メモ"></textarea>
           <button id="save-note" class="button-base button-compact secondary-button note-save-button" type="button">メモだけ保存</button>
         </div>

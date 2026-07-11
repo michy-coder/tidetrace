@@ -1444,11 +1444,26 @@ def test_record_input_header_and_last_medication_html_structure() -> None:
 
     assert '<h2 id="input-title" class="visually-hidden">記録</h2>' in html
     assert 'aria-labelledby="input-title"' in html
-    assert '<h3 class="record-input-heading">薬</h3>' in html
-    assert '<h3 class="record-input-heading">痛み</h3>' in html
-    assert '<label for="record-note-input" class="form-field-label">メモ（任意）</label>' in html
+    assert '<h3 class="record-input-heading visually-hidden">薬</h3>' in html
+    assert '<h3 class="record-input-heading visually-hidden">痛み</h3>' in html
+    assert '<label for="record-note-input" class="form-field-label visually-hidden">メモ（任意）</label>' in html
+    assert '<textarea id="record-note-input" class="form-control-base form-control-full"' in html
+    assert 'placeholder="薬や痛みの補足、または単独メモ"' in html
+    assert '<label for="pain-score" class="form-field-label">痛みスコア</label>' in html
+    assert '<label for="pain-state" class="form-field-label">状態</label>' in html
     assert 'ボタンを押すと服薬を記録します。' not in html
     assert '<h2 id="last-med-title">前回の服薬から</h2>' in html
+
+
+def test_record_input_section_spacing_is_preserved() -> None:
+    css = (Path(__file__).parents[1] / "docs" / "styles.css").read_text()
+    section_block = re.search(r"\.record-input-section \{(?P<body>[^}]+)\}", css).group('body')
+    first_section_block = re.search(r"\.record-input-section:first-of-type \{(?P<body>[^}]+)\}", css).group('body')
+
+    assert 'margin-top: 14px;' in section_block
+    assert 'margin-top: 0;' in first_section_block
+    assert 'border' not in section_block
+    assert 'background' not in section_block
 
 
 def test_last_medication_css_is_compact_without_note_button_changes() -> None:
@@ -1485,7 +1500,7 @@ def test_form_control_classification_regression() -> None:
     app_js = (root / "docs" / "app.js").read_text()
     css = (root / "docs" / "styles.css").read_text()
 
-    assert '<label for="pain-score" class="form-field-label">スコア</label>' in html
+    assert '<label for="pain-score" class="form-field-label">痛みスコア</label>' in html
     assert '<select id="pain-score" class="form-control-base form-control-full">' in html
     assert '<textarea id="record-note-input" class="form-control-base form-control-full"' in html
     assert '<input id="summary-start-date" class="form-control-base form-control" type="date">' in html
