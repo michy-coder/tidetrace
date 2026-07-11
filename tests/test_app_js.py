@@ -117,7 +117,7 @@ def test_medication_snapshot_display_csv_and_edit_options() -> None:
           note: ''
         };
         assert.equal(medicationEventLabel(snapshot), 'Recorded');
-        assert.match(eventText(snapshot), /Recorded \\/ 1unit/);
+        assert.deepEqual(eventDisplayInfo(snapshot), { icon: '💊', typeLabel: '服薬の記録', summary: 'Recorded 1unit', note: '' });
         assert.equal(csvValueForHeader(snapshot, 'medication_option_label'), 'Recorded');
         assert.equal(medicationEventLabel({ medicationOptionId: 'inactive' }), 'Hidden');
         assert.equal(medicationEditOptions({ medicationOptionId: 'inactive' }).at(-1).displayLabel, 'Hidden（非表示）');
@@ -128,6 +128,139 @@ def test_medication_snapshot_display_csv_and_edit_options() -> None:
         """
     )
 
+
+
+def test_render_event_list_uses_compact_accessible_rows_and_keeps_actions() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        function makeElement(tag) {
+          return {
+            tag, attributes: {}, children: [], listeners: {}, textContent: '', innerHTML: '', className: '', type: '',
+            setAttribute(name, value) { this.attributes[name] = value; },
+            getAttribute(name) { return this.attributes[name]; },
+            addEventListener(name, handler) { this.listeners[name] = handler; },
+            append(...items) { this.children.push(...items); },
+            appendChild(item) { this.children.push(item); },
+            click() { this.listeners.click(); },
+            queryByClass(name) {
+              if (this.className && this.className.split(' ').includes(name)) return this;
+              for (const child of this.children) {
+                if (child && child.queryByClass) {
+                  const result = child.queryByClass(name);
+                  if (result) return result;
+                }
+              }
+              return null;
+            },
+            allText() {
+              return this.textContent + this.children.map((child) => typeof child === 'string' ? child : child.allText()).join('');
+            }
+          };
+        }
+        global.document = {
+          createElement: makeElement,
+          createTextNode(text) { return text; }
+        };
+        appData = {
+          settings: {
+            painStateOptions: [{ id: 'standing', label: '立位', active: true, sortOrder: 1 }],
+            medicationOptions: [{ id: 'med-a', label: 'Medication A', defaultAmount: 1, unit: '錠', active: true, sortOrder: 1 }]
+          },
+          events: [], periods: []
+        };
+        const container = makeElement('div');
+        const opened = [];
+        const deleted = [];
+        openEditEventPanel = (id) => opened.push(id);
+        deleteEvent = (id) => deleted.push(id);
+        const events = [
+          { id: 'pain-id', type: 'pain', localDate: '2026-07-10', localTime: '15:32', createdAtUtc: '3', painScore: 4, stateOptionId: 'standing', note: '腰が重い' },
+          { id: 'med-id', type: 'medication', localDate: '2026-07-10', localTime: '15:10', createdAtUtc: '2', medicationOptionId: 'med-a', amount: 1, unit: '錠', note: '外出前' },
+          { id: 'note-id', type: 'note', localDate: '2026-07-10', localTime: '14:45', createdAtUtc: '1', note: '午後から雨。少しだるい' }
+        ];
+
+        renderEventList(container, events, sortedEventsDescending, { showDate: false });
+
+        assert.equal(container.children.length, 3);
+        const pain = container.children[0];
+        assert.deepEqual(pain.children.map((child) => child.className), ['event-time', 'event-type', 'event-body', 'event-actions']);
+        assert.equal(pain.queryByClass('event-time').textContent, '15:32');
+        assert.equal(pain.queryByClass('event-type-icon').textContent, '😖');
+        assert.equal(pain.queryByClass('event-type-icon').getAttribute('aria-hidden'), 'true');
+        assert.equal(pain.queryByClass('visually-hidden').textContent, '痛みの記録');
+        assert.equal(pain.queryByClass('event-summary').textContent, '4・立位');
+        assert.equal(pain.queryByClass('event-note').textContent, '腰が重い');
+        assert.equal(pain.allText().includes('pain'), false);
+        assert.equal(pain.allText().includes('score'), false);
+        assert.equal(pain.allText().includes('/'), false);
+
+        const med = container.children[1];
+        assert.equal(med.queryByClass('event-time').textContent, '15:10');
+        assert.equal(med.queryByClass('event-type-icon').textContent, '💊');
+        assert.equal(med.queryByClass('visually-hidden').textContent, '服薬の記録');
+        assert.equal(med.queryByClass('event-summary').textContent, 'Medication A 1錠');
+        assert.equal(med.queryByClass('event-note').textContent, '外出前');
+        assert.equal(med.allText().includes('medication'), false);
+        assert.equal(med.allText().includes('/'), false);
+
+        const note = container.children[2];
+        assert.equal(note.queryByClass('event-time').textContent, '14:45');
+        assert.equal(note.queryByClass('event-type-icon').textContent, '🗒️');
+        assert.equal(note.queryByClass('visually-hidden').textContent, 'メモ');
+        assert.equal(note.queryByClass('event-summary').textContent, '午後から雨。少しだるい');
+        assert.equal(note.allText().includes('note'), false);
+        assert.equal(note.allText().includes('/'), false);
+
+        const editButton = pain.queryByClass('edit-event-button');
+        const deleteButton = pain.queryByClass('delete-event-button');
+        assert.equal(editButton.getAttribute('aria-label'), '編集');
+        assert.equal(deleteButton.getAttribute('aria-label'), '記録を削除');
+        editButton.click();
+        deleteButton.click();
+        assert.deepEqual(opened, ['pain-id']);
+        assert.deepEqual(deleted, ['pain-id']);
+        """
+    )
+
+
+def test_event_display_info_handles_missing_legacy_values() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: { medicationOptions: [], painStateOptions: [] },
+          events: [], periods: []
+        };
+        assert.deepEqual(eventDisplayInfo({ type: 'pain', painScore: 4, stateLabel: '保存済み状態', note: '' }), {
+          icon: '😖', typeLabel: '痛みの記録', summary: '4・保存済み状態', note: ''
+        });
+        assert.deepEqual(eventDisplayInfo({ type: 'pain', painScore: 4, stateOptionId: 'missing', note: '' }).summary, '4・不明な状態');
+        assert.deepEqual(eventDisplayInfo({ type: 'medication', medicationOptionId: 'missing', note: '' }).summary, '不明な薬');
+        assert.deepEqual(eventDisplayInfo({ type: 'medication', medicationLabel: 'Medication A', unit: '錠', note: '' }).summary, 'Medication A 錠');
+        assert.deepEqual(eventDisplayInfo({ type: 'medication', medicationLabel: 'Medication A', amount: 1, note: '' }).summary, 'Medication A 1');
+        assert.equal(eventDisplayInfo({ type: 'medication', medicationLabel: 'Medication A', note: '' }).summary.includes('undefined'), false);
+        """
+    )
+
+
+def test_event_row_css_wraps_body_without_truncation() -> None:
+    css = (Path(__file__).parents[1] / "docs" / "styles.css").read_text()
+    event_block = re.search(r"\.event \{(?P<body>[^}]+)\}", css).group('body')
+    body_block = re.search(r"\.event-body \{(?P<body>[^}]+)\}", css).group('body')
+    time_block = re.search(r"\.event-time \{(?P<body>[^}]+)\}", css).group('body')
+    type_block = re.search(r"\.event-type \{(?P<body>[^}]+)\}", css).group('body')
+
+    assert 'display: grid;' in event_block
+    assert 'grid-template-columns: auto auto minmax(0, 1fr) auto;' in event_block
+    assert 'padding: 6px 0;' in event_block
+    assert 'min-width: 0;' in body_block
+    assert 'overflow-wrap: anywhere;' in body_block
+    assert 'white-space: nowrap' not in body_block
+    assert 'text-overflow: ellipsis' not in body_block
+    assert 'line-clamp' not in body_block
+    assert 'white-space: nowrap;' in time_block
+    assert 'white-space: nowrap;' in type_block
 
 
 def test_unedited_exported_backup_import_replaces_storage_and_preserves_data() -> None:
@@ -1335,14 +1468,14 @@ def test_last_medication_css_is_compact_without_note_button_changes() -> None:
 
 def test_static_asset_versions_are_current_for_input_header_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=19"' in html
-    assert 'styles.css?v=18' not in html
+    assert 'href="styles.css?v=20"' in html
+    assert 'styles.css?v=19' not in html
 
 
 def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=18"' in html
-    assert 'app.js?v=17"' not in html
+    assert 'src="app.js?v=19"' in html
+    assert 'app.js?v=18"' not in html
 
 
 
