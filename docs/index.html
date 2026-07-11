@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <link rel="manifest" href="./site.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=15">
+  <link rel="stylesheet" href="styles.css?v=16">
 </head>
 <body>
   <header class="app-header">
@@ -42,9 +42,9 @@
       </section>
 
       <div class="setup-actions" aria-label="初回設定の操作">
-        <button id="complete-initial-setup" class="setup-start-button" type="button">この設定ではじめる</button>
+        <button id="complete-initial-setup" class="button-base button-full primary-button setup-start-button" type="button">この設定ではじめる</button>
         <input id="setup-import-file" class="visually-hidden-file-input" type="file" accept="application/json,.json" aria-label="Tide TraceのJSONバックアップを選択" tabindex="-1">
-        <button id="restore-initial-backup" class="secondary-button setup-restore-button" type="button">バックアップから復元</button>
+        <button id="restore-initial-backup" class="button-base button-full secondary-button setup-restore-button" type="button">バックアップから復元</button>
       </div>
       <p id="setup-error" class="error" role="alert"></p>
     </section>
@@ -52,7 +52,7 @@
     <div id="app-screen" class="hidden">
       <div id="toast-feedback" class="toast-feedback" role="status" aria-live="polite" hidden>
         <span id="toast-message"></span>
-        <button id="toast-undo-button" class="toast-undo-button" type="button">取り消す</button>
+        <button id="toast-undo-button" class="button-base toast-undo-button" type="button">取り消す</button>
       </div>
 
       <div id="edit-event-panel" class="edit-event-panel" role="dialog" aria-modal="true" aria-labelledby="edit-event-title" hidden>
@@ -60,8 +60,8 @@
           <h2 id="edit-event-title">記録を編集</h2>
           <div id="edit-event-fields"></div>
           <div class="edit-event-actions">
-            <button id="save-edit-event" type="submit">保存</button>
-            <button id="cancel-edit-event" class="secondary-button" type="button">キャンセル</button>
+            <button id="save-edit-event" class="button-base button-full primary-button" type="submit">保存</button>
+            <button id="cancel-edit-event" class="button-base button-full secondary-button" type="button">キャンセル</button>
           </div>
         </form>
       </div>
@@ -91,13 +91,13 @@
               <select id="pain-state" class="form-control-base form-control-full"></select>
             </div>
           </div>
-          <button id="save-pain" type="button">痛みを記録</button>
+          <button id="save-pain" class="button-base button-full primary-button" type="button">痛みを記録</button>
         </div>
 
         <div class="record-input-section">
           <label for="record-note-input" class="form-field-label">メモ（任意）</label>
           <textarea id="record-note-input" class="form-control-base form-control-full" rows="4" placeholder="薬や痛みの補足、または単独メモ"></textarea>
-          <button id="save-note" class="secondary-button note-save-button" type="button">メモだけ保存</button>
+          <button id="save-note" class="button-base button-compact secondary-button note-save-button" type="button">メモだけ保存</button>
         </div>
       </section>
 
@@ -131,10 +131,10 @@
             </label>
           </fieldset>
           <input id="summary-end-date" class="form-control-base form-control" type="date">
-          <button id="run-visit-summary" type="button">集計する</button>
+          <button id="run-visit-summary" class="button-base button-full primary-button" type="button">集計する</button>
           <div id="visit-summary-actions" class="visit-summary-actions" aria-label="診察用サマリーの操作" hidden>
-            <button id="copy-visit-summary" class="secondary-button" type="button">コピー</button>
-            <button id="save-visit-summary-text" class="secondary-button" type="button">テキスト保存</button>
+            <button id="copy-visit-summary" class="button-base button-full secondary-button" type="button">コピー</button>
+            <button id="save-visit-summary-text" class="button-base button-full secondary-button" type="button">テキスト保存</button>
           </div>
           <p id="visit-summary-message" class="message" role="alert"></p>
           <div id="visit-summary-result"></div>
@@ -146,7 +146,7 @@
           <summary id="health-history-title">過去の記録とヘルスケアデータ</summary>
           <p>記録とヘルスケアデータを日ごとに表示します。</p>
           <p class="supplemental-text">今日のデータは対象外です。<br>読み込んだデータは保存せず、表示・印刷・コピーにだけ使います。</p>
-          <label class="file-action-label primary-button" for="heartwatch-csv-file">HeartWatch CSVを読み込む</label>
+          <label class="file-action-label button-base button-full primary-button" for="heartwatch-csv-file">HeartWatch CSVを読み込む</label>
           <input id="heartwatch-csv-file" class="visually-hidden-file-input" type="file" accept=".csv,text/csv" tabindex="-1">
           <p id="health-history-message" class="message" role="alert"></p>
           <details id="health-history-columns-panel" class="health-history-columns-panel">
@@ -154,9 +154,9 @@
             <div id="health-history-columns-editor"></div>
           </details>
           <div id="health-history-actions" class="visit-summary-actions" aria-label="過去の記録とヘルスケアデータの操作" hidden>
-            <button id="copy-health-history-text" class="secondary-button" type="button">テキストをコピー</button>
-            <button id="copy-health-history-tsv" class="secondary-button" type="button">TSVをコピー</button>
-            <button id="show-health-history-print" class="secondary-button" type="button">印刷用に表示</button>
+            <button id="copy-health-history-text" class="button-base button-full secondary-button" type="button">テキストをコピー</button>
+            <button id="copy-health-history-tsv" class="button-base button-full secondary-button" type="button">TSVをコピー</button>
+            <button id="show-health-history-print" class="button-base button-full secondary-button" type="button">印刷用に表示</button>
           </div>
           <p id="health-history-print-help" class="supplemental-text" hidden>ブラウザの共有・印刷機能からPDF保存できます。</p>
           <div id="health-history-result"></div>
@@ -175,9 +175,9 @@
         <div class="export-status" aria-live="polite">
           <p>最終バックアップ：<span id="last-json-exported-at"></span></p>
         </div>
-        <button id="export-json" type="button">バックアップを書き出し</button>
+        <button id="export-json" class="button-base button-full primary-button" type="button">バックアップを書き出し</button>
         <input id="import-file" class="visually-hidden-file-input" type="file" accept="application/json,.json" aria-label="バックアップファイルを選択" tabindex="-1">
-        <button id="import-json" type="button">バックアップから読み込み</button>
+        <button id="import-json" class="button-base button-full primary-button" type="button">バックアップから読み込み</button>
         <hr>
         <div class="export-status" aria-live="polite">
           <p>最終CSV出力：<span id="last-csv-exported-at"></span></p>
@@ -191,7 +191,7 @@
             <option value="note">メモのみ</option>
           </select>
         </div>
-        <button id="export-csv" type="button">CSVを書き出す</button>
+        <button id="export-csv" class="button-base button-full primary-button" type="button">CSVを書き出す</button>
         <hr>
         <details class="medication-settings settings-disclosure">
           <summary id="medication-settings-title"><span id="medication-settings-summary">薬設定</span></summary>
@@ -213,8 +213,8 @@
               <span>表示中</span>
             </label>
             <div class="medication-form-actions">
-              <button id="save-medication-option" type="submit">薬を追加</button>
-              <button id="cancel-medication-edit" class="secondary-button" type="button" hidden>キャンセル</button>
+              <button id="save-medication-option" class="button-base button-full primary-button" type="submit">薬を追加</button>
+              <button id="cancel-medication-edit" class="button-base button-full secondary-button" type="button" hidden>キャンセル</button>
             </div>
           </form>
           <p id="medication-settings-message" class="message" role="status"></p>
@@ -239,8 +239,8 @@
               <span>表示中</span>
             </label>
             <div class="pain-state-form-actions">
-              <button id="save-pain-state-option" type="submit">状態を追加</button>
-              <button id="cancel-pain-state-edit" class="secondary-button" type="button" hidden>キャンセル</button>
+              <button id="save-pain-state-option" class="button-base button-full primary-button" type="submit">状態を追加</button>
+              <button id="cancel-pain-state-edit" class="button-base button-full secondary-button" type="button" hidden>キャンセル</button>
             </div>
           </form>
           <p id="pain-state-settings-message" class="message" role="status"></p>
@@ -260,8 +260,8 @@
             <label for="comparison-period-note" class="form-field-label">メモ</label>
             <textarea id="comparison-period-note" class="form-control-base form-control" rows="3"></textarea>
             <div class="comparison-period-form-actions">
-              <button type="submit">体調比較用期間を追加</button>
-              <button id="cancel-comparison-period-edit" class="secondary-button" type="button" hidden>キャンセル</button>
+              <button class="button-base button-full primary-button" type="submit">体調比較用期間を追加</button>
+              <button id="cancel-comparison-period-edit" class="button-base button-full secondary-button" type="button" hidden>キャンセル</button>
             </div>
           </form>
           <p id="comparison-period-message" class="message" role="status"></p>
@@ -269,13 +269,13 @@
           <div id="comparison-period-list"></div>
         </details>
         <hr>
-        <button id="delete-all" class="danger" type="button">全データ削除</button>
+        <button id="delete-all" class="button-base button-full danger" type="button">全データ削除</button>
         <p id="app-message" class="message" role="status"></p>
       </section>
     </div>
   </main>
 
-  <script src="app.js?v=15" defer></script>
+  <script src="app.js?v=16" defer></script>
   <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fcd3243fc5f04e899f9d5c8b46a3bc8e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

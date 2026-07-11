@@ -3,6 +3,7 @@ import subprocess
 import tempfile
 import textwrap
 from pathlib import Path
+import re
 
 
 APP_JS = Path(__file__).parents[1] / "docs" / "app.js"
@@ -1206,12 +1207,12 @@ def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> No
 
 
 
-def test_static_asset_versions_are_current_for_form_control_refactor() -> None:
+def test_static_asset_versions_are_current_for_button_role_refactor() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=15"' in html
-    assert 'src="app.js?v=15"' in html
-    assert 'styles.css?v=14' not in html
-    assert 'app.js?v=14' not in html
+    assert 'href="styles.css?v=16"' in html
+    assert 'src="app.js?v=16"' in html
+    assert 'styles.css?v=15' not in html
+    assert 'app.js?v=15' not in html
 
 
 
@@ -1249,6 +1250,61 @@ def test_form_control_classification_regression() -> None:
     assert '.form-control-compact {' in css
     assert '.checkbox-control,' in css
     assert '.radio-control {' in css
+
+
+def test_button_role_classification_regression() -> None:
+    root = Path(__file__).parents[1]
+    html = (root / "docs" / "index.html").read_text()
+    app_js = (root / "docs" / "app.js").read_text()
+    css = (root / "docs" / "styles.css").read_text()
+
+    static_buttons = re.findall(r"<button\b[^>]*>", html)
+    assert static_buttons
+    assert all('button-base' in button for button in static_buttons)
+
+    assert 'class="button-base button-full primary-button setup-start-button"' in html
+    assert 'class="button-base button-full secondary-button setup-restore-button"' in html
+    assert 'class="button-base toast-undo-button"' in html
+    assert 'class="button-base button-compact secondary-button note-save-button"' in html
+    assert 'class="file-action-label button-base button-full primary-button" for="heartwatch-csv-file"' in html
+    assert 'class="button-base button-full danger" type="button">全データ削除' in html
+
+    dynamic_patterns = [
+        "editButton.className = 'button-base button-icon secondary-button edit-event-button';",
+        "button.className = 'button-base button-icon danger delete-event-button';",
+        "deleteButton.className = 'button-base button-icon danger delete-event-button';",
+        "toggleButton.className = 'button-base button-compact secondary-button pain-state-toggle-button';",
+        "toggleButton.className = 'button-base button-compact secondary-button medication-toggle-button';",
+        "button.className = 'button-base button-full primary-button';",
+        "button.className = 'button-base button-compact secondary-button history-detail-button';",
+        "recentButton.className = 'button-base button-compact secondary-button history-nav-button';",
+        "olderButton.className = 'button-base button-compact secondary-button history-nav-button';",
+        'class="button-base button-icon secondary-button column-reorder-button"',
+        'class="button-base button-icon danger delete-event-button column-remove-button"',
+        'class="button-base button-full primary-button">保存',
+        'class="button-base button-full secondary-button">初期表示に戻す',
+    ]
+    for pattern in dynamic_patterns:
+        assert pattern in app_js
+
+    assert re.search(r"\.button-full\s*\{\s*width: 100%;\s*\}", css)
+    button_base_rule = re.search(r"\.button-base\s*\{(?P<body>.*?)\n\}", css, re.S).group('body')
+    assert 'width:' not in button_base_rule
+    assert 'background:' not in button_base_rule
+    assert 'color:' not in button_base_rule
+    assert 'border: 0' not in button_base_rule
+
+    assert 'button:not(' not in css
+    assert re.search(r'(^|\n)button:active', css) is None
+    assert 'button.danger' not in css
+    assert re.search(r"\nbutton\s*\{", css) is None
+    assert 'button,\n.primary-button' not in css
+    assert '.primary-button:hover' in css
+    assert '.primary-button:active' in css
+    assert '.secondary-button:active' in css
+    assert '.danger:active' in css
+    assert '.button-compact {' in css
+    assert '.button-icon {' in css
 
 def test_heartwatch_csv_uses_iso_prefix_and_keeps_import_temporary() -> None:
     run_app_js(

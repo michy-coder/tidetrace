@@ -552,13 +552,13 @@ function renderEventList(container, events, sortEvents = sortedEvents, options =
     const actions = document.createElement('div');
     actions.className = 'event-actions';
     const editButton = document.createElement('button');
-    editButton.className = 'edit-event-button';
+    editButton.className = 'button-base button-icon secondary-button edit-event-button';
     editButton.type = 'button';
     editButton.textContent = '✎';
     editButton.setAttribute('aria-label', '編集');
     editButton.addEventListener('click', () => openEditEventPanel(event.id));
     const button = document.createElement('button');
-    button.className = 'delete-event-button';
+    button.className = 'button-base button-icon danger delete-event-button';
     button.type = 'button';
     button.textContent = '×';
     button.setAttribute('aria-label', '記録を削除');
@@ -1618,14 +1618,14 @@ function renderHealthHistoryColumnEditor() {
   const rowHtml = healthHistoryColumnDraft.map((item, index) => {
     const metric = healthHistoryMetricById(item.columnId);
     const name = metric ? healthHistoryColumnEditorName(metric) : item.columnId;
-    return `<div class="column-selected-row"><div class="column-selected-name">${escapeHtml(name)}</div><div class="column-selected-controls"><label class="column-short-label">短縮名<input class="form-control-base form-control-compact" data-column-label-index="${index}" value="${escapeHtml(item.shortLabel)}" maxlength="16"></label><div class="column-selected-actions"><button type="button" class="column-reorder-button" data-column-move-up="${index}" aria-label="${escapeHtml(name)}を上へ移動" title="上へ移動">↑</button><button type="button" class="column-reorder-button" data-column-move-down="${index}" aria-label="${escapeHtml(name)}を下へ移動" title="下へ移動">↓</button><button type="button" class="delete-event-button column-remove-button" data-column-remove="${index}" aria-label="${escapeHtml(name)}を表示項目から削除" title="表示項目から削除">×</button></div></div></div>`;
+    return `<div class="column-selected-row"><div class="column-selected-name">${escapeHtml(name)}</div><div class="column-selected-controls"><label class="column-short-label">短縮名<input class="form-control-base form-control-compact" data-column-label-index="${index}" value="${escapeHtml(item.shortLabel)}" maxlength="16"></label><div class="column-selected-actions"><button type="button" class="button-base button-icon secondary-button column-reorder-button" data-column-move-up="${index}" aria-label="${escapeHtml(name)}を上へ移動" title="上へ移動">↑</button><button type="button" class="button-base button-icon secondary-button column-reorder-button" data-column-move-down="${index}" aria-label="${escapeHtml(name)}を下へ移動" title="下へ移動">↓</button><button type="button" class="button-base button-icon danger delete-event-button column-remove-button" data-column-remove="${index}" aria-label="${escapeHtml(name)}を表示項目から削除" title="表示項目から削除">×</button></div></div></div>`;
   }).join('');
   const checkbox = (m, label = null) => `<label class="health-column-check"><input class="checkbox-control" type="checkbox" data-column-toggle="${escapeHtml(m.columnId)}" ${selectedIds.has(m.columnId) ? 'checked' : ''}><span>${escapeHtml(label || healthHistoryColumnEditorName(m))}</span></label>`;
   const painKinds = ['tidetrace:pain:max','tidetrace:pain:average','tidetrace:pain:min','tidetrace:pain:count'].map((id) => checkbox(metrics.find((m) => m.columnId === id))).join('');
   const states = sortedPainOptions(appData.settings?.painStateOptions || []).map((o) => `<div class="state-column-group"><div class="state-column-name">${escapeHtml(o.label)}${o.active ? '' : '（非表示中）'}</div><div class="state-column-checks">${['max','average','count'].map((k) => checkbox(metrics.find((m) => m.columnId === `tidetrace:pain-state:${o.id}:${k}`), k === 'max' ? '最大' : k === 'average' ? '平均' : '回数')).join('')}</div></div>`).join('');
   const meds = sortedMedicationOptions(appData.settings?.medicationOptions || []).map((o) => checkbox(metrics.find((m) => m.columnId === `tidetrace:medication:${o.id}:count`))).join('') + checkbox(metrics.find((m) => m.columnId === 'tidetrace:note:count'));
   const cats = ['睡眠・起床','心拍','活動','血圧・体温・SpO2','血糖値','体重・体組成'].map((cat) => `<details><summary>${cat}</summary><div class="health-column-checks">${metrics.filter((m) => m.category === cat).map((m) => checkbox(m)).join('')}</div></details>`).join('');
-  root.innerHTML = `<h4>表示中の項目</h4><div class="fixed-date-column">日付（先頭固定）</div>${rowHtml || '<p class="empty">表示項目がありません。</p>'}<p id="health-history-columns-error" class="message error"></p><h4>項目を追加</h4><details><summary>TideTrace</summary><h5>日ごとの痛み</h5><div class="health-column-checks">${painKinds}</div><h5>状態別の痛み</h5>${states}<h5>薬・メモ</h5><div class="health-column-checks">${meds}</div></details>${cats}<div class="health-column-buttons"><button id="save-health-history-columns" type="button" class="primary-button">保存</button><button id="reset-health-history-columns" type="button" class="secondary-button">初期表示に戻す</button></div>`;
+  root.innerHTML = `<h4>表示中の項目</h4><div class="fixed-date-column">日付（先頭固定）</div>${rowHtml || '<p class="empty">表示項目がありません。</p>'}<p id="health-history-columns-error" class="message error"></p><h4>項目を追加</h4><details><summary>TideTrace</summary><h5>日ごとの痛み</h5><div class="health-column-checks">${painKinds}</div><h5>状態別の痛み</h5>${states}<h5>薬・メモ</h5><div class="health-column-checks">${meds}</div></details>${cats}<div class="health-column-buttons"><button id="save-health-history-columns" type="button" class="button-base button-full primary-button">保存</button><button id="reset-health-history-columns" type="button" class="button-base button-full secondary-button">初期表示に戻す</button></div>`;
 }
 
 function syncDraftLabels() { document.querySelectorAll('[data-column-label-index]').forEach((input) => { const i = Number(input.dataset.columnLabelIndex); if (healthHistoryColumnDraft[i]) { healthHistoryColumnDraft[i].shortLabel = input.value; healthHistoryColumnDraft[i].shortLabelMode = 'custom'; } }); }
@@ -1747,13 +1747,13 @@ function renderPeriodList() {
     const actions = document.createElement('div');
     actions.className = 'event-actions';
     const editButton = document.createElement('button');
-    editButton.className = 'edit-event-button';
+    editButton.className = 'button-base button-icon secondary-button edit-event-button';
     editButton.type = 'button';
     editButton.textContent = '✎';
     editButton.setAttribute('aria-label', '体調比較用期間を編集');
     editButton.addEventListener('click', () => editPeriod(period.id));
     const deleteButton = document.createElement('button');
-    deleteButton.className = 'delete-event-button';
+    deleteButton.className = 'button-base button-icon danger delete-event-button';
     deleteButton.type = 'button';
     deleteButton.textContent = '×';
     deleteButton.setAttribute('aria-label', '体調比較用期間を削除');
@@ -1867,13 +1867,13 @@ function renderPainStateSettingsList() {
     const actions = document.createElement('div');
     actions.className = 'pain-state-settings-actions';
     const editButton = document.createElement('button');
-    editButton.className = 'edit-event-button';
+    editButton.className = 'button-base button-icon secondary-button edit-event-button';
     editButton.type = 'button';
     editButton.textContent = '✎';
     editButton.setAttribute('aria-label', '痛み状態設定を編集');
     editButton.addEventListener('click', () => editPainStateOption(option.id));
     const toggleButton = document.createElement('button');
-    toggleButton.className = 'secondary-button pain-state-toggle-button';
+    toggleButton.className = 'button-base button-compact secondary-button pain-state-toggle-button';
     toggleButton.type = 'button';
     toggleButton.textContent = option.active ? '非表示' : '表示';
     toggleButton.addEventListener('click', () => togglePainStateOptionActive(option.id));
@@ -2003,13 +2003,13 @@ function renderMedicationSettingsList() {
     const actions = document.createElement('div');
     actions.className = 'medication-settings-actions';
     const editButton = document.createElement('button');
-    editButton.className = 'edit-event-button';
+    editButton.className = 'button-base button-icon secondary-button edit-event-button';
     editButton.type = 'button';
     editButton.textContent = '✎';
     editButton.setAttribute('aria-label', '薬設定を編集');
     editButton.addEventListener('click', () => editMedicationOption(option.id));
     const toggleButton = document.createElement('button');
-    toggleButton.className = 'secondary-button medication-toggle-button';
+    toggleButton.className = 'button-base button-compact secondary-button medication-toggle-button';
     toggleButton.type = 'button';
     toggleButton.textContent = option.active ? '非表示' : '表示';
     toggleButton.addEventListener('click', () => toggleMedicationOptionActive(option.id));
@@ -2073,6 +2073,7 @@ function render() {
   medicationOptions.forEach((option) => {
     const button = document.createElement('button');
     button.type = 'button';
+    button.className = 'button-base button-full primary-button';
     button.textContent = option.label;
     button.addEventListener('click', () => saveMedication(option.id));
     $('medication-buttons').appendChild(button);
@@ -2230,7 +2231,7 @@ function renderHistory(today) {
     title.className = 'history-day-title';
     title.textContent = formatHistoryDateHeading(date);
     const button = document.createElement('button');
-    button.className = 'history-detail-button secondary-button';
+    button.className = 'button-base button-compact secondary-button history-detail-button';
     button.type = 'button';
     const isExpanded = expandedHistoryDate === date;
     button.textContent = isExpanded ? '閉じる' : '詳細';
@@ -2278,7 +2279,7 @@ function renderHistoryNavigation(today, list) {
   buttons.className = 'history-navigation-buttons';
   if (historyRange.mode === 'older') {
     const recentButton = document.createElement('button');
-    recentButton.className = 'history-nav-button secondary-button';
+    recentButton.className = 'button-base button-compact secondary-button history-nav-button';
     recentButton.type = 'button';
     recentButton.textContent = '◀︎ 新しい記録';
     recentButton.addEventListener('click', () => {
@@ -2292,7 +2293,7 @@ function renderHistoryNavigation(today, list) {
   const target = olderHistoryRange(historyRange);
   if (target) {
     const olderButton = document.createElement('button');
-    olderButton.className = 'history-nav-button secondary-button';
+    olderButton.className = 'button-base button-compact secondary-button history-nav-button';
     olderButton.type = 'button';
     olderButton.textContent = '古い記録 ▶︎';
     olderButton.addEventListener('click', () => {
