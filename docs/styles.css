@@ -408,6 +408,7 @@ input[type="time"].form-control-full {
 
 .note-save-button {
   display: inline-flex;
+  margin-top: 10px;
   align-items: center;
   justify-content: center;
   width: auto;
