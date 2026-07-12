@@ -1483,8 +1483,8 @@ def test_last_medication_css_is_compact_without_note_button_changes() -> None:
 
 def test_static_asset_versions_are_current_for_input_header_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=20"' in html
-    assert 'styles.css?v=19' not in html
+    assert 'href="styles.css?v=21"' in html
+    assert 'styles.css?v=20' not in html
 
 
 def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
@@ -1492,6 +1492,85 @@ def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
     assert 'src="app.js?v=19"' in html
     assert 'app.js?v=18"' not in html
 
+
+
+
+
+def test_disclosure_html_roles_are_explicit_and_existing_relationships_remain() -> None:
+    html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
+
+    assert '<details id="history-details" class="section-disclosure">\n          <summary id="history-title">過去の記録</summary>' in html
+    assert '<section class="card history-card" aria-labelledby="history-title">' in html
+    assert '<details id="visit-summary-details" class="section-disclosure">\n          <summary id="visit-summary-title">診察用サマリー</summary>' in html
+    assert '<section class="card visit-summary-card" aria-labelledby="visit-summary-title">' in html
+    assert '<details id="health-history-details" class="section-disclosure">\n          <summary id="health-history-title">過去の記録とヘルスケアデータ</summary>' in html
+    assert '<section class="card health-history-card" aria-labelledby="health-history-title">' in html
+    assert '<details id="health-history-columns-panel" class="health-history-columns-panel settings-disclosure">\n            <summary>表示項目</summary>' in html
+    assert '<details class="medication-settings settings-disclosure">\n          <summary id="medication-settings-title"><span id="medication-settings-summary">薬設定</span></summary>' in html
+    assert '<details class="pain-state-settings settings-disclosure">\n          <summary id="pain-state-settings-title"><span id="pain-state-settings-summary">痛み状態設定</span></summary>' in html
+    assert '<details class="comparison-period-settings settings-disclosure">\n          <summary id="comparison-period-title"><span id="comparison-period-summary">体調比較用期間の設定</span></summary>' in html
+
+
+def test_disclosure_css_uses_role_selectors_without_global_summary_rule() -> None:
+    css = (Path(__file__).parents[1] / "docs" / "styles.css").read_text()
+
+    assert re.search(r"(^|\n)summary\s*\{", css) is None
+    assert re.search(r"(^|\n)summary::(?:before|after)\s*\{", css) is None
+    assert "summary::-webkit-details-marker" not in css
+
+    section_summary = css_rule_body(css, ".section-disclosure > summary")
+    assert_declarations(section_summary, ["cursor: pointer;", "font-weight: 700;", "padding: 8px 0;"])
+
+    settings_summary = css_rule_body(css, ".settings-disclosure > summary")
+    assert_declarations(settings_summary, [
+        "border: 1px solid var(--border);",
+        "border-radius: 12px;",
+        "background: var(--surface-muted);",
+        "color: var(--text);",
+        "cursor: pointer;",
+        "line-height: 1.35;",
+        "padding: 12px;",
+        "overflow-wrap: anywhere;",
+    ])
+    assert_declarations(css_rule_body(css, ".settings-disclosure > summary:focus-visible"), [
+        "outline: 3px solid var(--focus-ring);",
+        "outline-offset: 2px;",
+    ])
+    assert_declarations(css_rule_body(css, ".settings-disclosure[open] > summary"), ["margin-bottom: 14px;"])
+
+    assert re.search(r"(^|\n)\.settings-disclosure summary\s*\{", css) is None
+    assert re.search(r"(^|\n)\.settings-disclosure summary:focus-visible\s*\{", css) is None
+    assert re.search(r"(^|\n)\.settings-disclosure\[open\] summary\s*\{", css) is None
+    assert re.search(r"(^|\n)\.history-card details > summary\s*\{", css) is None
+
+    columns_summary = css_rule_body(css, ".health-history-columns-panel > summary")
+    assert_declarations(columns_summary, ["min-height: 44px;"])
+    assert_no_declarations(columns_summary, [
+        "border:", "border-radius:", "background:", "color:", "cursor:",
+        "line-height:", "padding:", "overflow-wrap:", "outline:", "outline-offset:",
+    ])
+    assert_declarations(css_rule_body(css, ".health-history-columns-panel"), ["margin: 12px 0;"])
+    assert_declarations(css_rule_body(css, ".health-history-columns-panel[open] > summary"), ["margin-bottom: 12px;"])
+
+
+def test_dynamic_summary_styles_are_preserved_after_removing_global_summary_rule() -> None:
+    css = (Path(__file__).parents[1] / "docs" / "styles.css").read_text()
+    app_js = (Path(__file__).parents[1] / "docs" / "app.js").read_text()
+
+    assert "details.className = 'visit-summary-dose-pain-item';" in app_js
+    assert "const summary = document.createElement('summary');" in app_js
+    dose_summary = css_rule_body(css, ".visit-summary-dose-pain-item > summary")
+    assert_declarations(dose_summary, ["cursor: pointer;", "font-weight: 700;", "padding: 8px 0;"])
+
+    assert "<details><summary>TideTrace</summary>" in app_js
+    assert "<details><summary>${cat}</summary>" in app_js
+    nested_columns_summary = css_rule_body(css, ".health-history-columns-panel details > summary")
+    assert_declarations(nested_columns_summary, [
+        "cursor: pointer;",
+        "font-weight: 700;",
+        "min-height: 36px;",
+        "padding: 8px 0;",
+    ])
 
 
 def test_form_control_classification_regression() -> None:
