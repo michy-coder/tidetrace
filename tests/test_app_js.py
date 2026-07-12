@@ -1461,10 +1461,174 @@ def test_history_range_labels_use_actual_record_dates_and_skip_empty_ranges() ->
 
 def test_history_navigation_renders_before_and_after_records() -> None:
     source = APP_JS.read_text()
-    assert source.count("renderHistoryNavigation(today, list);") == 2
+    assert "renderHistoryNavigation(today, list, { showCopy: true });" in source
+    assert "renderHistoryNavigation(today, list, { showCopy: false });" in source
     assert "scrollHistoryToStart();" in source
     assert "formatFullDate(dateText)" in source
 
+
+
+
+def test_history_daily_summary_rows_use_accessible_icons_and_commas() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        function makeElement(tag) {
+          return {
+            tag, attributes: {}, children: [], listeners: {}, textContent: '', className: '', type: '',
+            setAttribute(name, value) { this.attributes[name] = value; },
+            getAttribute(name) { return this.attributes[name]; },
+            addEventListener(name, handler) { this.listeners[name] = handler; },
+            append(...items) { this.children.push(...items); },
+            appendChild(item) { this.children.push(item); },
+            queryByClass(name) {
+              const attrClass = this.getAttribute('class') || '';
+              if (`${attrClass} ${this.className}`.split(/\s+/).includes(name)) return this;
+              for (const child of this.children) if (child && child.queryByClass) {
+                const result = child.queryByClass(name);
+                if (result) return result;
+              }
+              return null;
+            },
+            queryAllByClass(name, found = []) {
+              const attrClass = this.getAttribute('class') || '';
+              if (`${attrClass} ${this.className}`.split(/\s+/).includes(name)) found.push(this);
+              for (const child of this.children) if (child && child.queryAllByClass) child.queryAllByClass(name, found);
+              return found;
+            },
+            allText() { return this.textContent + this.children.map((child) => typeof child === 'string' ? child : child.allText()).join(''); }
+          };
+        }
+        global.document = { createElement: makeElement, createElementNS(ns, tag) { return makeElement(tag); } };
+        appData = { settings: { medicationOptions: [] }, periods: [], events: [] };
+        const summary = buildDailySummary([
+          { id: 'p1', type: 'pain', localDate: '2026-07-11', localTime: '09:00', painScore: 9 },
+          { id: 'p2', type: 'pain', localDate: '2026-07-11', localTime: '12:00', painScore: 2 },
+          { id: 'm1', type: 'medication', localDate: '2026-07-11', localTime: '10:00', medicationLabel: 'Dummy A', amount: 2, unit: '錠' },
+          { id: 'm2', type: 'medication', localDate: '2026-07-11', localTime: '11:00', medicationLabel: 'Dummy B', amount: 3, unit: '錠' },
+          { id: 'n1', type: 'note', localDate: '2026-07-11', localTime: '08:00', note: 'Dummy note' },
+          { id: 'n2', type: 'note', localDate: '2026-07-11', localTime: '13:00', note: 'Second note' },
+          { id: 'n3', type: 'note', localDate: '2026-07-11', localTime: '14:00', note: 'Third note' }
+        ]);
+        const container = makeElement('div');
+        appendDailySummaryRows(container, summary);
+        const rows = container.queryAllByClass('history-summary-row');
+        assert.equal(rows.length, 3);
+        assert.deepEqual(rows.map((row) => row.queryByClass('visually-hidden').textContent), ['痛み', '服薬', 'メモ']);
+        assert.deepEqual(rows.map((row) => row.queryByClass('history-summary-icon').tag), ['svg', 'svg', 'svg']);
+        assert.deepEqual(rows.map((row) => row.queryByClass('history-summary-icon').getAttribute('aria-hidden')), ['true', 'true', 'true']);
+        assert.equal(rows[0].queryByClass('history-summary-text').textContent, '最大9、平均5.5');
+        assert.equal(rows[1].queryByClass('history-summary-text').textContent, 'Dummy A2錠、Dummy B3錠');
+        assert.equal(rows[2].queryByClass('history-summary-text').textContent, 'Dummy note、ほか2件');
+        assert.equal(container.allText().includes(' / '), false);
+        """
+    )
+
+
+def test_history_summary_copy_text_uses_range_data_and_omits_details() -> None:
+    run_app_js(
+        r"""
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: { medicationOptions: [] }, periods: [],
+          events: [
+            { id: 'out', type: 'note', localDate: '2026-07-04', localTime: '09:00', note: 'outside' },
+            { id: 'p1', type: 'pain', localDate: '2026-07-11', localTime: '09:00', painScore: 9 },
+            { id: 'p2', type: 'pain', localDate: '2026-07-11', localTime: '12:00', painScore: 2 },
+            { id: 'm1', type: 'medication', localDate: '2026-07-11', localTime: '10:00', medicationLabel: 'Dummy A', amount: 2, unit: '錠' },
+            { id: 'm2', type: 'medication', localDate: '2026-07-11', localTime: '11:00', medicationLabel: 'Dummy B', amount: 3, unit: '錠' },
+            { id: 'n1', type: 'note', localDate: '2026-07-11', localTime: '08:00', note: 'Dummy note' },
+            { id: 'n2', type: 'note', localDate: '2026-07-11', localTime: '13:00', note: 'Second note' },
+            { id: 'n3', type: 'note', localDate: '2026-07-11', localTime: '14:00', note: 'Third note' },
+            { id: 'only-note', type: 'note', localDate: '2026-07-10', localTime: '09:00', note: 'Only note' }
+          ]
+        };
+        historyRange = { start: '2026-07-05', end: '2026-07-11', mode: 'recent' };
+        expandedHistoryDate = '2026-07-11';
+        const text = buildHistorySummaryText(historyRange);
+        assert.equal(text, [
+          '過去の記録',
+          '表示範囲：2026/07/10〜2026/07/11',
+          '',
+          '7/11 土',
+          '痛み：最大9、平均5.5',
+          '服薬：Dummy A2錠、Dummy B3錠',
+          'メモ：Dummy note、ほか2件',
+          '',
+          '7/10 金',
+          'メモ：Only note'
+        ].join('\n'));
+        assert.equal(text.includes('/ '), false);
+        assert.equal(text.includes('outside'), false);
+        assert.equal(text.endsWith('\n'), false);
+        expandedHistoryDate = null;
+        assert.equal(buildHistorySummaryText(historyRange), text);
+        """
+    )
+
+
+def test_history_copy_button_is_top_only_and_uses_clipboard_safely() -> None:
+    run_app_js(
+        """
+        (async () => {
+        const assert = require('node:assert/strict');
+        function makeElement(tag) {
+          return {
+            tag, attributes: {}, children: [], listeners: {}, textContent: '', className: '', type: '', innerHTML: '', open: true,
+            classList: { add() {}, remove() {} },
+            setAttribute(name, value) { this.attributes[name] = value; },
+            getAttribute(name) { return this.attributes[name]; },
+            addEventListener(name, handler) { this.listeners[name] = handler; },
+            append(...items) { this.children.push(...items); },
+            appendChild(item) { this.children.push(item); },
+            querySelector(selector) { return this.queryByClass(selector.slice(1)); },
+            queryByClass(name) {
+              const attrClass = this.getAttribute('class') || '';
+              if (`${attrClass} ${this.className}`.split(/\s+/).includes(name)) return this;
+              for (const child of this.children) if (child && child.queryByClass) {
+                const result = child.queryByClass(name);
+                if (result) return result;
+              }
+              return null;
+            },
+            queryAllByClass(name, found = []) {
+              const attrClass = this.getAttribute('class') || '';
+              if (`${attrClass} ${this.className}`.split(/\s+/).includes(name)) found.push(this);
+              for (const child of this.children) if (child && child.queryAllByClass) child.queryAllByClass(name, found);
+              return found;
+            }
+          };
+        }
+        const elements = { 'history-details': makeElement('details'), 'history-list': makeElement('div') };
+        global.document = { getElementById(id) { return elements[id]; }, createElement: makeElement, createElementNS(ns, tag) { return makeElement(tag); } };
+        appData = { settings: { medicationOptions: [] }, periods: [], events: [{ id: 'n1', type: 'note', localDate: '2026-07-11', localTime: '09:00', note: 'Dummy' }] };
+        historyRange = { start: '2026-07-05', end: '2026-07-11', mode: 'recent' };
+        renderHistory('2026-07-12');
+        const buttons = elements['history-list'].queryAllByClass('history-copy-button');
+        assert.equal(buttons.length, 1);
+        assert.equal(buttons[0].textContent, 'コピー');
+        assert.equal(buttons[0].className, 'button-base button-compact secondary-button history-copy-button');
+        const topNav = elements['history-list'].children[0];
+        assert.equal(topNav.children[0].className, 'history-range-label');
+        assert.equal(topNav.children[1].className, 'history-copy-button-row');
+        assert.equal(topNav.children[2].className, 'history-navigation-buttons');
+        let clipboardText = '';
+        Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText(text) { clipboardText = text; return Promise.resolve(); } } }, configurable: true });
+        const toasts = [];
+        showToast = (message) => toasts.push(message);
+        await copyVisibleHistorySummary();
+        assert.equal(clipboardText.includes('過去の記録'), true);
+        assert.equal(toasts.at(-1), '表示中の記録をコピーしました');
+        navigator.clipboard.writeText = () => Promise.reject(new Error('denied'));
+        await copyVisibleHistorySummary();
+        assert.equal(toasts.at(-1), 'コピーできませんでした');
+        appData.events = [];
+        clipboardText = 'unchanged';
+        await copyVisibleHistorySummary();
+        assert.equal(clipboardText, 'unchanged');
+        })();
+        """
+    )
 
 def test_visit_summary_text_uses_shared_summary_data_without_ui_labels() -> None:
     run_app_js(
@@ -1630,14 +1794,14 @@ def test_last_medication_css_is_compact_without_note_button_changes() -> None:
 
 def test_static_asset_versions_are_current_for_input_header_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=23"' in html
-    assert 'styles.css?v=22' not in html
+    assert 'href="styles.css?v=24"' in html
+    assert 'styles.css?v=23' not in html
 
 
 def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=22"' in html
-    assert 'app.js?v=21"' not in html
+    assert 'src="app.js?v=23"' in html
+    assert 'app.js?v=22"' not in html
 
 
 

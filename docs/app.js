@@ -2304,27 +2304,79 @@ function buildDailySummary(events) {
   };
 }
 
+function dailySummaryPainText(summary) {
+  if (!summary.painScores.length) return '';
+  const max = Math.max(...summary.painScores);
+  const average = summary.painScores.reduce((total, score) => total + score, 0) / summary.painScores.length;
+  return `最大${max}、平均${average.toFixed(1)}`;
+}
+
+function dailySummaryMedicationText(summary) {
+  if (!summary.medications.length) return '';
+  return summary.medications.map((item) => `${item.label}${amountText(item.total, item.unit)}`).join('、');
+}
+
+function dailySummaryNoteText(summary) {
+  if (!summary.notes.length) return '';
+  const extraCount = summary.notes.length - 1;
+  return `${summary.notes[0].note}${extraCount > 0 ? `、ほか${extraCount}件` : ''}`;
+}
+
+function appendDailySummaryRow(container, type, label, text) {
+  if (!text) return;
+  const row = document.createElement('p');
+  row.className = 'history-summary-row';
+  const hiddenLabel = document.createElement('span');
+  hiddenLabel.className = 'visually-hidden';
+  hiddenLabel.textContent = label;
+  const content = document.createElement('span');
+  content.className = 'history-summary-text';
+  content.textContent = text;
+  row.append(createTypeIcon(type, 'history-summary-icon'), hiddenLabel, content);
+  container.appendChild(row);
+}
+
 function appendDailySummaryRows(container, summary) {
-  if (summary.painScores.length) {
-    const max = Math.max(...summary.painScores);
-    const average = summary.painScores.reduce((total, score) => total + score, 0) / summary.painScores.length;
-    const row = document.createElement('p');
-    row.className = 'history-summary-row';
-    row.textContent = `痛み：最大 ${max} / 平均 ${average.toFixed(1)}`;
-    container.appendChild(row);
+  appendDailySummaryRow(container, 'pain', '痛み', dailySummaryPainText(summary));
+  appendDailySummaryRow(container, 'medication', '服薬', dailySummaryMedicationText(summary));
+  appendDailySummaryRow(container, 'note', 'メモ', dailySummaryNoteText(summary));
+}
+
+function buildDailySummaryText(date, summary) {
+  const lines = [formatHistoryDateHeading(date)];
+  const painText = dailySummaryPainText(summary);
+  const medicationText = dailySummaryMedicationText(summary);
+  const noteText = dailySummaryNoteText(summary);
+  if (painText) lines.push(`痛み：${painText}`);
+  if (medicationText) lines.push(`服薬：${medicationText}`);
+  if (noteText) lines.push(`メモ：${noteText}`);
+  return lines.join('\n');
+}
+
+function buildHistorySummaryText(range) {
+  if (!range) return '';
+  const sections = datesInRangeDescending(range.start, range.end)
+    .map((date) => {
+      const events = appData.events.filter((event) => event.localDate === date);
+      if (!events.length) return '';
+      return buildDailySummaryText(date, buildDailySummary(events));
+    })
+    .filter(Boolean);
+  if (!sections.length) return '';
+  return ['過去の記録', `表示範囲：${formatHistoryRangeLabel(range)}`, '', sections.join('\n\n')].join('\n');
+}
+
+async function copyVisibleHistorySummary() {
+  const text = buildHistorySummaryText(historyRange);
+  if (!text || !navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+    showToast('コピーできませんでした');
+    return;
   }
-  if (summary.medications.length) {
-    const row = document.createElement('p');
-    row.className = 'history-summary-row';
-    row.textContent = `服薬：${summary.medications.map((item) => `${item.label} ${amountText(item.total, item.unit)}`).join(' / ')}`;
-    container.appendChild(row);
-  }
-  if (summary.notes.length) {
-    const row = document.createElement('p');
-    row.className = 'history-summary-row';
-    const extraCount = summary.notes.length - 1;
-    row.textContent = `メモ：${summary.notes[0].note}${extraCount > 0 ? `　ほか${extraCount}件` : ''}`;
-    container.appendChild(row);
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('表示中の記録をコピーしました');
+  } catch {
+    showToast('コピーできませんでした');
   }
 }
 
@@ -2385,7 +2437,7 @@ function renderHistory(today) {
   }
   if (!historyRange) historyRange = recentHistoryRange(today);
   list.innerHTML = '';
-  renderHistoryNavigation(today, list);
+  renderHistoryNavigation(today, list, { showCopy: true });
   datesInRangeDescending(historyRange.start, historyRange.end).forEach((date) => {
     const events = appData.events.filter((event) => event.localDate === date);
     if (events.length === 0) return;
@@ -2423,7 +2475,7 @@ function renderHistory(today) {
     empty.textContent = 'この期間に記録はありません。';
     list.appendChild(empty);
   }
-  renderHistoryNavigation(today, list);
+  renderHistoryNavigation(today, list, { showCopy: false });
 }
 
 function scrollHistoryToStart() {
@@ -2432,7 +2484,7 @@ function scrollHistoryToStart() {
   target.scrollIntoView({ block: 'start' });
 }
 
-function renderHistoryNavigation(today, list) {
+function renderHistoryNavigation(today, list, options = {}) {
   const nav = document.createElement('div');
   nav.className = 'history-navigation';
 
@@ -2440,6 +2492,18 @@ function renderHistoryNavigation(today, list) {
   rangeLabel.className = 'history-range-label';
   rangeLabel.textContent = `表示範囲：${formatHistoryRangeLabel(historyRange)}`;
   nav.appendChild(rangeLabel);
+
+  if (options.showCopy && historyEventsInRange(historyRange).length) {
+    const copyRow = document.createElement('div');
+    copyRow.className = 'history-copy-button-row';
+    const copyButton = document.createElement('button');
+    copyButton.className = 'button-base button-compact secondary-button history-copy-button';
+    copyButton.type = 'button';
+    copyButton.textContent = 'コピー';
+    copyButton.addEventListener('click', copyVisibleHistorySummary);
+    copyRow.appendChild(copyButton);
+    nav.appendChild(copyRow);
+  }
 
   const buttons = document.createElement('div');
   buttons.className = 'history-navigation-buttons';

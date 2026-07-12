@@ -987,7 +987,22 @@ hr {
 }
 
 .history-summary-row {
+  align-items: center;
+  display: flex;
+  gap: 6px;
   margin: 4px 0;
+  min-width: 0;
+}
+
+.history-summary-icon {
+  flex: 0 0 auto;
+  height: 18px;
+  width: 18px;
+}
+
+.history-summary-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .history-day-detail {
@@ -1006,6 +1021,15 @@ hr {
   flex-direction: column;
   gap: 8px;
   margin: 12px 0;
+}
+
+.history-copy-button-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.history-copy-button {
+  flex: 0 0 auto;
 }
 
 .history-navigation-buttons {
