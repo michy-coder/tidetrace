@@ -144,7 +144,8 @@ def test_render_event_list_uses_compact_accessible_rows_and_keeps_actions() -> N
             appendChild(item) { this.children.push(item); },
             click() { this.listeners.click(); },
             queryByClass(name) {
-              if (this.className && this.className.split(' ').includes(name)) return this;
+              const attrClass = this.getAttribute('class') || '';
+              if (`${attrClass} ${this.className}`.split(/\\s+/).includes(name)) return this;
               for (const child of this.children) {
                 if (child && child.queryByClass) {
                   const result = child.queryByClass(name);
@@ -243,6 +244,102 @@ def test_event_display_info_handles_missing_legacy_values() -> None:
         assert.deepEqual(eventDisplayInfo({ type: 'medication', medicationLabel: 'Medication A', unit: '錠', note: '' }).summary, 'Medication A 錠');
         assert.deepEqual(eventDisplayInfo({ type: 'medication', medicationLabel: 'Medication A', amount: 1, note: '' }).summary, 'Medication A 1');
         assert.equal(eventDisplayInfo({ type: 'medication', medicationLabel: 'Medication A', note: '' }).summary.includes('undefined'), false);
+        """
+    )
+
+
+def test_svg_icons_use_namespaced_elements_and_class_attributes() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const createdWithNs = [];
+        function makeElement(tag, isSvg = false) {
+          const element = {
+            tag,
+            isSvg,
+            attributes: {}, children: [], listeners: {}, textContent: '', innerHTML: '', type: '',
+            className: isSvg ? { baseVal: '', animVal: '' } : '',
+            setAttribute(name, value) { this.attributes[name] = String(value); },
+            getAttribute(name) { return this.attributes[name]; },
+            addEventListener(name, handler) { this.listeners[name] = handler; },
+            append(...items) { this.children.push(...items); },
+            appendChild(item) { this.children.push(item); },
+            click() { if (this.listeners.click) this.listeners.click(); },
+            queryByClass(name) {
+              const attrClass = this.getAttribute('class') || '';
+              const propClass = typeof this.className === 'string' ? this.className : '';
+              if (`${attrClass} ${propClass}`.split(/\\s+/).includes(name)) return this;
+              for (const child of this.children) {
+                if (child && child.queryByClass) {
+                  const result = child.queryByClass(name);
+                  if (result) return result;
+                }
+              }
+              return null;
+            },
+            allText() {
+              return this.textContent + this.children.map((child) => typeof child === 'string' ? child : child.allText()).join('');
+            }
+          };
+          return element;
+        }
+        const elementsById = {
+          'save-pain': makeElement('button'),
+          'save-note': makeElement('button')
+        };
+        elementsById['save-pain'].textContent = '痛みを記録';
+        elementsById['save-note'].textContent = 'メモだけ保存';
+        global.document = {
+          createElement: (tag) => makeElement(tag),
+          createElementNS(ns, tag) {
+            createdWithNs.push({ ns, tag });
+            return makeElement(tag, true);
+          },
+          createTextNode(text) { return text; },
+          getElementById(id) { return elementsById[id]; }
+        };
+        appData = {
+          settings: {
+            painStateOptions: [{ id: 'standing', label: '立位', active: true, sortOrder: 1 }],
+            medicationOptions: [{ id: 'med-a', label: 'Medication A', defaultAmount: 1, unit: '錠', active: true, sortOrder: 1 }]
+          },
+          events: [], periods: []
+        };
+
+        const buttonIcon = createTypeIcon('medication', 'button-type-icon');
+        assert.equal(buttonIcon.tag, 'svg');
+        assert.equal(buttonIcon.isSvg, true);
+        assert.notEqual(typeof buttonIcon.className, 'string');
+        assert.equal(buttonIcon.getAttribute('class'), 'button-type-icon');
+        assert.equal(buttonIcon.getAttribute('viewBox'), '0 0 24 24');
+        assert.equal(buttonIcon.getAttribute('stroke'), 'currentColor');
+        assert.equal(buttonIcon.getAttribute('aria-hidden'), 'true');
+
+        const eventIcon = createTypeIcon('pain');
+        assert.equal(eventIcon.getAttribute('class'), 'event-type-icon');
+        assert.equal(eventIcon.getAttribute('viewBox'), '0 0 24 24');
+        assert.equal(eventIcon.getAttribute('stroke'), 'currentColor');
+        assert.equal(eventIcon.getAttribute('aria-hidden'), 'true');
+        assert.ok(createdWithNs.some((item) => item.ns === 'http://www.w3.org/2000/svg' && item.tag === 'svg'));
+
+        decorateRecordActionButtons();
+        assert.equal(elementsById['save-pain'].queryByClass('button-type-icon').getAttribute('class'), 'button-type-icon');
+        assert.equal(elementsById['save-note'].queryByClass('button-type-icon').getAttribute('class'), 'button-type-icon');
+
+        const container = makeElement('div');
+        renderEventList(container, [
+          { id: 'med-id', type: 'medication', localDate: '2026-07-10', localTime: '15:10', createdAtUtc: '2', medicationOptionId: 'med-a', amount: 1, unit: '錠', note: '' },
+          { id: 'pain-id', type: 'pain', localDate: '2026-07-10', localTime: '15:32', createdAtUtc: '3', painScore: 4, stateOptionId: 'standing', note: '' },
+          { id: 'note-id', type: 'note', localDate: '2026-07-10', localTime: '14:45', createdAtUtc: '1', note: 'メモ' }
+        ], sortedEventsDescending, { showDate: false });
+        for (const row of container.children) {
+          const rowIcon = row.queryByClass('event-type-icon');
+          assert.equal(rowIcon.tag, 'svg');
+          assert.equal(rowIcon.getAttribute('class'), 'event-type-icon');
+          assert.equal(rowIcon.getAttribute('viewBox'), '0 0 24 24');
+          assert.equal(rowIcon.getAttribute('stroke'), 'currentColor');
+          assert.equal(rowIcon.getAttribute('aria-hidden'), 'true');
+        }
         """
     )
 
@@ -1539,8 +1636,8 @@ def test_static_asset_versions_are_current_for_input_header_update() -> None:
 
 def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=21"' in html
-    assert 'app.js?v=18"' not in html
+    assert 'src="app.js?v=22"' in html
+    assert 'app.js?v=21"' not in html
 
 
 

@@ -561,7 +561,7 @@ function createSvgElement(tag) {
 
 function createTypeIcon(type, className = 'event-type-icon') {
   const svg = createSvgElement('svg');
-  svg.className = className;
+  svg.setAttribute('class', className);
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('fill', 'none');
   svg.setAttribute('stroke', 'currentColor');
