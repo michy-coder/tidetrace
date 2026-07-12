@@ -659,13 +659,17 @@ hr {
   padding: 2px 0;
 }
 
-summary { font-weight: 700; padding: 8px 0; }
+.section-disclosure > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 8px 0;
+}
 
 .settings-disclosure {
   margin-bottom: 14px;
 }
 
-.settings-disclosure summary {
+.settings-disclosure > summary {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface-muted);
@@ -676,12 +680,12 @@ summary { font-weight: 700; padding: 8px 0; }
   overflow-wrap: anywhere;
 }
 
-.settings-disclosure summary:focus-visible {
+.settings-disclosure > summary:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
-.settings-disclosure[open] summary {
+.settings-disclosure[open] > summary {
   margin-bottom: 14px;
 }
 
@@ -822,8 +826,7 @@ summary { font-weight: 700; padding: 8px 0; }
   width: auto;
 }
 
-.visit-summary-card details > summary {
-  cursor: pointer;
+.visit-summary-card > .section-disclosure > summary {
   font-size: 1.1rem;
 }
 
@@ -901,6 +904,8 @@ summary { font-weight: 700; padding: 8px 0; }
 
 .visit-summary-dose-pain-item > summary {
   cursor: pointer;
+  font-weight: 700;
+  padding: 8px 0;
 }
 
 .visit-summary-dose-pain-row {
@@ -908,8 +913,7 @@ summary { font-weight: 700; padding: 8px 0; }
 }
 
 
-.health-history-card details > summary {
-  cursor: pointer;
+.health-history-card > .section-disclosure > summary {
   font-size: 1.1rem;
 }
 
@@ -1017,11 +1021,6 @@ summary { font-weight: 700; padding: 8px 0; }
   margin-top: 10px;
 }
 
-.history-card details > summary {
-  cursor: pointer;
-  font-weight: 700;
-  padding: 8px 0;
-}
 
 .history-range-label {
   color: #5f6f89;
@@ -1051,29 +1050,19 @@ summary { font-weight: 700; padding: 8px 0; }
 }
 
 .health-history-columns-panel > summary {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface-muted);
-  color: var(--text);
-  cursor: pointer;
-  line-height: 1.35;
   min-height: 44px;
-  padding: 12px;
-  overflow-wrap: anywhere;
 }
 
-.health-history-columns-panel > summary:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
-}
 
 .health-history-columns-panel[open] > summary {
   margin-bottom: 12px;
 }
 
-.health-history-columns-panel details summary {
+.health-history-columns-panel details > summary {
   cursor: pointer;
+  font-weight: 700;
   min-height: 36px;
+  padding: 8px 0;
 }
 
 .column-selected-row {
