@@ -383,7 +383,8 @@ input[type="time"].form-control-full {
 .supplemental-text {
   color: var(--text-muted);
   font-size: 0.85rem;
-  line-height: 1.4;
+  line-height: 1.45;
+  margin: 8px 0 14px;
 }
 
 .pain-input-grid {
@@ -755,14 +756,6 @@ hr {
   margin: -2px 0 10px;
 }
 
-.notice-text {
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--text-muted);
-  margin: 10px 0 14px;
-  padding: 10px 12px;
-}
 
 .checkbox-row {
   align-items: center;
