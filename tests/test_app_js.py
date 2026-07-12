@@ -2033,14 +2033,16 @@ def test_health_history_configurable_columns_validation_and_calculations() -> No
 def test_settings_forms_start_hidden_after_registered_lists() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
     management = html[html.index('<section class="card management"'):html.index('<button id="delete-all"')]
-    for heading, add_button, form in [
-        ("登録済みの薬", "新しい薬を追加", "medication-option-form"),
-        ("登録済みの痛み状態", "新しい状態を追加", "pain-state-option-form"),
-        ("登録済みの体調比較用期間", "新しい期間を追加", "comparison-period-form"),
+    for removed_heading in ["登録済みの薬", "登録済みの痛み状態", "登録済みの体調比較用期間"]:
+        assert f'class="settings-list-title">{removed_heading}</' not in management
+    for list_id, add_button, form in [
+        ("medication-settings-list", "新しい薬を追加", "medication-option-form"),
+        ("pain-state-settings-list", "新しい状態を追加", "pain-state-option-form"),
+        ("comparison-period-list", "新しい期間を追加", "comparison-period-form"),
     ]:
-        heading_index = management.index(heading)
-        add_index = management.index(add_button, heading_index)
-        assert heading_index < add_index < management.index(f'id="{form}"')
+        list_index = management.index(f'id="{list_id}"')
+        add_index = management.index(add_button, list_index)
+        assert list_index < add_index < management.index(f'id="{form}"')
         form_tag = re.search(rf'<form id="{form}"[^>]*>', html).group(0)
         assert "settings-form-panel" in form_tag
         assert "hidden" in form_tag
