@@ -51,7 +51,7 @@ After setup, the app shows:
 - A collapsed visit-summary section.
 - Management controls for backup, CSV export, settings, periods, and deleting all data.
 
-Today's records and expanded past-record details use the same record-row display. Each row separates the time, record type, record body, and edit/delete actions. Pain, medication, and standalone note rows are visually distinguished with `😖`, `💊`, and `🗒️` icons, and each row also includes an accessible type name (`痛みの記録`, `服薬の記録`, or `メモ`) separate from the icon. Pain rows show the body as `スコア・状態`, followed by any memo text. Medication rows show the body as `薬名 量単位`, followed by any memo text. Standalone note rows show the note text as the body. Memo text is not truncated and wraps within the body column. Edit and delete actions are shown on the right side of each record row.
+Today's records and expanded past-record details use the same record-row display. Each row separates the time, record type, record body, and edit/delete actions. Pain, medication, and standalone note rows are visually distinguished with reusable single-color line SVG icons, and each row also includes an accessible type name (`痛みの記録`, `服薬の記録`, or `メモ`) separate from the icon. Pain rows show the body as `スコア・状態`, followed by any memo text. Medication rows show the body as `薬名 量単位`, followed by any memo text. Standalone note rows show the note text as the body. Memo text is not truncated and wraps within the body column. Edit and delete actions are shown on the right side of each record row.
 
 ## Pain recording
 
@@ -66,7 +66,7 @@ Today's records and expanded past-record details use the same record-row display
 
 - The record input card keeps the “記録” heading as an accessible heading, but it is visually hidden.
 - Active medication options are rendered as medication buttons, sorted by display order, label, and ID.
-- Each medication button displays `💊 薬名` and has the accessible name `薬名を記録`.
+- Each medication button displays a single-color line SVG icon followed by `薬名` and has the accessible name `薬名を記録`. The pain and standalone memo action buttons also keep their text labels and add matching line SVG icons. These SVG icons use `currentColor` and are hidden from assistive technologies with their meaning preserved by button text or separate accessible type text.
 - Pressing a medication button creates a medication event with the option ID, a snapshot of the current label, the option default amount, and unit.
 - The optional memo field is trimmed and saved as the event note.
 - After saving, the shared memo field is cleared.

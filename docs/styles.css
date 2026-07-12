@@ -294,11 +294,21 @@ input[type="time"].form-control-full {
 }
 
 .button-base {
+  align-items: center;
   border-radius: 12px;
+  display: inline-flex;
   font: inherit;
   font-weight: 700;
+  gap: 0.45rem;
+  justify-content: center;
   min-height: 48px;
   padding: 12px 14px;
+}
+
+.button-type-icon {
+  flex: 0 0 auto;
+  height: 20px;
+  width: 20px;
 }
 
 .button-full {
@@ -515,8 +525,16 @@ hr {
 }
 
 .event-type {
+  align-items: center;
+  display: inline-flex;
   line-height: 1.5;
+  min-height: 1.5em;
   white-space: nowrap;
+}
+
+.event-type-icon {
+  height: 18px;
+  width: 18px;
 }
 
 .event-body {
