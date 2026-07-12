@@ -527,16 +527,54 @@ function sortedEventsDescending(events) {
 function eventDisplayInfo(event) {
   if (event.type === 'pain') {
     const summaryParts = [event.painScore, painEventLabel(event)].filter((part) => part !== undefined && part !== null && part !== '');
-    return { icon: '😖', typeLabel: '痛みの記録', summary: summaryParts.join('・'), note: event.note || '' };
+    return { typeLabel: '痛みの記録', summary: summaryParts.join('・'), note: event.note || '' };
   }
   if (event.type === 'medication') {
     const medication = medicationEventLabel(event) || '不明な薬';
     const amount = event.amount !== undefined && event.amount !== null ? String(event.amount) : '';
     const unit = event.unit || '';
     const dose = `${amount}${unit}`;
-    return { icon: '💊', typeLabel: '服薬の記録', summary: [medication, dose].filter(Boolean).join(' '), note: event.note || '' };
+    return { typeLabel: '服薬の記録', summary: [medication, dose].filter(Boolean).join(' '), note: event.note || '' };
   }
-  return { icon: '🗒️', typeLabel: 'メモ', summary: event.note || '', note: '' };
+  return { typeLabel: 'メモ', summary: event.note || '', note: '' };
+}
+
+const RECORD_TYPE_ICONS = {
+  medication: [
+    { tag: 'rect', attrs: { x: '5.2', y: '8.2', width: '13.6', height: '7.6', rx: '3.8', transform: 'rotate(-38 12 12)' } },
+    { tag: 'path', attrs: { d: 'M10.1 8.9l3.8 4.8' } }
+  ],
+  pain: [
+    { tag: 'circle', attrs: { cx: '12', cy: '12', r: '7.4' } },
+    { tag: 'path', attrs: { d: 'M8.4 9.9l2 1.2M15.6 9.9l-2 1.2M9.3 15.2c1.5-1.2 3.9-1.2 5.4 0' } }
+  ],
+  note: [
+    { tag: 'path', attrs: { d: 'M7.5 4.8h6.9l3.1 3.2v9.2a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2V6.8a2 2 0 0 1 2-2z' } },
+    { tag: 'path', attrs: { d: 'M14.2 4.9v3.3h3.2M8.8 12h6.4M8.8 15.2h4.8' } }
+  ]
+};
+
+function createSvgElement(tag) {
+  if (document.createElementNS) return document.createElementNS('http://www.w3.org/2000/svg', tag);
+  return document.createElement(tag);
+}
+
+function createTypeIcon(type, className = 'event-type-icon') {
+  const svg = createSvgElement('svg');
+  svg.className = className;
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.8');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  for (const item of RECORD_TYPE_ICONS[type] || RECORD_TYPE_ICONS.note) {
+    const child = createSvgElement(item.tag);
+    Object.entries(item.attrs).forEach(([name, value]) => child.setAttribute(name, value));
+    svg.appendChild(child);
+  }
+  return svg;
 }
 
 function appendEventBodyText(body, info) {
@@ -551,6 +589,21 @@ function appendEventBodyText(body, info) {
     if (info.summary) body.appendChild(document.createTextNode('　'));
     body.appendChild(note);
   }
+}
+
+
+function setActionButtonIcon(buttonId, type) {
+  const button = $(buttonId);
+  const labelText = button.textContent;
+  button.textContent = '';
+  const label = document.createElement('span');
+  label.textContent = labelText;
+  button.append(createTypeIcon(type, 'button-type-icon'), label);
+}
+
+function decorateRecordActionButtons() {
+  setActionButtonIcon('save-pain', 'pain');
+  setActionButtonIcon('save-note', 'note');
 }
 
 function renderEventList(container, events, sortEvents = sortedEvents, options = {}) {
@@ -569,10 +622,7 @@ function renderEventList(container, events, sortEvents = sortedEvents, options =
     time.textContent = showDate ? `${event.localDate} ${event.localTime}` : event.localTime;
     const type = document.createElement('div');
     type.className = 'event-type';
-    const icon = document.createElement('span');
-    icon.className = 'event-type-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = info.icon;
+    const icon = createTypeIcon(event.type);
     const typeLabel = document.createElement('span');
     typeLabel.className = 'visually-hidden';
     typeLabel.textContent = info.typeLabel;
@@ -2131,7 +2181,9 @@ function createMedicationRecordButton(option) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'button-base button-full primary-button';
-  button.textContent = `💊 ${option.label}`;
+  const label = document.createElement('span');
+  label.textContent = option.label;
+  button.append(createTypeIcon('medication', 'button-type-icon'), label);
   button.setAttribute('aria-label', `${option.label}を記録`);
   button.addEventListener('click', () => saveMedication(option.id));
   return button;
@@ -2613,6 +2665,7 @@ function saveMedication(medicationOptionId) {
 }
 
 function wireEvents() {
+  decorateRecordActionButtons();
   $('complete-initial-setup').addEventListener('click', completeInitialSetup);
   $('restore-initial-backup').addEventListener('click', requestInitialBackupRestore);
   $('setup-import-file').addEventListener('change', handleInitialBackupFileSelected);

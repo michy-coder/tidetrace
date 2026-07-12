@@ -117,7 +117,7 @@ def test_medication_snapshot_display_csv_and_edit_options() -> None:
           note: ''
         };
         assert.equal(medicationEventLabel(snapshot), 'Recorded');
-        assert.deepEqual(eventDisplayInfo(snapshot), { icon: '💊', typeLabel: '服薬の記録', summary: 'Recorded 1unit', note: '' });
+        assert.deepEqual(eventDisplayInfo(snapshot), { typeLabel: '服薬の記録', summary: 'Recorded 1unit', note: '' });
         assert.equal(csvValueForHeader(snapshot, 'medication_option_label'), 'Recorded');
         assert.equal(medicationEventLabel({ medicationOptionId: 'inactive' }), 'Hidden');
         assert.equal(medicationEditOptions({ medicationOptionId: 'inactive' }).at(-1).displayLabel, 'Hidden（非表示）');
@@ -186,8 +186,9 @@ def test_render_event_list_uses_compact_accessible_rows_and_keeps_actions() -> N
         const pain = container.children[0];
         assert.deepEqual(pain.children.map((child) => child.className), ['event-time', 'event-type', 'event-body', 'event-actions']);
         assert.equal(pain.queryByClass('event-time').textContent, '15:32');
-        assert.equal(pain.queryByClass('event-type-icon').textContent, '😖');
+        assert.equal(pain.queryByClass('event-type-icon').tag, 'svg');
         assert.equal(pain.queryByClass('event-type-icon').getAttribute('aria-hidden'), 'true');
+        assert.equal(pain.queryByClass('event-type-icon').getAttribute('stroke'), 'currentColor');
         assert.equal(pain.queryByClass('visually-hidden').textContent, '痛みの記録');
         assert.equal(pain.queryByClass('event-summary').textContent, '4・立位');
         assert.equal(pain.queryByClass('event-note').textContent, '腰が重い');
@@ -197,7 +198,8 @@ def test_render_event_list_uses_compact_accessible_rows_and_keeps_actions() -> N
 
         const med = container.children[1];
         assert.equal(med.queryByClass('event-time').textContent, '15:10');
-        assert.equal(med.queryByClass('event-type-icon').textContent, '💊');
+        assert.equal(med.queryByClass('event-type-icon').tag, 'svg');
+        assert.equal(med.queryByClass('event-type-icon').getAttribute('aria-hidden'), 'true');
         assert.equal(med.queryByClass('visually-hidden').textContent, '服薬の記録');
         assert.equal(med.queryByClass('event-summary').textContent, 'Medication A 1錠');
         assert.equal(med.queryByClass('event-note').textContent, '外出前');
@@ -206,7 +208,8 @@ def test_render_event_list_uses_compact_accessible_rows_and_keeps_actions() -> N
 
         const note = container.children[2];
         assert.equal(note.queryByClass('event-time').textContent, '14:45');
-        assert.equal(note.queryByClass('event-type-icon').textContent, '🗒️');
+        assert.equal(note.queryByClass('event-type-icon').tag, 'svg');
+        assert.equal(note.queryByClass('event-type-icon').getAttribute('aria-hidden'), 'true');
         assert.equal(note.queryByClass('visually-hidden').textContent, 'メモ');
         assert.equal(note.queryByClass('event-summary').textContent, '午後から雨。少しだるい');
         assert.equal(note.allText().includes('note'), false);
@@ -233,7 +236,7 @@ def test_event_display_info_handles_missing_legacy_values() -> None:
           events: [], periods: []
         };
         assert.deepEqual(eventDisplayInfo({ type: 'pain', painScore: 4, stateLabel: '保存済み状態', note: '' }), {
-          icon: '😖', typeLabel: '痛みの記録', summary: '4・保存済み状態', note: ''
+          typeLabel: '痛みの記録', summary: '4・保存済み状態', note: ''
         });
         assert.deepEqual(eventDisplayInfo({ type: 'pain', painScore: 4, stateOptionId: 'missing', note: '' }).summary, '4・不明な状態');
         assert.deepEqual(eventDisplayInfo({ type: 'medication', medicationOptionId: 'missing', note: '' }).summary, '不明な薬');
@@ -869,10 +872,12 @@ def test_medication_record_buttons_are_labeled_safely_and_click_save_medication(
           getElementById(id) { return id === 'medication-buttons' ? medicationButtons : { innerHTML: '', appendChild() {} }; },
           createElement(tag) {
             return {
-              tag, attributes: {}, listeners: {}, textContent: '', innerHTML: '',
+              tag, attributes: {}, listeners: {}, textContent: '', innerHTML: '', children: [], className: '',
               setAttribute(name, value) { this.attributes[name] = value; },
               getAttribute(name) { return this.attributes[name]; },
               addEventListener(name, handler) { this.listeners[name] = handler; },
+              append(...items) { this.children.push(...items); },
+              appendChild(item) { this.children.push(item); },
               click() { this.listeners.click(); }
             };
           }
@@ -912,13 +917,58 @@ def test_medication_record_buttons_are_labeled_safely_and_click_save_medication(
         render();
 
         assert.equal(buttons.length, 2);
-        assert.equal(buttons[0].textContent, '💊 Medication A');
+        assert.equal(buttons[0].children[0].tag, 'svg');
+        assert.equal(buttons[0].children[0].getAttribute('aria-hidden'), 'true');
+        assert.equal(buttons[0].children[0].getAttribute('stroke'), 'currentColor');
+        assert.equal(buttons[0].children[1].textContent, 'Medication A');
         assert.equal(buttons[0].getAttribute('aria-label'), 'Medication Aを記録');
-        assert.equal(buttons[1].textContent, '💊 <img src=x onerror=alert(1)>');
+        assert.equal(buttons[1].children[1].textContent, '<img src=x onerror=alert(1)>');
         assert.equal(buttons[1].innerHTML, '');
         assert.equal(buttons.some((button) => button.textContent.includes('Hidden Medication')), false);
         buttons[0].click();
         assert.deepEqual(saved, ['shown']);
+        """
+    )
+
+
+def test_management_button_labels_are_unified() -> None:
+    html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
+    assert 'バックアップを書き出す' in html
+    assert 'バックアップから読み込む' in html
+    assert 'CSVを書き出す' in html
+    assert 'バックアップを書き出し</button>' not in html
+    assert 'バックアップから読み込み</button>' not in html
+
+
+def test_record_action_icon_decorator_keeps_text_labels_accessible() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        function makeElement(tag, text = '') {
+          return {
+            tag, attributes: {}, children: [], textContent: text, className: '',
+            setAttribute(name, value) { this.attributes[name] = value; },
+            getAttribute(name) { return this.attributes[name]; },
+            append(...items) { this.children.push(...items); },
+            appendChild(item) { this.children.push(item); }
+          };
+        }
+        const elements = {
+          'save-pain': makeElement('button', '痛みを記録'),
+          'save-note': makeElement('button', 'メモだけ保存')
+        };
+        global.document = {
+          getElementById(id) { return elements[id]; },
+          createElement: makeElement
+        };
+        decorateRecordActionButtons();
+        for (const id of ['save-pain', 'save-note']) {
+          assert.equal(elements[id].children[0].tag, 'svg');
+          assert.equal(elements[id].children[0].getAttribute('aria-hidden'), 'true');
+          assert.equal(elements[id].children[0].getAttribute('stroke'), 'currentColor');
+        }
+        assert.equal(elements['save-pain'].children[1].textContent, '痛みを記録');
+        assert.equal(elements['save-note'].children[1].textContent, 'メモだけ保存');
         """
     )
 
@@ -1483,13 +1533,13 @@ def test_last_medication_css_is_compact_without_note_button_changes() -> None:
 
 def test_static_asset_versions_are_current_for_input_header_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=22"' in html
-    assert 'styles.css?v=20' not in html
+    assert 'href="styles.css?v=23"' in html
+    assert 'styles.css?v=22' not in html
 
 
 def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=20"' in html
+    assert 'src="app.js?v=21"' in html
     assert 'app.js?v=18"' not in html
 
 
