@@ -1483,13 +1483,13 @@ def test_last_medication_css_is_compact_without_note_button_changes() -> None:
 
 def test_static_asset_versions_are_current_for_input_header_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=21"' in html
+    assert 'href="styles.css?v=22"' in html
     assert 'styles.css?v=20' not in html
 
 
 def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=19"' in html
+    assert 'src="app.js?v=20"' in html
     assert 'app.js?v=18"' not in html
 
 
@@ -2028,3 +2028,105 @@ def test_health_history_configurable_columns_validation_and_calculations() -> No
         assert.equal(buildHealthHistoryTsv(rows).split('\\n')[0], '日付\t最小\t痛回\t安静平\t非薬\tメモ\t朝収縮');
         """
     )
+
+
+def test_settings_forms_start_hidden_after_registered_lists() -> None:
+    html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
+    management = html[html.index('<section class="card management"'):html.index('<button id="delete-all"')]
+    for heading, add_button, form in [
+        ("登録済みの薬", "新しい薬を追加", "medication-option-form"),
+        ("登録済みの痛み状態", "新しい状態を追加", "pain-state-option-form"),
+        ("登録済みの体調比較用期間", "新しい期間を追加", "comparison-period-form"),
+    ]:
+        heading_index = management.index(heading)
+        add_index = management.index(add_button, heading_index)
+        assert heading_index < add_index < management.index(f'id="{form}"')
+        form_tag = re.search(rf'<form id="{form}"[^>]*>', html).group(0)
+        assert "settings-form-panel" in form_tag
+        assert "hidden" in form_tag
+    assert html.count('class="settings-form-actions"') == 3
+    assert 'class="settings-add-button"' in html or 'settings-add-button' in html
+
+
+def test_settings_form_open_edit_cancel_and_validation_states() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        function element(id) {
+          return {
+            id, value: '', textContent: '', hidden: false, checked: false, className: '', innerHTML: '', children: [],
+            classList: { add() {}, remove() {}, toggle() {} },
+            reset() { this.value = ''; },
+            querySelector() { return submitButtons[id] || null; },
+            appendChild(child) { this.children.push(child); },
+            append(...items) { this.children.push(...items); },
+            addEventListener() {},
+            setAttribute(name, value) { this[name] = value; },
+            focus() { focused = id; },
+            scrollIntoView(options) { scrolled = { id, options }; }
+          };
+        }
+        let focused = '';
+        let scrolled = null;
+        const ids = ['medication-option-form','open-medication-option-form','medication-label','medication-option-id','medication-default-amount','medication-unit','medication-sort-order','medication-active','save-medication-option','cancel-medication-edit','medication-settings-message','medication-option-form-title','pain-state-option-form','open-pain-state-option-form','pain-state-label','pain-state-option-id','pain-state-sort-order','pain-state-active','save-pain-state-option','cancel-pain-state-edit','pain-state-settings-message','pain-state-option-form-title','comparison-period-form','open-comparison-period-form','comparison-period-label','comparison-period-start','comparison-period-end','comparison-period-note','cancel-comparison-period-edit','comparison-period-message','comparison-period-form-title'];
+        const elements = Object.fromEntries(ids.map((id) => [id, element(id)]));
+        const submitButtons = {
+          'comparison-period-form': { textContent: '', hidden: false },
+          'medication-option-form': elements['save-medication-option'],
+          'pain-state-option-form': elements['save-pain-state-option']
+        };
+        global.document = { getElementById: (id) => elements[id] || element(id), createElement: (tag) => element(tag) };
+        global.localStorage = { setItem() {}, getItem() { return null; } };
+        global.crypto = { randomUUID: () => 'uuid' };
+        global.showToast = () => {};
+        appData = { schemaVersion: 1, appName: 'Tide Trace', settings: { medicationOptions: [{ id: 'med1', label: '薬A', defaultAmount: 2, unit: '錠', active: true, sortOrder: 4 }], painStateOptions: [{ id: 'pain1', label: '座位', active: false, sortOrder: 3 }], lastJsonExportedAtUtc: null, lastCsvExportedAtUtc: null }, periods: [{ id: 'period1', label: '期間A', startDate: '2026-07-01', endDate: '2026-07-03', note: 'memo' }], events: [] };
+
+        openMedicationOptionForm();
+        assert.equal(elements['medication-option-form'].hidden, false);
+        assert.equal(elements['open-medication-option-form'].hidden, true);
+        assert.equal(elements['medication-default-amount'].value, '1');
+        assert.equal(String(elements['medication-sort-order'].value), '5');
+        assert.equal(elements['save-medication-option'].textContent, '薬を追加');
+        assert.equal(focused, 'medication-label');
+        editMedicationOption('med1');
+        assert.equal(editingMedicationOptionId, 'med1');
+        assert.equal(elements['medication-label'].value, '薬A');
+        assert.equal(elements['medication-option-form-title'].textContent, '薬を編集');
+        assert.equal(elements['save-medication-option'].textContent, '薬を更新');
+        elements['medication-label'].value = '';
+        elements['medication-default-amount'].value = String(elements['medication-default-amount'].value);
+        elements['medication-sort-order'].value = String(elements['medication-sort-order'].value);
+        saveMedicationOptionFromForm();
+        assert.equal(elements['medication-option-form'].hidden, false);
+        assert.equal(elements['open-medication-option-form'].hidden, true);
+        closeMedicationOptionForm();
+        assert.equal(editingMedicationOptionId, null);
+        assert.equal(elements['medication-option-form'].hidden, true);
+        assert.equal(elements['open-medication-option-form'].hidden, false);
+
+        openPainStateOptionForm();
+        assert.equal(String(elements['pain-state-sort-order'].value), '4');
+        editPainStateOption('pain1');
+        assert.equal(editingPainStateOptionId, 'pain1');
+        assert.equal(elements['pain-state-option-form-title'].textContent, '痛み状態を編集');
+        assert.equal(elements['save-pain-state-option'].textContent, '痛み状態を更新');
+        closePainStateOptionForm();
+        assert.equal(elements['pain-state-option-form'].hidden, true);
+
+        openPeriodForm();
+        assert.equal(elements['comparison-period-start'].value, '2026-07-04');
+        editPeriod('period1');
+        assert.equal(editingPeriodId, 'period1');
+        assert.equal(elements['comparison-period-form-title'].textContent, '体調比較用期間を編集');
+        assert.equal(submitButtons['comparison-period-form'].textContent, '体調比較用期間を更新');
+        closePeriodForm();
+        assert.equal(elements['comparison-period-form'].hidden, true);
+        """
+    )
+
+
+def test_settings_forms_share_css_classes() -> None:
+    css = (Path(__file__).parents[1] / "docs" / "styles.css").read_text()
+    assert ".settings-form-panel" in css
+    assert ".settings-add-button" in css
+    assert ".settings-form-actions" in css

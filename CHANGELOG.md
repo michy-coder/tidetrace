@@ -13,6 +13,7 @@ All notable changes to TideTrace will be documented in this file.
 - Added time-of-day pain summaries to visit summaries, grouping pain records by late night/early morning, morning, afternoon, and night without assessing causes or medication effects.
 
 ### Changed
+- Updated medication, pain-state, and comparison-period settings to show existing entries first and open add/edit forms only when needed.
 - Updated today’s and past record details to use compact, accessible rows with type icons and wrapping memo text.
 - Updated the HeartWatch daily summary to show only imported HeartWatch dates, use shorter pain headers, add active-medication count columns with short medication labels, and include sleep bpm and waking HRV reference values.
 - Updated visit-summary state-pain rows to prioritize higher average pain before maximum pain.
