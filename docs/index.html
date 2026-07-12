@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <link rel="manifest" href="./site.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=21">
+  <link rel="stylesheet" href="styles.css?v=22">
 </head>
 <body>
   <header class="app-header">
@@ -196,7 +196,11 @@
           <summary id="medication-settings-title"><span id="medication-settings-summary">薬設定</span></summary>
           <p>薬ボタンの表示名、よく使う量、単位、表示順を設定できます。</p>
           <p class="supplemental-text">別の薬に変更する場合は、名前を上書きせず、元の薬を非表示にしてから、新しい薬を追加してください。非表示にした薬は新規記録ボタンに表示されませんが、過去の記録は残ります。再開するときは、表示に戻せます。</p>
-          <form id="medication-option-form">
+          <h3 class="settings-list-title">登録済みの薬</h3>
+          <div id="medication-settings-list" class="settings-list-block"></div>
+          <button id="open-medication-option-form" class="button-base button-full secondary-button settings-add-button" type="button">新しい薬を追加</button>
+          <form id="medication-option-form" class="settings-form-panel" aria-labelledby="medication-option-form-title" hidden>
+            <h4 id="medication-option-form-title" class="settings-form-title">薬を追加</h4>
             <input id="medication-option-id" type="hidden">
             <label for="medication-label" class="form-field-label">薬名</label>
             <input id="medication-label" class="form-control-base form-control" type="text" autocomplete="off" required>
@@ -211,14 +215,12 @@
               <input id="medication-active" type="checkbox" class="checkbox-control" checked>
               <span>表示中</span>
             </label>
-            <div class="medication-form-actions">
+            <div class="settings-form-actions">
               <button id="save-medication-option" class="button-base button-full primary-button" type="submit">薬を追加</button>
               <button id="cancel-medication-edit" class="button-base button-full secondary-button" type="button" hidden>キャンセル</button>
             </div>
           </form>
           <p id="medication-settings-message" class="message" role="status"></p>
-          <h3>登録済みの薬</h3>
-          <div id="medication-settings-list"></div>
         </details>
         <hr>
         <details class="pain-state-settings settings-disclosure">
@@ -227,7 +229,11 @@
           <p class="supplemental-text">別の状態に変更する場合は、名前を上書きせず、元の状態を非表示にしてから、新しい状態を追加してください。
 
 名前を上書きすると、過去の記録や診察用サマリーの状態別集計が分かりにくくなることがあります。非表示にしても過去の記録は残り、再開するときは表示に戻せます。</p>
-          <form id="pain-state-option-form">
+          <h3 class="settings-list-title">登録済みの痛み状態</h3>
+          <div id="pain-state-settings-list" class="settings-list-block"></div>
+          <button id="open-pain-state-option-form" class="button-base button-full secondary-button settings-add-button" type="button">新しい状態を追加</button>
+          <form id="pain-state-option-form" class="settings-form-panel" aria-labelledby="pain-state-option-form-title" hidden>
+            <h4 id="pain-state-option-form-title" class="settings-form-title">痛み状態を追加</h4>
             <input id="pain-state-option-id" type="hidden">
             <label for="pain-state-label" class="form-field-label">状態名</label>
             <input id="pain-state-label" class="form-control-base form-control" type="text" autocomplete="off" required>
@@ -237,19 +243,21 @@
               <input id="pain-state-active" type="checkbox" class="checkbox-control" checked>
               <span>表示中</span>
             </label>
-            <div class="pain-state-form-actions">
+            <div class="settings-form-actions">
               <button id="save-pain-state-option" class="button-base button-full primary-button" type="submit">状態を追加</button>
               <button id="cancel-pain-state-edit" class="button-base button-full secondary-button" type="button" hidden>キャンセル</button>
             </div>
           </form>
           <p id="pain-state-settings-message" class="message" role="status"></p>
-          <h3>登録済みの痛み状態</h3>
-          <div id="pain-state-settings-list"></div>
         </details>
         <hr>
         <details class="comparison-period-settings settings-disclosure">
           <summary id="comparison-period-title"><span id="comparison-period-summary">体調比較用期間の設定</span></summary>
-          <form id="comparison-period-form">
+          <h3 class="settings-list-title">登録済みの体調比較用期間</h3>
+          <div id="comparison-period-list" class="settings-list-block"></div>
+          <button id="open-comparison-period-form" class="button-base button-full secondary-button settings-add-button" type="button">新しい期間を追加</button>
+          <form id="comparison-period-form" class="settings-form-panel" aria-labelledby="comparison-period-form-title" hidden>
+            <h4 id="comparison-period-form-title" class="settings-form-title">体調比較用期間を追加</h4>
             <label for="comparison-period-label" class="form-field-label">期間名</label>
             <input id="comparison-period-label" class="form-control-base form-control" type="text" autocomplete="off">
             <label for="comparison-period-start" class="form-field-label">開始日</label>
@@ -258,14 +266,12 @@
             <input id="comparison-period-end" class="form-control-base form-control" type="date">
             <label for="comparison-period-note" class="form-field-label">メモ</label>
             <textarea id="comparison-period-note" class="form-control-base form-control" rows="3"></textarea>
-            <div class="comparison-period-form-actions">
+            <div class="settings-form-actions">
               <button class="button-base button-full primary-button" type="submit">体調比較用期間を追加</button>
               <button id="cancel-comparison-period-edit" class="button-base button-full secondary-button" type="button" hidden>キャンセル</button>
             </div>
           </form>
           <p id="comparison-period-message" class="message" role="status"></p>
-          <h3>登録済みの体調比較用期間</h3>
-          <div id="comparison-period-list"></div>
         </details>
         <hr>
         <button id="delete-all" class="button-base button-full danger" type="button">全データ削除</button>
@@ -274,7 +280,7 @@
     </div>
   </main>
 
-  <script src="app.js?v=19" defer></script>
+  <script src="app.js?v=20" defer></script>
   <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fcd3243fc5f04e899f9d5c8b46a3bc8e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

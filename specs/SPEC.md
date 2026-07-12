@@ -84,7 +84,7 @@ Today's records and expanded past-record details use the same record-row display
 
 ## Medication settings
 
-Medication settings support adding, editing, and hiding/showing medication options.
+Medication settings support adding, editing, and hiding/showing medication options. The settings UI shows the explanation, supplemental guidance, and registered medication list before the add/edit form. The add form is hidden until the user presses `新しい薬を追加`; editing a registered item opens the same form in edit mode. After a successful save or cancel, the form closes and the registered list and add button remain available.
 
 Each option has:
 
@@ -103,7 +103,7 @@ The UI advises users to hide an old medication option and add a new one instead 
 
 ## Pain state settings
 
-Pain-state settings support adding, editing, and hiding/showing pain-state options.
+Pain-state settings support adding, editing, and hiding/showing pain-state options. The settings UI shows the explanation, supplemental guidance, and registered pain-state list before the add/edit form. The add form is hidden until the user presses `新しい状態を追加`; editing a registered item opens the same form in edit mode. After a successful save or cancel, the form closes and the registered list and add button remain available.
 
 Each option has:
 
@@ -122,7 +122,7 @@ The UI advises users to hide an old state and add a new one instead of overwriti
 
 The app stores “condition comparison periods” with a label, start date, end date, and note.
 
-- Periods can be added, edited, and deleted.
+- Periods can be added, edited, and deleted. The period settings UI uses the same list-first add/edit pattern as medication and pain-state settings: the registered period list appears before the add button, the form opens only for `新しい期間を追加` or editing, and the form closes after a successful save or cancel.
 - A period requires a label, start date, and end date.
 - Dates must be `YYYY-MM-DD` strings and start date must be on or before end date.
 - Period date ranges cannot overlap existing period ranges.

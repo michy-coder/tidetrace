@@ -307,9 +307,7 @@ input[type="time"].form-control-full {
 
 .record-input-section > .button-full,
 .management > .button-full,
-.medication-form-actions .button-full,
-.pain-state-form-actions .button-full,
-.comparison-period-form-actions .button-full,
+.settings-form-actions .button-full,
 .health-column-buttons .button-full,
 #run-visit-summary {
   margin: 10px 0 0;
@@ -698,10 +696,6 @@ hr {
   .card.last-medication-card { padding-top: 10px; padding-bottom: 10px; }
 }
 
-.comparison-period-settings h3 {
-  margin-top: 14px;
-}
-
 .comparison-period-item {
   align-items: flex-start;
   border-top: 1px solid var(--divider);
@@ -720,16 +714,6 @@ hr {
   overflow-wrap: anywhere;
 }
 
-.comparison-period-form-actions {
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: 1fr;
-}
-
-.comparison-period-form-actions button[hidden] {
-  display: none;
-}
-
 .visually-hidden-file-input {
   position: absolute;
   width: 1px;
@@ -740,16 +724,6 @@ hr {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
-}
-
-.medication-settings h3,
-.pain-state-settings h3 {
-  margin-top: 14px;
-}
-
-.medication-settings h3:first-child,
-.pain-state-settings h3:first-child {
-  margin-top: 0;
 }
 
 .field-help {
@@ -767,18 +741,6 @@ hr {
 .checkbox-row .checkbox-control {
   flex: 0 0 auto;
   margin: 0;
-}
-
-.medication-form-actions,
-.pain-state-form-actions {
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: 1fr;
-}
-
-.medication-form-actions button[hidden],
-.pain-state-form-actions button[hidden] {
-  display: none;
 }
 
 .medication-settings-item,
@@ -1207,4 +1169,38 @@ hr {
   .health-column-buttons {
     grid-template-columns: max-content max-content;
   }
+}
+
+.settings-list-title {
+  margin-top: 14px;
+}
+
+.settings-list-block {
+  margin-bottom: 10px;
+}
+
+.settings-add-button {
+  margin: 10px 0 0;
+}
+
+.settings-form-panel {
+  border-top: 1px solid var(--divider);
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.settings-form-panel[hidden],
+.settings-add-button[hidden] {
+  display: none;
+}
+
+.settings-form-title {
+  font-size: 1rem;
+  margin: 0 0 10px;
+}
+
+.settings-form-actions {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
 }

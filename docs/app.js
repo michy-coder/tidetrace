@@ -11,6 +11,9 @@ let editingEventId = null;
 let editingPeriodId = null;
 let editingMedicationOptionId = null;
 let editingPainStateOptionId = null;
+let medicationOptionFormOpen = false;
+let painStateOptionFormOpen = false;
+let periodFormOpen = false;
 let expandedHistoryDate = null;
 let historyRange = null;
 let currentVisitSummaryData = null;
@@ -1663,6 +1666,66 @@ async function copyHealthHistoryTsv() { if (!currentHealthHistoryRows.length || 
 function showHealthHistoryPrint() { if (!currentHealthHistoryRows.length) return; $('health-history-print-help').hidden = false; $('health-history-details').open = true; document.body.classList.add('health-history-print-mode'); window.print(); }
 function handleHeartWatchCsvSelected(event) { const input = event.target; const file = input.files && input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { const parsed = parseHeartWatchCsv(String(reader.result)); const message = $('health-history-message'); message.textContent = ''; message.classList.remove('error'); currentHealthHistoryRows = []; currentHeartWatchData = null; $('health-history-actions').hidden = true; if (parsed.error) { message.textContent = 'HeartWatch CSVとして読み込めませんでした。'; message.classList.add('error'); $('health-history-result').innerHTML = ''; } else { currentHeartWatchData = parsed.data; currentHealthHistoryRows = buildHealthHistoryRows(parsed.data); renderHealthHistoryRows(currentHealthHistoryRows, hasMissingHeartWatchDates(currentHealthHistoryRows, parsed.data)); showToast('HeartWatch CSVを読み込みました'); } input.value = ''; }; reader.onerror = () => { $('health-history-message').textContent = 'HeartWatch CSVとして読み込めませんでした。'; $('health-history-message').classList.add('error'); input.value = ''; }; reader.readAsText(file); }
 
+function setSettingsFormPanelState(formId, addButtonId, isOpen, focusId = null) {
+  const form = $(formId);
+  const addButton = $(addButtonId);
+  if (!form || !addButton) return;
+  form.hidden = !isOpen;
+  addButton.hidden = isOpen;
+  if (isOpen) {
+    form.scrollIntoView({ block: 'nearest' });
+    if (focusId) $(focusId).focus();
+  }
+}
+
+function syncSettingsFormPanels() {
+  setSettingsFormPanelState('medication-option-form', 'open-medication-option-form', medicationOptionFormOpen);
+  setSettingsFormPanelState('pain-state-option-form', 'open-pain-state-option-form', painStateOptionFormOpen);
+  setSettingsFormPanelState('comparison-period-form', 'open-comparison-period-form', periodFormOpen);
+}
+
+function openMedicationOptionForm() {
+  resetMedicationOptionForm();
+  medicationOptionFormOpen = true;
+  setMedicationSettingsMessage('');
+  syncSettingsFormPanels();
+  $('medication-label').focus();
+}
+
+function closeMedicationOptionForm() {
+  medicationOptionFormOpen = false;
+  resetMedicationOptionForm();
+  syncSettingsFormPanels();
+}
+
+function openPainStateOptionForm() {
+  resetPainStateOptionForm();
+  painStateOptionFormOpen = true;
+  setPainStateSettingsMessage('');
+  syncSettingsFormPanels();
+  $('pain-state-label').focus();
+}
+
+function closePainStateOptionForm() {
+  painStateOptionFormOpen = false;
+  resetPainStateOptionForm();
+  syncSettingsFormPanels();
+}
+
+function openPeriodForm() {
+  resetPeriodForm();
+  periodFormOpen = true;
+  setPeriodMessage('');
+  syncSettingsFormPanels();
+  $('comparison-period-label').focus();
+}
+
+function closePeriodForm() {
+  periodFormOpen = false;
+  resetPeriodForm();
+  syncSettingsFormPanels();
+}
+
 function nextPeriodStartSuggestion() {
   if (!appData.periods.length) return '';
   const latest = [...appData.periods].sort((a, b) => b.endDate.localeCompare(a.endDate))[0];
@@ -1674,7 +1737,8 @@ function resetPeriodForm() {
   $('comparison-period-form').reset();
   $('comparison-period-start').value = nextPeriodStartSuggestion();
   $('comparison-period-form').querySelector('button[type="submit"]').textContent = '体調比較用期間を追加';
-  $('cancel-comparison-period-edit').hidden = true;
+  $('comparison-period-form-title').textContent = '体調比較用期間を追加';
+  $('cancel-comparison-period-edit').hidden = false;
 }
 
 function periodFormValue() {
@@ -1716,6 +1780,7 @@ function savePeriodFromForm() {
     if (!period) { resetPeriodForm(); return; }
     Object.assign(period, value);
     saveData();
+    periodFormOpen = false;
     render();
     resetPeriodForm();
     showToast('体調比較用期間を更新しました');
@@ -1724,6 +1789,7 @@ function savePeriodFromForm() {
   }
   appData.periods.push(createPeriod(value));
   saveData();
+  periodFormOpen = false;
   render();
   resetPeriodForm();
   showToast('体調比較用期間を追加しました');
@@ -1739,6 +1805,9 @@ function editPeriod(id) {
   $('comparison-period-end').value = period.endDate;
   $('comparison-period-note').value = period.note || '';
   $('comparison-period-form').querySelector('button[type="submit"]').textContent = '体調比較用期間を更新';
+  $('comparison-period-form-title').textContent = '体調比較用期間を編集';
+  periodFormOpen = true;
+  syncSettingsFormPanels();
   $('cancel-comparison-period-edit').hidden = false;
   setPeriodMessage('');
   $('comparison-period-label').focus();
@@ -1747,7 +1816,10 @@ function editPeriod(id) {
 function deletePeriod(id) {
   if (!confirm('この体調比較用期間を削除します。\n記録自体は削除されません。')) return;
   appData.periods = appData.periods.filter((period) => period.id !== id);
-  if (editingPeriodId === id) resetPeriodForm();
+  if (editingPeriodId === id) {
+    periodFormOpen = false;
+    resetPeriodForm();
+  }
   saveData();
   render();
   resetPeriodForm();
@@ -1804,7 +1876,8 @@ function resetPainStateOptionForm() {
   $('pain-state-sort-order').value = nextPainSortOrder();
   $('pain-state-active').checked = true;
   $('save-pain-state-option').textContent = '状態を追加';
-  $('cancel-pain-state-edit').hidden = true;
+  $('pain-state-option-form-title').textContent = '痛み状態を追加';
+  $('cancel-pain-state-edit').hidden = false;
 }
 
 function setPainStateSettingsMessage(message, isError = false) {
@@ -1836,6 +1909,7 @@ function savePainStateOptionFromForm() {
     if (!option) { resetPainStateOptionForm(); return; }
     Object.assign(option, normalizedValue);
     saveData();
+    painStateOptionFormOpen = false;
     render();
     resetPainStateOptionForm();
     showToast('痛み状態設定を更新しました。');
@@ -1844,6 +1918,7 @@ function savePainStateOptionFromForm() {
   }
   appData.settings.painStateOptions.push({ id: createPainStateOptionId(), ...normalizedValue });
   saveData();
+  painStateOptionFormOpen = false;
   render();
   resetPainStateOptionForm();
   showToast('状態を追加しました。');
@@ -1858,7 +1933,10 @@ function editPainStateOption(id) {
   $('pain-state-label').value = option.label;
   $('pain-state-sort-order').value = option.sortOrder;
   $('pain-state-active').checked = option.active;
-  $('save-pain-state-option').textContent = '痛み状態設定を更新';
+  $('save-pain-state-option').textContent = '痛み状態を更新';
+  $('pain-state-option-form-title').textContent = '痛み状態を編集';
+  painStateOptionFormOpen = true;
+  syncSettingsFormPanels();
   $('cancel-pain-state-edit').hidden = false;
   setPainStateSettingsMessage('');
   $('pain-state-label').focus();
@@ -1926,7 +2004,8 @@ function resetMedicationOptionForm() {
   $('medication-sort-order').value = nextMedicationSortOrder();
   $('medication-active').checked = true;
   $('save-medication-option').textContent = '薬を追加';
-  $('cancel-medication-edit').hidden = true;
+  $('medication-option-form-title').textContent = '薬を追加';
+  $('cancel-medication-edit').hidden = false;
 }
 
 function setMedicationSettingsMessage(message, isError = false) {
@@ -1970,6 +2049,7 @@ function saveMedicationOptionFromForm() {
     if (!option) { resetMedicationOptionForm(); return; }
     Object.assign(option, normalizedValue);
     saveData();
+    medicationOptionFormOpen = false;
     render();
     resetMedicationOptionForm();
     showToast('薬設定を更新しました。');
@@ -1978,6 +2058,7 @@ function saveMedicationOptionFromForm() {
   }
   appData.settings.medicationOptions.push({ id: createMedicationOptionId(), ...normalizedValue });
   saveData();
+  medicationOptionFormOpen = false;
   render();
   resetMedicationOptionForm();
   showToast('薬を追加しました。');
@@ -1994,7 +2075,10 @@ function editMedicationOption(id) {
   $('medication-unit').value = option.unit || '';
   $('medication-sort-order').value = option.sortOrder;
   $('medication-active').checked = option.active;
-  $('save-medication-option').textContent = '薬設定を更新';
+  $('save-medication-option').textContent = '薬を更新';
+  $('medication-option-form-title').textContent = '薬を編集';
+  medicationOptionFormOpen = true;
+  syncSettingsFormPanels();
   $('cancel-medication-edit').hidden = false;
   setMedicationSettingsMessage('');
   $('medication-label').focus();
@@ -2123,6 +2207,7 @@ function render() {
   renderComparisonPeriodSummary();
   renderPeriodList();
   if (!editingPeriodId && !$('comparison-period-start').value) $('comparison-period-start').value = nextPeriodStartSuggestion();
+  syncSettingsFormPanels();
 
   renderEventList($('today-list'), appData.events.filter((event) => event.localDate === today), sortedEventsDescending, { showDate: false });
   renderHistory(today);
@@ -2548,6 +2633,9 @@ function wireEvents() {
     clearRecordNote();
     $('app-message').textContent = '';
   });
+  $('open-medication-option-form').addEventListener('click', openMedicationOptionForm);
+  $('open-pain-state-option-form').addEventListener('click', openPainStateOptionForm);
+  $('open-comparison-period-form').addEventListener('click', openPeriodForm);
   $('medication-option-form').addEventListener('submit', (event) => {
     event.preventDefault();
     saveMedicationOptionFromForm();
@@ -2579,11 +2667,11 @@ function wireEvents() {
     renderHistory(nowParts().localDate);
   });
   $('cancel-medication-edit').addEventListener('click', () => {
-    resetMedicationOptionForm();
+    closeMedicationOptionForm();
     setMedicationSettingsMessage('');
   });
   $('cancel-pain-state-edit').addEventListener('click', () => {
-    resetPainStateOptionForm();
+    closePainStateOptionForm();
     setPainStateSettingsMessage('');
   });
   $('comparison-period-form').addEventListener('submit', (event) => {
@@ -2591,7 +2679,7 @@ function wireEvents() {
     savePeriodFromForm();
   });
   $('cancel-comparison-period-edit').addEventListener('click', () => {
-    resetPeriodForm();
+    closePeriodForm();
     setPeriodMessage('');
   });
   $('export-csv').addEventListener('click', exportCsv);
