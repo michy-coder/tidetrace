@@ -5,6 +5,7 @@ All notable changes to TideTrace will be documented in this file.
 ## Unreleased
 
 ### Added
+- Added SVG daily-summary markers and plain-text copying for the currently displayed past-record summaries.
 - Added configurable columns for the “日ごとのまとめ” table, text copy, TSV copy, and print view, including selectable TideTrace and HeartWatch metrics, custom short labels, and saved display order.
 - Added a past records and healthcare data view that temporarily loads HeartWatch daily CSV files, aligns them with TideTrace daily records, and supports text, TSV, and print-friendly output.
 - Added editing for record date and time on medication, pain, and note 

@@ -144,6 +144,12 @@ The current summary includes:
 
 Summary text can be copied or downloaded as a plain text file. Summary wording is intended to be descriptive and non-diagnostic, describing recorded values without assessing treatment effectiveness, causes, or severity.
 
+## Past records behavior
+
+The “過去の記録” view shows past TideTrace records by day. Daily summaries distinguish pain, medication, and memo rows with the same monochrome line SVG record-type icons used elsewhere in the app, while keeping hidden text labels for assistive technology.
+
+The currently displayed past-record daily summaries can be copied as plain text. The copied text includes the “過去の記録” heading, the visible date range, dates that have records, and available pain, medication, and memo summary lines. It is generated from summary data rather than expanded detail DOM, so opening or closing a day’s details does not change the copied text. The copied text uses written type labels such as `痛み`, `服薬`, and `メモ` instead of SVG icons.
+
 
 ## Past records and healthcare data behavior
 
