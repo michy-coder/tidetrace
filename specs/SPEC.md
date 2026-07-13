@@ -146,6 +146,10 @@ When a current pain-state or medication setting exists for a saved option ID, vi
 
 Summary text can be copied or downloaded as a plain text file. Summary wording is intended to be descriptive and non-diagnostic, describing recorded values without assessing treatment effectiveness, causes, or severity.
 
+Result actions are shown only after a summary is successfully generated. The actions support copying, plain-text saving, and browser-standard printing without changing the generated summary text or saved file behavior.
+
+The focused print view for a generated visit summary shows the `診察用サマリー` heading and generated aggregation result, including the current explanatory text attached to the medication, pain-by-state, pain-by-time, pain-by-dose, and pain-change sections. Printing uses the current generated result rather than recalculating the summary, and the screen returns to normal after the print UI closes.
+
 ## Past records behavior
 
 The “過去の記録” view shows past TideTrace records by day. Daily summaries distinguish pain, medication, and memo rows with the same monochrome line SVG record-type icons used elsewhere in the app, while keeping hidden text labels for assistive technology.
@@ -171,7 +175,7 @@ Each selected metric has a short label shown in the table header and TSV header.
 
 The default configuration for new users and existing data without `settings.healthReviewColumns` is: `日付`, daily pain maximum, daily pain average, one medication count column for each currently active medication option, steps, sleep duration, sleep bpm, sleep HRV, and waking HRV. Defaults are built from the settings object being created, loaded, or imported. Inactive medications, pain-state metrics, daily pain minimum/count, standalone note count, and the other HeartWatch metrics are available but unchecked by default. Valid saved configurations preserve selected and unselected columns, display order, custom short labels, label modes, HeartWatch selections, TideTrace metric selections, and references to active or inactive medication and pain-state options.
 
-The on-screen table, readable text copy, TSV copy, and print view all use the same saved selected columns, order, short labels, date rows, blank handling, and calculated TideTrace values. TSV headers exactly match the visible short labels, with fixed first header `日付`.
+The result actions are shown only after a HeartWatch CSV is successfully imported and at least one displayable row is generated. The actions support readable text copy, TSV copy, and browser-standard printing. Printing opens a focused result view that shows only the `日ごとのまとめ` heading and table, then returns to the normal screen after the print UI closes. The on-screen table, readable text copy, TSV copy, and print view all use the same saved selected columns, order, short labels, date rows, blank handling, and calculated TideTrace values. TSV headers exactly match the visible short labels, with fixed first header `日付`.
 
 ## Import/export behavior
 

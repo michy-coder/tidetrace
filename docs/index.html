@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <link rel="manifest" href="./site.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=24">
+  <link rel="stylesheet" href="styles.css?v=25">
 </head>
 <body>
   <header class="app-header">
@@ -131,12 +131,16 @@
           </fieldset>
           <input id="summary-end-date" class="form-control-base form-control" type="date">
           <button id="run-visit-summary" class="button-base button-full primary-button" type="button">集計する</button>
-          <div id="visit-summary-actions" class="visit-summary-actions" aria-label="診察用サマリーの操作" hidden>
+          <div id="visit-summary-actions" class="result-actions" aria-label="診察用サマリーの操作" hidden>
             <button id="copy-visit-summary" class="button-base button-full secondary-button" type="button">コピー</button>
             <button id="save-visit-summary-text" class="button-base button-full secondary-button" type="button">テキスト保存</button>
+            <button id="show-visit-summary-print" class="button-base button-full secondary-button result-print-action" type="button">印刷用に表示</button>
           </div>
           <p id="visit-summary-message" class="message" role="alert"></p>
-          <div id="visit-summary-result"></div>
+          <div id="visit-summary-print-content" class="print-content">
+            <h2 class="print-only print-document-title" hidden>診察用サマリー</h2>
+            <div id="visit-summary-result"></div>
+          </div>
         </details>
       </section>
 
@@ -152,13 +156,14 @@
             <summary>表示項目</summary>
             <div id="health-history-columns-editor"></div>
           </details>
-          <div id="health-history-actions" class="visit-summary-actions" aria-label="過去の記録とヘルスケアデータの操作" hidden>
+          <div id="health-history-actions" class="result-actions" aria-label="過去の記録とヘルスケアデータの操作" hidden>
             <button id="copy-health-history-text" class="button-base button-full secondary-button" type="button">テキストをコピー</button>
             <button id="copy-health-history-tsv" class="button-base button-full secondary-button" type="button">TSVをコピー</button>
-            <button id="show-health-history-print" class="button-base button-full secondary-button" type="button">印刷用に表示</button>
+            <button id="show-health-history-print" class="button-base button-full secondary-button result-print-action" type="button">印刷用に表示</button>
           </div>
-          <p id="health-history-print-help" class="supplemental-text" hidden>ブラウザの共有・印刷機能からPDF保存できます。</p>
-          <div id="health-history-result"></div>
+          <div id="health-history-print-content" class="print-content">
+            <div id="health-history-result"></div>
+          </div>
         </details>
       </section>
 
@@ -277,7 +282,7 @@
     </div>
   </main>
 
-  <script src="app.js?v=24" defer></script>
+  <script src="app.js?v=25" defer></script>
   <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fcd3243fc5f04e899f9d5c8b46a3bc8e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

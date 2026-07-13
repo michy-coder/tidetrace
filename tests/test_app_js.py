@@ -1824,9 +1824,97 @@ def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> No
     actions_index = html.index('id="visit-summary-actions"')
     result_index = html.index('id="visit-summary-result"')
     assert run_index < actions_index < result_index
-    assert 'id="visit-summary-actions" class="visit-summary-actions" aria-label="診察用サマリーの操作" hidden' in html
+    assert 'id="visit-summary-actions" class="result-actions" aria-label="診察用サマリーの操作" hidden' in html
 
 
+
+def test_result_action_print_structure_and_css_regression() -> None:
+    root = Path(__file__).parents[1]
+    html = (root / "docs" / "index.html").read_text()
+    css = (root / "docs" / "styles.css").read_text()
+    app_js = (root / "docs" / "app.js").read_text()
+
+    assert 'id="visit-summary-actions" class="result-actions" aria-label="診察用サマリーの操作" hidden' in html
+    assert 'id="health-history-actions" class="result-actions" aria-label="過去の記録とヘルスケアデータの操作" hidden' in html
+    assert '<button id="show-visit-summary-print" class="button-base button-full secondary-button result-print-action" type="button">印刷用に表示</button>' in html
+    assert '<button id="show-health-history-print" class="button-base button-full secondary-button result-print-action" type="button">印刷用に表示</button>' in html
+    assert html.index('id="copy-visit-summary"') < html.index('id="save-visit-summary-text"') < html.index('id="show-visit-summary-print"')
+    assert html.index('id="copy-health-history-text"') < html.index('id="copy-health-history-tsv"') < html.index('id="show-health-history-print"')
+    assert 'id="visit-summary-print-content"' in html
+    assert 'class="print-only print-document-title" hidden>診察用サマリー</h2>' in html
+    assert 'id="health-history-print-help"' not in html
+
+    assert '.result-actions[hidden]' in css
+    assert 'display: none;' in css_rule_body(css, '.result-actions[hidden]')
+    assert '.result-print-action' in css
+    assert 'grid-column: 1 / -1;' in css_rule_body(css, '.result-print-action')
+    assert 'body.visit-summary-print-mode' in css
+    assert 'body.health-history-print-mode' in css
+    assert '#toast-feedback' in css
+    assert '#edit-event-panel' in css
+    assert '.health-history-table-wrap' in css and 'overflow: visible;' in css
+
+    assert 'function clearPrintModes()' in app_js
+    assert 'function printResultView(modeClass, detailsId)' in app_js
+    assert 'function showVisitSummaryPrint()' in app_js
+    assert "$('show-visit-summary-print').addEventListener('click', showVisitSummaryPrint);" in app_js
+    assert 'health-history-print-help' not in app_js
+
+
+def test_result_print_modes_behavior() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const listeners = {};
+        const classValues = new Set(['health-history-print-mode']);
+        const elements = {
+          'visit-summary-details': { open: false },
+          'health-history-details': { open: false }
+        };
+        global.document = {
+          body: { classList: { add(name) { classValues.add(name); }, remove(...names) { names.forEach((name) => classValues.delete(name)); }, contains(name) { return classValues.has(name); } } },
+          getElementById(id) { return elements[id] || null; }
+        };
+        global.window = {
+          printCalls: 0,
+          addEventListener(name, handler, options) { listeners[name] = { handler, options }; },
+          print() { this.printCalls += 1; }
+        };
+
+        currentVisitSummaryData = null;
+        currentVisitSummaryText = '';
+        showVisitSummaryPrint();
+        assert.equal(window.printCalls, 0);
+
+        currentVisitSummaryData = { days: 1 };
+        currentVisitSummaryText = 'summary';
+        showVisitSummaryPrint();
+        assert.equal(window.printCalls, 1);
+        assert.equal(elements['visit-summary-details'].open, true);
+        assert.equal(classValues.has('visit-summary-print-mode'), true);
+        assert.equal(classValues.has('health-history-print-mode'), false);
+        assert.equal(listeners.afterprint.options.once, true);
+        listeners.afterprint.handler();
+        assert.equal(classValues.has('visit-summary-print-mode'), false);
+
+        currentHealthHistoryRows = [];
+        showHealthHistoryPrint();
+        assert.equal(window.printCalls, 1);
+
+        currentHealthHistoryRows = [{ date: '2026-07-01' }];
+        showHealthHistoryPrint();
+        assert.equal(window.printCalls, 2);
+        assert.equal(elements['health-history-details'].open, true);
+        assert.equal(classValues.has('health-history-print-mode'), true);
+        assert.equal(classValues.has('visit-summary-print-mode'), false);
+        listeners.afterprint.handler();
+        assert.equal(classValues.has('health-history-print-mode'), false);
+
+        window.print = () => { throw new Error('print failed'); };
+        showHealthHistoryPrint();
+        assert.equal(classValues.has('health-history-print-mode'), false);
+        """
+    )
 
 
 def test_record_input_header_and_last_medication_html_structure() -> None:
@@ -1873,13 +1961,13 @@ def test_last_medication_css_is_compact_without_note_button_changes() -> None:
 
 def test_static_asset_versions_are_current_for_input_header_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=24"' in html
+    assert 'href="styles.css?v=25"' in html
     assert 'styles.css?v=23' not in html
 
 
 def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=24"' in html
+    assert 'src="app.js?v=25"' in html
     assert 'app.js?v=22"' not in html
 
 
