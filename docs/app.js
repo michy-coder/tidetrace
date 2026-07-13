@@ -1792,19 +1792,19 @@ function handleHeartWatchCsvSelected(event) {
     message.textContent = '';
     message.classList.remove('error');
     if (parsed.error) {
-      message.textContent = 'HeartWatch CSVとして読み込めませんでした。';
+      message.textContent = 'HeartWatch まとめCSVとして読み込めませんでした。';
       message.classList.add('error');
       resetHealthHistoryResult();
     } else {
       currentHeartWatchData = parsed.data;
       currentHealthHistoryRows = buildHealthHistoryRows(parsed.data);
       renderHealthHistoryRows(currentHealthHistoryRows, hasMissingHeartWatchDates(currentHealthHistoryRows, parsed.data));
-      showToast('HeartWatch CSVを読み込みました');
+      showToast('HeartWatch まとめCSVを読み込みました');
     }
     input.value = '';
   };
   reader.onerror = () => {
-    message.textContent = 'HeartWatch CSVとして読み込めませんでした。';
+    message.textContent = 'HeartWatch まとめCSVとして読み込めませんでした。';
     message.classList.add('error');
     resetHealthHistoryResult();
     input.value = '';

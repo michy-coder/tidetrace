@@ -8,13 +8,14 @@ All notable changes to TideTrace will be documented in this file.
 - Added a focused print view for generated visit summaries.
 - Added SVG daily-summary markers and plain-text copying for the currently displayed past-record summaries.
 - Added configurable columns for the “日ごとのまとめ” table, text copy, TSV copy, and print view, including selectable TideTrace and HeartWatch metrics, custom short labels, and saved display order.
-- Added a past records and healthcare data view that temporarily loads HeartWatch daily CSV files, aligns them with TideTrace daily records, and supports text, TSV, and print-friendly output.
+- Added a past records and healthcare data view that temporarily loads HeartWatch summary CSV files, aligns them with TideTrace daily records, and supports text, TSV, and print-friendly output.
 - Added editing for record date and time on medication, pain, and note 
 - Added medication pain-change summaries to visit summaries, showing recorded before-and-after pain-score changes by medication without assessing medication effectiveness.
 - Added copy and plain text download actions for visit summaries.
 - Added time-of-day pain summaries to visit summaries, grouping pain records by late night/early morning, morning, afternoon, and night without assessing causes or medication effects.
 
 ### Changed
+- Moved health-history display settings before CSV import and clarified that the importer accepts HeartWatch summary CSV files.
 - Replaced record-type emojis with reusable line SVG icons and unified management button labels.
 - Updated medication, pain-state, and comparison-period settings to show existing entries first and open add/edit forms only when needed.
 - Updated today’s and past record details to use compact, accessible rows with type icons and wrapping memo text.
