@@ -930,6 +930,40 @@ function summaryValidationMessage(startDate, endDate) {
   return '';
 }
 
+function summaryEventOrderKey(event) {
+  return [event.localDate || '', event.localTime || '', event.recordedAtUtc || ''].join('T');
+}
+
+function medicationSummaryDisplayLabel(event, option) {
+  return (option && option.label) || event.medicationLabel || '不明な薬';
+}
+
+function updateFallbackMedicationLabel(row, event, option) {
+  if (option || !event.medicationLabel) return;
+  const orderKey = summaryEventOrderKey(event);
+  if (orderKey >= row.latestLabelOrderKey) {
+    row.label = event.medicationLabel;
+    row.latestLabelOrderKey = orderKey;
+  }
+}
+
+function statePainSummaryKey(event) {
+  return event.stateOptionId ? `id:${event.stateOptionId}` : `label:${event.stateLabel || '不明な状態'}`;
+}
+
+function statePainSummaryDisplayLabel(event, option) {
+  return (option && option.label) || event.stateLabel || '不明な状態';
+}
+
+function updateFallbackStateLabel(row, event, option) {
+  if (option || !event.stateLabel) return;
+  const orderKey = summaryEventOrderKey(event);
+  if (orderKey >= row.latestLabelOrderKey) {
+    row.label = event.stateLabel;
+    row.latestLabelOrderKey = orderKey;
+  }
+}
+
 function medicationSummaryUnit(event, option) {
   if (typeof event.unit === 'string' && event.unit) return event.unit;
   return (option && option.unit) || '';
@@ -949,7 +983,7 @@ function buildMedicationSummary(startDate, endDate) {
   const optionById = new Map(appData.settings.medicationOptions.map((option) => [option.id, option]));
   const rows = new Map();
   const ensureRow = (key, base) => {
-    if (!rows.has(key)) rows.set(key, { ...base, total: 0, dates: new Set(), latestLabelDate: '' });
+    if (!rows.has(key)) rows.set(key, { ...base, total: 0, dates: new Set(), latestLabelOrderKey: '' });
     return rows.get(key);
   };
 
@@ -961,7 +995,7 @@ function buildMedicationSummary(startDate, endDate) {
   appData.events.filter((event) => event.type === 'medication' && event.localDate >= startDate && event.localDate <= endDate).forEach((event) => {
     const option = event.medicationOptionId ? optionById.get(event.medicationOptionId) : null;
     const key = medicationSummaryKey(event, option);
-    const label = event.medicationLabel || (option && option.label) || event.medicationLabel || '不明な薬';
+    const label = medicationSummaryDisplayLabel(event, option);
     const unit = medicationSummaryUnit(event, option);
     const row = ensureRow(key, {
       medicationSortOrder: option ? option.sortOrder : Number.MAX_SAFE_INTEGER,
@@ -972,10 +1006,7 @@ function buildMedicationSummary(startDate, endDate) {
     const amount = amountForSummary(event);
     row.total += amount;
     if (amount > 0) row.dates.add(event.localDate);
-    if (event.medicationLabel && event.localDate >= row.latestLabelDate) {
-      row.label = event.medicationLabel;
-      row.latestLabelDate = event.localDate;
-    }
+    updateFallbackMedicationLabel(row, event, option);
   });
 
   return [...rows.values()].sort((a, b) =>
@@ -1017,20 +1048,26 @@ function buildStatePainSummary(startDate, endDate) {
   appData.events.filter((event) => event.type === 'pain' && event.localDate >= startDate && event.localDate <= endDate).forEach((event) => {
     if (typeof event.painScore !== 'number' || !Number.isFinite(event.painScore)) return;
     const option = event.stateOptionId ? optionById.get(event.stateOptionId) : null;
-    const label = event.stateLabel || (option && option.label) || '不明な状態';
-    const key = `${label}\n${event.localDate}`;
-    if (!dailyByState.has(key)) dailyByState.set(key, { label, localDate: event.localDate, max: event.painScore, total: 0, count: 0 });
+    const label = statePainSummaryDisplayLabel(event, option);
+    const stateKey = statePainSummaryKey(event);
+    const key = `${stateKey}\n${event.localDate}`;
+    if (!dailyByState.has(key)) dailyByState.set(key, { stateKey, label, localDate: event.localDate, max: event.painScore, total: 0, count: 0, latestLabelOrderKey: '' });
     const day = dailyByState.get(key);
     day.max = Math.max(day.max, event.painScore);
     day.total += event.painScore;
     day.count += 1;
     day.average = day.total / day.count;
+    updateFallbackStateLabel(day, event, option);
   });
 
   const rows = new Map();
   [...dailyByState.values()].forEach((day) => {
-    if (!rows.has(day.label)) rows.set(day.label, { label: day.label, recordDays: 0, maxPain: null, maxPainDays: 0, averagePainTotal: 0 });
-    const row = rows.get(day.label);
+    if (!rows.has(day.stateKey)) rows.set(day.stateKey, { label: day.label, recordDays: 0, maxPain: null, maxPainDays: 0, averagePainTotal: 0, latestLabelOrderKey: '' });
+    const row = rows.get(day.stateKey);
+    if (day.latestLabelOrderKey && day.latestLabelOrderKey >= row.latestLabelOrderKey) {
+      row.label = day.label;
+      row.latestLabelOrderKey = day.latestLabelOrderKey;
+    }
     row.recordDays += 1;
     if (row.maxPain === null || day.max > row.maxPain) {
       row.maxPain = day.max;
@@ -1201,26 +1238,23 @@ function buildDosePainSummary(startDate, endDate) {
   appData.settings.medicationOptions.filter((option) => option.active).forEach((option) => {
     const unit = option.unit || '';
     const key = `id:${option.id}|unit:${unit}`;
-    ensureRow(key, { medicationSortOrder: option.sortOrder, medicationId: option.id, label: option.label || '不明な薬', unit, latestLabelDate: '' });
+    ensureRow(key, { medicationSortOrder: option.sortOrder, medicationId: option.id, label: option.label || '不明な薬', unit, latestLabelOrderKey: '' });
   });
 
   appData.events.filter((event) => event.type === 'medication' && event.localDate >= startDate && event.localDate <= endDate).forEach((event) => {
     const option = event.medicationOptionId ? optionById.get(event.medicationOptionId) : null;
     const key = medicationSummaryKey(event, option);
-    const label = event.medicationLabel || (option && option.label) || '不明な薬';
+    const label = medicationSummaryDisplayLabel(event, option);
     const unit = medicationSummaryUnit(event, option);
     const row = ensureRow(key, {
       medicationSortOrder: option ? option.sortOrder : Number.MAX_SAFE_INTEGER,
       medicationId: event.medicationOptionId || '',
       label,
       unit,
-      latestLabelDate: ''
+      latestLabelOrderKey: ''
     });
     row.dailyAmounts.set(event.localDate, (row.dailyAmounts.get(event.localDate) || 0) + amountForSummary(event));
-    if (event.medicationLabel && event.localDate >= row.latestLabelDate) {
-      row.label = event.medicationLabel;
-      row.latestLabelDate = event.localDate;
-    }
+    updateFallbackMedicationLabel(row, event, option);
   });
 
   return [...rows.values()].map((row) => {
@@ -1317,7 +1351,7 @@ function buildMedicationPainChangeSummary(startDate, endDate) {
   const optionById = new Map(appData.settings.medicationOptions.map((option) => [option.id, option]));
   const rows = new Map();
   const ensureRow = (key, base) => {
-    if (!rows.has(key)) rows.set(key, { ...base, changes: [], beforeTotal: 0, afterTotal: 0, latestLabelDate: '' });
+    if (!rows.has(key)) rows.set(key, { ...base, changes: [], beforeTotal: 0, afterTotal: 0, latestLabelOrderKey: '' });
     return rows.get(key);
   };
 
@@ -1341,7 +1375,7 @@ function buildMedicationPainChangeSummary(startDate, endDate) {
     if (!after || before.painScore === 0) return;
 
     const option = event.medicationOptionId ? optionById.get(event.medicationOptionId) : null;
-    const label = event.medicationLabel || (option && option.label) || '不明な薬';
+    const label = medicationSummaryDisplayLabel(event, option);
     const key = medicationPainChangeKey(event, option);
     const row = ensureRow(key, {
       medicationSortOrder: option ? option.sortOrder : Number.MAX_SAFE_INTEGER,
@@ -1352,10 +1386,7 @@ function buildMedicationPainChangeSummary(startDate, endDate) {
     row.changes.push(changeRate);
     row.beforeTotal += before.painScore;
     row.afterTotal += after.painScore;
-    if (event.medicationLabel && event.localDate >= row.latestLabelDate) {
-      row.label = event.medicationLabel;
-      row.latestLabelDate = event.localDate;
-    }
+    updateFallbackMedicationLabel(row, event, option);
   });
 
   return [...rows.values()]
