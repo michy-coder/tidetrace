@@ -144,7 +144,9 @@ The current 記録の集計 includes:
 
 When a current pain-state or medication setting exists for a saved option ID, 記録の集計 displays the current setting label. When the referenced setting no longer exists, 記録の集計 displays the saved snapshot label from the record. Individual record displays keep showing the name saved at the time of recording.
 
-Summary text uses the `TideTrace 記録の集計` output title and can be copied or downloaded as a plain text file. Summary wording is intended to be descriptive and non-diagnostic, describing recorded values without assessing treatment effectiveness, causes, or severity.
+Summary metric items are separated with spacing rather than slash separators. Pain summary rows show average pain before maximum pain. Medication-dose pain rows show the dose heading on its own line, followed by a metric row using `日数 N日（うち痛み記録 N日）`, average pain, and maximum pain.
+
+Summary text uses the `TideTrace 記録の集計` output title and can be copied or downloaded as a plain text file. Summary wording is intended to be descriptive and non-diagnostic, describing recorded values without assessing treatment effectiveness, causes, or severity. Screen, copied text, saved plain text, and print output use aligned summary wording and metric order.
 
 Result actions are shown only after a summary is successfully generated. The actions support copying, plain-text saving, and browser-standard printing without changing the generated aggregation content.
 

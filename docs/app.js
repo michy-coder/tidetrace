@@ -1084,6 +1084,38 @@ function buildStatePainSummary(startDate, endDate) {
   })).sort((a, b) => b.averagePain - a.averagePain || b.maxPain - a.maxPain || a.label.localeCompare(b.label, 'ja'));
 }
 
+function visitSummaryMetricGroupHtml(items) {
+  return `<span class="visit-summary-metric-group">${items.map((item) => `<span class="visit-summary-metric">${escapeHtml(item)}</span>`).join('')}</span>`;
+}
+
+function visitSummaryMetricBlockHtml(items) {
+  return `<div class="visit-summary-metric-group">${items.map((item) => `<span class="visit-summary-metric">${escapeHtml(item)}</span>`).join('')}</div>`;
+}
+
+function visitSummaryMetricText(items) {
+  return items.join('　');
+}
+
+function medicationSummaryMetrics(row, days) {
+  return [`合計 ${amountText(row.total, row.unit)}`, `1日平均 ${(row.total / days).toFixed(2)}${row.unit}`];
+}
+
+function painSummaryMetrics(row) {
+  return [`記録日数 ${row.recordDays}日`, `平均 ${row.averagePain.toFixed(1)}`, `最大 ${formatPainValue(row.maxPain)}${formatMaxPainDays(row.maxPainDays)}`];
+}
+
+function dosePainMetrics(group) {
+  return [`日数 ${group.targetDays}日（うち痛み記録 ${group.painDays}日）`, `平均 ${formatAveragePain(group)}`, `最大 ${formatPainValue(group.maxPain)}${formatMaxPainDays(group.maxPainDays)}`];
+}
+
+function painChangeMetrics(row) {
+  const beforeAfter = `${formatOneDecimal(row.averageBefore)}→${formatOneDecimal(row.averageAfter)}`;
+  const averageText = formatPainChangeRate(row.averageChange);
+  return row.count === 1
+    ? ['対象 1回', averageText, `前後 ${beforeAfter}`]
+    : [`対象 ${row.count}回`, `平均 ${averageText}`, `中央 ${formatPainChangeRate(row.medianChange)}`, `前後 ${beforeAfter}`];
+}
+
 function renderStatePainSummary(block, statePainRows) {
   const heading = document.createElement('h3');
   heading.textContent = '状態別の痛み';
@@ -1100,7 +1132,7 @@ function renderStatePainSummary(block, statePainRows) {
   statePainRows.forEach((row) => {
     const item = document.createElement('div');
     item.className = 'visit-summary-state-pain-item';
-    item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：記録日数 ${row.recordDays}日 / 最大 ${escapeHtml(formatPainValue(row.maxPain))}${escapeHtml(formatMaxPainDays(row.maxPainDays))} / 平均 ${escapeHtml(row.averagePain.toFixed(1))}`;
+    item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：${visitSummaryMetricGroupHtml(painSummaryMetrics(row))}`;
     block.appendChild(item);
   });
 
@@ -1197,7 +1229,7 @@ function buildTimePainSummary(startDate, endDate) {
 }
 
 function formatTimePainSummaryRow(row) {
-  return `${row.label}：記録日数 ${row.recordDays}日 / 最大 ${formatPainValue(row.maxPain)}${formatMaxPainDays(row.maxPainDays)} / 平均 ${row.averagePain.toFixed(1)}`;
+  return `${row.label}：${visitSummaryMetricText(painSummaryMetrics(row))}`;
 }
 
 function renderTimePainSummary(block, timePainRows) {
@@ -1214,7 +1246,7 @@ function renderTimePainSummary(block, timePainRows) {
     timePainRows.forEach((row) => {
       const item = document.createElement('div');
       item.className = 'visit-summary-time-pain-item';
-      item.textContent = formatTimePainSummaryRow(row);
+      item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：${visitSummaryMetricGroupHtml(painSummaryMetrics(row))}`;
       block.appendChild(item);
     });
   }
@@ -1292,7 +1324,7 @@ function formatPainValue(value) {
 }
 
 function formatMaxPainDays(days) {
-  return typeof days === 'number' && days > 0 ? `(${days}日)` : '';
+  return typeof days === 'number' && days > 0 ? `（${days}日）` : '';
 }
 
 function formatAveragePain(group) {
@@ -1323,7 +1355,7 @@ function renderDosePainSummary(block, dosePainRows) {
       const item = document.createElement('div');
       item.className = 'visit-summary-dose-pain-row';
       const doseLabel = `${amountText(group.amount, row.unit)}の日`;
-      item.innerHTML = `<strong>${escapeHtml(doseLabel)}</strong><br>対象 ${group.targetDays}日 / 痛み記録あり ${group.painDays}日<br>最大 ${escapeHtml(formatPainValue(group.maxPain))}${escapeHtml(formatMaxPainDays(group.maxPainDays))} / 平均 ${escapeHtml(formatAveragePain(group))}`;
+      item.innerHTML = `<strong class="visit-summary-dose-heading">${escapeHtml(doseLabel)}</strong>${visitSummaryMetricBlockHtml(dosePainMetrics(group))}`;
       body.appendChild(item);
     });
     details.append(summary, body);
@@ -1435,13 +1467,7 @@ function renderMedicationPainChangeSummary(block, painChangeRows) {
     painChangeRows.forEach((row) => {
       const item = document.createElement('div');
       item.className = 'visit-summary-pain-change-item';
-      const beforeAfter = `${formatOneDecimal(row.averageBefore)}→${formatOneDecimal(row.averageAfter)}`;
-      const averageText = formatPainChangeRate(row.averageChange);
-      if (row.count === 1) {
-        item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：対象 1回 / ${escapeHtml(averageText)} / 前後 ${escapeHtml(beforeAfter)}`;
-      } else {
-        item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：対象 ${row.count}回 / 平均 ${escapeHtml(averageText)} / 中央 ${escapeHtml(formatPainChangeRate(row.medianChange))} / 前後 ${escapeHtml(beforeAfter)}`;
-      }
+      item.innerHTML = `<strong>${escapeHtml(row.label)}</strong>：${visitSummaryMetricGroupHtml(painChangeMetrics(row))}`;
       block.appendChild(item);
     });
   }
@@ -1496,7 +1522,7 @@ function buildVisitSummaryText(summary) {
     '服薬',
     data.medicationRows,
     '服薬記録はありません。',
-    (row) => `${row.label}：合計 ${amountText(row.total, row.unit)} / 1日平均 ${(row.total / data.days).toFixed(2)}${row.unit}`
+    (row) => `${row.label}：${visitSummaryMetricText(medicationSummaryMetrics(row, data.days))}`
   );
 
   appendVisitSummaryTextSection(
@@ -1504,7 +1530,7 @@ function buildVisitSummaryText(summary) {
     '状態別の痛み',
     data.statePainRows,
     '状態別の痛み記録はありません。',
-    (row) => `${row.label}：記録日数 ${row.recordDays}日 / 最大 ${formatPainValue(row.maxPain)}${formatMaxPainDays(row.maxPainDays)} / 平均 ${row.averagePain.toFixed(1)}`,
+    (row) => `${row.label}：${visitSummaryMetricText(painSummaryMetrics(row))}`,
     '同じ日・同じ状態の痛みを日単位で集計しています。服薬前後や他の薬との併用条件は分けていません。'
   );
 
@@ -1525,7 +1551,7 @@ function buildVisitSummaryText(summary) {
       lines.push(row.unit ? `${row.label}（${row.unit}）` : row.label);
       row.doseGroups.forEach((group) => {
         const doseLabel = `${amountText(group.amount, row.unit)}の日`;
-        lines.push(`- ${doseLabel}：対象 ${group.targetDays}日 / 痛み記録あり ${group.painDays}日 / 最大 ${formatPainValue(group.maxPain)}${formatMaxPainDays(group.maxPainDays)} / 平均 ${formatAveragePain(group)}`);
+        lines.push(`- ${doseLabel}：${visitSummaryMetricText(dosePainMetrics(group))}`);
       });
     });
   }
@@ -1537,11 +1563,7 @@ function buildVisitSummaryText(summary) {
     data.painChangeRows,
     '条件に合う服薬前後の痛み記録はありません。',
     (row) => {
-      const beforeAfter = `${formatOneDecimal(row.averageBefore)}→${formatOneDecimal(row.averageAfter)}`;
-      const averageText = formatPainChangeRate(row.averageChange);
-      return row.count === 1
-        ? `${row.label}：対象 1回 / ${averageText} / 前後 ${beforeAfter}`
-        : `${row.label}：対象 ${row.count}回 / 平均 ${averageText} / 中央 ${formatPainChangeRate(row.medianChange)} / 前後 ${beforeAfter}`;
+      return `${row.label}：${visitSummaryMetricText(painChangeMetrics(row))}`;
     },
     '服薬前2時間以内と服薬後1〜3時間以内の痛み記録がそろう服薬だけを集計しています。姿勢・状態・他の薬との併用条件は分けていません。'
   );
@@ -1624,8 +1646,7 @@ function renderVisitSummaryResult(startDate, endDate, days, rows, statePainRows,
     rows.forEach((row) => {
       const item = document.createElement('div');
       item.className = 'visit-summary-medication-item';
-      const average = row.total / days;
-      item.innerHTML = `<strong>${escapeHtml(row.label)}</strong><br>合計 ${escapeHtml(amountText(row.total, row.unit))} / 1日平均 ${escapeHtml(average.toFixed(2) + row.unit)}`;
+      item.innerHTML = `<strong>${escapeHtml(row.label)}</strong><br>${visitSummaryMetricGroupHtml(medicationSummaryMetrics(row, days))}`;
       block.appendChild(item);
     });
   }
