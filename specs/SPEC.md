@@ -4,7 +4,7 @@ This document describes the current TideTrace implementation. It documents exist
 
 ## Purpose
 
-TideTrace is a small static web app for local-first pain, medication, and note logging. It helps users record observations, review recent and past records, prepare descriptive visit summaries, and export or restore their data.
+TideTrace is a small static web app for local-first pain, medication, and note logging. It helps users record observations, review recent and past records, prepare descriptive record summaries, and export or restore their data.
 
 ## Non-goals
 
@@ -48,7 +48,7 @@ After setup, the app shows:
 - A shared optional memo field for medication, pain, or note records. Its `メモ（任意）` label remains associated with the memo textarea for assistive technologies but is visually hidden.
 - Today's records.
 - A collapsed past-records section.
-- A collapsed visit-summary section.
+- A collapsed 記録の集計 section.
 - Management controls for backup, CSV export, settings, periods, and deleting all data.
 
 Today's records and expanded past-record details use the same record-row display. Each row separates the time, record type, record body, and edit/delete actions. Pain, medication, and standalone note rows are visually distinguished with reusable single-color line SVG icons, and each row also includes an accessible type name (`痛みの記録`, `服薬の記録`, or `メモ`) separate from the icon. Pain rows show the body as `スコア・状態`, followed by any memo text. Medication rows show the body as `薬名 量単位`, followed by any memo text. Standalone note rows show the note text as the body. Memo text is not truncated and wraps within the body column. Edit and delete actions are shown on the right side of each record row.
@@ -129,11 +129,11 @@ The app stores “condition comparison periods” with a label, start date, end 
 - Deleting a period does not delete records.
 - Periods can be selected in the visit-summary section to fill the summary date range.
 
-## Visit summary behavior
+## 記録の集計 behavior
 
-The visit summary is generated for a selected date range. By default, the end date is yesterday and the start date is 29 days before that.
+記録の集計 summarizes pain and medication records for a selected date range. By default, the end date is yesterday and the start date is 29 days before that.
 
-The current summary includes:
+The current 記録の集計 includes:
 
 - Range and day count.
 - Medication totals and daily averages by medication/unit. Medication records with the same `medicationOptionId` are treated as the same medication, while medication totals and medication-dose pain summaries remain separated by unit. Legacy medication records without an option ID are grouped by their saved `medicationLabel`.
@@ -142,13 +142,13 @@ The current summary includes:
 - Pain summaries by medication dose grouping.
 - Recorded before-and-after pain-score changes by medication when applicable.
 
-When a current pain-state or medication setting exists for a saved option ID, visit summaries display the current setting label. When the referenced setting no longer exists, visit summaries display the saved snapshot label from the record. Individual record displays keep showing the name saved at the time of recording.
+When a current pain-state or medication setting exists for a saved option ID, 記録の集計 displays the current setting label. When the referenced setting no longer exists, 記録の集計 displays the saved snapshot label from the record. Individual record displays keep showing the name saved at the time of recording.
 
-Summary text can be copied or downloaded as a plain text file. Summary wording is intended to be descriptive and non-diagnostic, describing recorded values without assessing treatment effectiveness, causes, or severity.
+Summary text uses the `TideTrace 記録の集計` output title and can be copied or downloaded as a plain text file. Summary wording is intended to be descriptive and non-diagnostic, describing recorded values without assessing treatment effectiveness, causes, or severity.
 
-Result actions are shown only after a summary is successfully generated. The actions support copying, plain-text saving, and browser-standard printing without changing the generated summary text or saved file behavior.
+Result actions are shown only after a summary is successfully generated. The actions support copying, plain-text saving, and browser-standard printing without changing the generated aggregation content.
 
-The focused print view for a generated visit summary shows the `診察用サマリー` heading and generated aggregation result, including the current explanatory text attached to the medication, pain-by-state, pain-by-time, pain-by-dose, and pain-change sections. Printing uses the current generated result rather than recalculating the summary, and the screen returns to normal after the print UI closes.
+The focused print view for a generated 記録の集計 shows the `記録の集計` heading and generated aggregation result, including the current explanatory text attached to the medication, pain-by-state, pain-by-time, pain-by-dose, and pain-change sections. Printing uses the current generated result rather than recalculating the summary, and the screen returns to normal after the print UI closes.
 
 ## Past records behavior
 
