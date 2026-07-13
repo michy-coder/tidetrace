@@ -623,11 +623,87 @@ def test_visit_summary_state_pain_groups_daily_by_resolved_state_label() -> None
 
         assert.deepEqual(rows.map((row) => [row.label, row.recordDays, row.maxPain, row.maxPainDays, row.averagePain.toFixed(1)]), [
           ['不明な状態', 1, 9, 1, '9.0'],
-          ['立位', 2, 8, 2, '6.5'],
+          ['Standing current', 2, 8, 2, '6.5'],
           ['Sitting current', 1, 3, 1, '3.0']
         ]);
         assert.equal(rows.some((row) => row.label === 'Unused active'), false);
         assert.equal(rows.some((row) => row.label === '範囲外'), false);
+        """
+    )
+
+
+def test_visit_summary_state_pain_groups_by_option_id_and_uses_current_label() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: {
+            painStateOptions: [
+              { id: 'state_a', label: '🧍状態A', active: true, sortOrder: 1 },
+              { id: 'state_b', label: '🧍状態A', active: true, sortOrder: 2 }
+            ]
+          },
+          events: [
+            { type: 'pain', localDate: '2026-07-01', localTime: '09:00', recordedAtUtc: '2026-07-01T00:00:00.000Z', painScore: 4, stateOptionId: 'state_a', stateLabel: '状態A' },
+            { type: 'pain', localDate: '2026-07-01', localTime: '10:00', recordedAtUtc: '2026-07-01T01:00:00.000Z', painScore: 8, stateOptionId: 'state_a', stateLabel: '🧍状態A' },
+            { type: 'pain', localDate: '2026-07-02', localTime: '09:00', recordedAtUtc: '2026-07-02T00:00:00.000Z', painScore: 6, stateOptionId: 'state_a', stateLabel: '状態A' },
+            { type: 'pain', localDate: '2026-07-03', painScore: 7, stateOptionId: 'state_b', stateLabel: '🧍状態A' },
+            { type: 'pain', localDate: '2026-07-04', localTime: '08:00', recordedAtUtc: '2026-07-03T23:00:00.000Z', painScore: 5, stateOptionId: 'missing_state', stateLabel: '旧不明' },
+            { type: 'pain', localDate: '2026-07-05', localTime: '08:00', recordedAtUtc: '2026-07-04T23:00:00.000Z', painScore: 9, stateOptionId: 'missing_state', stateLabel: '新不明' },
+            { type: 'pain', localDate: '2026-07-06', painScore: 3, stateLabel: '旧形式A' },
+            { type: 'pain', localDate: '2026-07-07', painScore: 4, stateLabel: '旧形式A' },
+            { type: 'pain', localDate: '2026-07-08', painScore: 2, stateLabel: '旧形式B' }
+          ]
+        };
+
+        const rows = buildStatePainSummary('2026-07-01', '2026-07-08');
+        const stateA = rows.filter((row) => row.medicationId !== 'unused').find((row) => row.label === '🧍状態A' && row.recordDays === 2);
+        assert.equal(stateA.maxPain, 8);
+        assert.equal(stateA.maxPainDays, 1);
+        assert.equal(stateA.averagePain.toFixed(1), '6.0');
+        assert.equal(rows.filter((row) => row.label === '🧍状態A').length, 2);
+        assert.equal(rows.find((row) => row.label === '新不明').recordDays, 2);
+        assert.equal(rows.find((row) => row.label === '旧形式A').recordDays, 2);
+        assert.equal(rows.find((row) => row.label === '旧形式B').recordDays, 1);
+        assert.deepEqual(rows.map((row) => row.label), ['新不明', '🧍状態A', '🧍状態A', '旧形式A', '旧形式B']);
+        """
+    )
+
+
+def test_visit_summary_medication_summaries_use_current_labels_and_keep_keys() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = {
+          settings: {
+            medicationOptions: [
+              { id: 'med_a', label: '修正済み薬A', unit: '錠', active: true, sortOrder: 1 },
+              { id: 'med_b', label: '同名薬', unit: '錠', active: true, sortOrder: 2 },
+              { id: 'med_c', label: '同名薬', unit: '錠', active: true, sortOrder: 3 }
+            ]
+          },
+          events: [
+            { type: 'medication', localDate: '2026-07-01', medicationOptionId: 'med_a', medicationLabel: '誤記薬A', amount: 1, unit: '錠' },
+            { type: 'medication', localDate: '2026-07-02', medicationOptionId: 'med_a', medicationLabel: '誤記薬A', amount: 2, unit: '錠' },
+            { type: 'medication', localDate: '2026-07-03', medicationOptionId: 'med_a', medicationLabel: '古い別単位', amount: 1, unit: '包' },
+            { type: 'medication', localDate: '2026-07-01', medicationOptionId: 'med_b', medicationLabel: '同名薬', amount: 1, unit: '錠' },
+            { type: 'medication', localDate: '2026-07-01', medicationOptionId: 'med_c', medicationLabel: '同名薬', amount: 1, unit: '錠' },
+            { type: 'medication', localDate: '2026-07-01', medicationLabel: '旧形式薬', amount: 1, unit: '滴' },
+            { type: 'medication', localDate: '2026-07-02', medicationLabel: '旧形式薬', amount: 2, unit: '滴' },
+            { type: 'medication', localDate: '2026-07-01', medicationOptionId: 'missing_med', medicationLabel: '不明旧', amount: 1, unit: '錠' },
+            { type: 'medication', localDate: '2026-07-02', medicationOptionId: 'missing_med', medicationLabel: '不明新', amount: 1, unit: '錠' }
+          ]
+        };
+
+        const rows = buildMedicationSummary('2026-07-01', '2026-07-03').filter((row) => row.total > 0);
+        assert.deepEqual(rows.map((row) => [row.label, row.medicationId, row.unit, row.total, row.dates.size, (row.total / 3).toFixed(2)]), [
+          ['修正済み薬A', 'med_a', '錠', 3, 2, '1.00'],
+          ['修正済み薬A', 'med_a', '包', 1, 1, '0.33'],
+          ['同名薬', 'med_b', '錠', 1, 1, '0.33'],
+          ['同名薬', 'med_c', '錠', 1, 1, '0.33'],
+          ['旧形式薬', '', '滴', 3, 2, '1.00'],
+          ['不明新', 'missing_med', '錠', 2, 2, '0.67']
+        ]);
         """
     )
 
@@ -672,13 +748,13 @@ def test_visit_summary_dose_pain_counts_max_pain_days_after_daily_grouping() -> 
         appData = {
           settings: {
             medicationOptions: [
-              { id: 'med_001', label: '薬A', defaultAmount: 1, unit: '錠', active: true, sortOrder: 1 }
+              { id: 'med_001', label: '修正済み薬A', defaultAmount: 1, unit: '錠', active: true, sortOrder: 1 }
             ]
           },
           events: [
-            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: '薬A', amount: 1, unit: '錠', localDate: '2026-07-01' },
-            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: '薬A', amount: 1, unit: '錠', localDate: '2026-07-02' },
-            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: '薬A', amount: 1, unit: '錠', localDate: '2026-07-03' },
+            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: '旧薬A', amount: 1, unit: '錠', localDate: '2026-07-01' },
+            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: '旧薬A', amount: 1, unit: '錠', localDate: '2026-07-02' },
+            { type: 'medication', medicationOptionId: 'med_001', medicationLabel: '旧薬A', amount: 1, unit: '錠', localDate: '2026-07-03' },
             { type: 'pain', localDate: '2026-07-01', painScore: 7 },
             { type: 'pain', localDate: '2026-07-01', painScore: 7 },
             { type: 'pain', localDate: '2026-07-02', painScore: 5 },
@@ -689,6 +765,7 @@ def test_visit_summary_dose_pain_counts_max_pain_days_after_daily_grouping() -> 
         const rows = buildDosePainSummary('2026-07-01', '2026-07-03');
         const oneTabletGroup = rows[0].doseGroups.find((group) => group.amount === 1);
 
+        assert.equal(rows[0].label, '修正済み薬A');
         assert.equal(oneTabletGroup.maxPain, 7);
         assert.equal(oneTabletGroup.maxPainDays, 2);
         assert.equal(oneTabletGroup.painDays, 3);
@@ -804,19 +881,19 @@ def test_visit_summary_pain_change_uses_required_windows_and_medication_groups()
         appData = {
           settings: {
             medicationOptions: [
-              { id: 'med_a', label: '薬A', active: true, sortOrder: 1 },
+              { id: 'med_a', label: '修正済み薬A', active: true, sortOrder: 1 },
               { id: 'med_b', label: '薬B', active: true, sortOrder: 2 }
             ]
           },
           events: [
             { type: 'pain', localDate: '2026-07-01', localTime: '08:00', painScore: 9 },
             { type: 'pain', localDate: '2026-07-01', localTime: '09:30', painScore: 8 },
-            { type: 'medication', medicationOptionId: 'med_a', medicationLabel: '薬A', localDate: '2026-07-01', localTime: '10:00' },
+            { type: 'medication', medicationOptionId: 'med_a', medicationLabel: '旧薬A', localDate: '2026-07-01', localTime: '10:00' },
             { type: 'pain', localDate: '2026-07-01', localTime: '11:00', painScore: 5 },
             { type: 'pain', localDate: '2026-07-01', localTime: '12:00', painScore: 4 },
             { type: 'pain', localDate: '2026-07-01', localTime: '12:30', painScore: 4 },
             { type: 'pain', localDate: '2026-07-02', localTime: '08:10', painScore: 6 },
-            { type: 'medication', medicationOptionId: 'med_a', medicationLabel: '薬A', localDate: '2026-07-02', localTime: '09:00' },
+            { type: 'medication', medicationOptionId: 'med_a', medicationLabel: '旧薬A', localDate: '2026-07-02', localTime: '09:00' },
             { type: 'pain', localDate: '2026-07-02', localTime: '10:30', painScore: 3 },
             { type: 'pain', localDate: '2026-07-03', localTime: '08:00', painScore: 7 },
             { type: 'medication', medicationOptionId: 'med_b', medicationLabel: '薬B', localDate: '2026-07-03', localTime: '09:00' },
@@ -832,7 +909,7 @@ def test_visit_summary_pain_change_uses_required_windows_and_medication_groups()
         const rows = buildMedicationPainChangeSummary('2026-07-01', '2026-07-05');
 
         assert.equal(rows.length, 1);
-        assert.equal(rows[0].label, '薬A');
+        assert.equal(rows[0].label, '修正済み薬A');
         assert.equal(rows[0].count, 2);
         assert.equal(rows[0].averageBefore.toFixed(1), '7.0');
         assert.equal(rows[0].averageAfter.toFixed(1), '3.5');
@@ -1637,24 +1714,26 @@ def test_visit_summary_text_uses_shared_summary_data_without_ui_labels() -> None
         appData = {
           schemaVersion: 1,
           settings: {
-            painStateOptions: [{ id: 'state', label: '安静時', active: true, sortOrder: 1 }],
-            medicationOptions: [{ id: 'med', label: '薬A', defaultAmount: 1, unit: '錠', active: true, sortOrder: 1 }]
+            painStateOptions: [{ id: 'state', label: '現在状態', active: true, sortOrder: 1 }],
+            medicationOptions: [{ id: 'med', label: '現在薬A', defaultAmount: 1, unit: '錠', active: true, sortOrder: 1 }]
           },
           periods: [],
           events: [
-            { id: 'm1', type: 'medication', localDate: '2026-02-16', localTime: '09:00', medicationOptionId: 'med', medicationLabel: '薬A', amount: 1, unit: '錠' },
-            { id: 'p1', type: 'pain', localDate: '2026-02-16', localTime: '08:30', painScore: 6, stateOptionId: 'state', stateLabel: '安静時' },
-            { id: 'p2', type: 'pain', localDate: '2026-02-16', localTime: '11:00', painScore: 3, stateOptionId: 'state', stateLabel: '安静時' }
+            { id: 'm1', type: 'medication', localDate: '2026-02-16', localTime: '09:00', medicationOptionId: 'med', medicationLabel: '旧薬A', amount: 1, unit: '錠' },
+            { id: 'p1', type: 'pain', localDate: '2026-02-16', localTime: '08:30', painScore: 6, stateOptionId: 'state', stateLabel: '旧状態' },
+            { id: 'p2', type: 'pain', localDate: '2026-02-16', localTime: '11:00', painScore: 3, stateOptionId: 'state', stateLabel: '旧状態' }
           ]
         };
         const summary = buildVisitSummaryData('2026-02-16', '2026-02-16');
         const text = buildVisitSummaryText(summary);
         assert.match(text, /^Tide Trace 診察用サマリー/);
         assert.equal(text.includes('範囲：2026/02/16〜2026/02/16'), true);
-        assert.equal(text.includes('服薬\\n薬A：合計 1錠 / 1日平均 1.00錠'), true);
-        assert.equal(text.includes('状態別の痛み\\n安静時：記録日数 1日 / 最大 6(1日) / 平均 4.5'), true);
+        assert.equal(text.includes('服薬\\n現在薬A：合計 1錠 / 1日平均 1.00錠'), true);
+        assert.equal(text.includes('状態別の痛み\\n現在状態：記録日数 1日 / 最大 6(1日) / 平均 4.5'), true);
         assert.equal(text.includes('時間帯別の痛み\\n午前：記録日数 1日 / 最大 6(1日) / 平均 4.5'), true);
-        assert.equal(text.includes('服薬前後の痛み変化\\n薬A：対象 1回 / 50%低下 / 前後 6→3'), true);
+        assert.equal(text.includes('服薬前後の痛み変化\\n現在薬A：対象 1回 / 50%低下 / 前後 6→3'), true);
+        assert.equal(text.includes('旧薬A'), false);
+        assert.equal(text.includes('旧状態'), false);
         assert.equal(text.includes('コピー'), false);
         assert.equal(text.includes('テキスト保存'), false);
         assert.equal(visitSummaryTextFilename(summary), 'tide-trace-summary-2026-02-16_2026-02-16.txt');
@@ -1800,7 +1879,7 @@ def test_static_asset_versions_are_current_for_input_header_update() -> None:
 
 def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=23"' in html
+    assert 'src="app.js?v=24"' in html
     assert 'app.js?v=22"' not in html
 
 

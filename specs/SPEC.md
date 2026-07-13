@@ -136,11 +136,13 @@ The visit summary is generated for a selected date range. By default, the end da
 The current summary includes:
 
 - Range and day count.
-- Medication totals and daily averages by medication/unit.
-- Pain summaries by state.
+- Medication totals and daily averages by medication/unit. Medication records with the same `medicationOptionId` are treated as the same medication, while medication totals and medication-dose pain summaries remain separated by unit. Legacy medication records without an option ID are grouped by their saved `medicationLabel`.
+- Pain summaries by state. Pain records with the same `stateOptionId` are treated as the same state. Legacy pain records without an option ID are grouped by their saved `stateLabel`.
 - Pain summaries by time of day.
 - Pain summaries by medication dose grouping.
 - Recorded before-and-after pain-score changes by medication when applicable.
+
+When a current pain-state or medication setting exists for a saved option ID, visit summaries display the current setting label. When the referenced setting no longer exists, visit summaries display the saved snapshot label from the record. Individual record displays keep showing the name saved at the time of recording.
 
 Summary text can be copied or downloaded as a plain text file. Summary wording is intended to be descriptive and non-diagnostic, describing recorded values without assessing treatment effectiveness, causes, or severity.
 
