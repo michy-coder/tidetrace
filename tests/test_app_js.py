@@ -1828,6 +1828,26 @@ def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> No
 
 
 
+
+def test_health_history_import_controls_follow_natural_dom_order_and_label() -> None:
+    html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
+    section_start = html.index('<section class="card health-history-card"')
+    section_end = html.index('</section>', section_start)
+    section = html[section_start:section_end]
+
+    description_index = section.index('記録とヘルスケアデータを日ごとに表示します。')
+    supplemental_index = section.index('今日のデータは対象外です。')
+    columns_index = section.index('id="health-history-columns-panel"')
+    import_label_index = section.index('for="heartwatch-csv-file"')
+    actions_index = section.index('id="health-history-actions"')
+    result_index = section.index('id="health-history-result"')
+
+    assert description_index < supplemental_index < columns_index < import_label_index < actions_index < result_index
+    assert '<summary>表示項目</summary>' in section
+    assert '<label class="file-action-label button-base button-full primary-button" for="heartwatch-csv-file">HeartWatch まとめCSVを読み込む</label>' in section
+    assert '>HeartWatch CSVを読み込む<' not in section
+    assert '<input id="heartwatch-csv-file" class="visually-hidden-file-input" type="file" accept=".csv,text/csv" tabindex="-1">' in section
+
 def test_result_action_print_structure_and_css_regression() -> None:
     root = Path(__file__).parents[1]
     html = (root / "docs" / "index.html").read_text()
@@ -1967,8 +1987,8 @@ def test_static_asset_versions_are_current_for_input_header_update() -> None:
 
 def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=25"' in html
-    assert 'app.js?v=22"' not in html
+    assert 'src="app.js?v=26"' in html
+    assert 'app.js?v=25"' not in html
 
 
 

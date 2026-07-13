@@ -149,13 +149,13 @@
           <summary id="health-history-title">過去の記録とヘルスケアデータ</summary>
           <p>記録とヘルスケアデータを日ごとに表示します。</p>
           <p class="supplemental-text">今日のデータは対象外です。<br>読み込んだデータは保存せず、表示・印刷・コピーにだけ使います。</p>
-          <label class="file-action-label button-base button-full primary-button" for="heartwatch-csv-file">HeartWatch CSVを読み込む</label>
-          <input id="heartwatch-csv-file" class="visually-hidden-file-input" type="file" accept=".csv,text/csv" tabindex="-1">
-          <p id="health-history-message" class="message" role="alert"></p>
           <details id="health-history-columns-panel" class="health-history-columns-panel settings-disclosure">
             <summary>表示項目</summary>
             <div id="health-history-columns-editor"></div>
           </details>
+          <label class="file-action-label button-base button-full primary-button" for="heartwatch-csv-file">HeartWatch まとめCSVを読み込む</label>
+          <input id="heartwatch-csv-file" class="visually-hidden-file-input" type="file" accept=".csv,text/csv" tabindex="-1">
+          <p id="health-history-message" class="message" role="alert"></p>
           <div id="health-history-actions" class="result-actions" aria-label="過去の記録とヘルスケアデータの操作" hidden>
             <button id="copy-health-history-text" class="button-base button-full secondary-button" type="button">テキストをコピー</button>
             <button id="copy-health-history-tsv" class="button-base button-full secondary-button" type="button">TSVをコピー</button>
@@ -282,7 +282,7 @@
     </div>
   </main>
 
-  <script src="app.js?v=25" defer></script>
+  <script src="app.js?v=26" defer></script>
   <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fcd3243fc5f04e899f9d5c8b46a3bc8e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
