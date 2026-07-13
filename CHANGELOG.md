@@ -15,6 +15,7 @@ All notable changes to TideTrace will be documented in this file.
 - Added time-of-day pain summaries to visit summaries, grouping pain records by late night/early morning, morning, afternoon, and night without assessing causes or medication effects.
 
 ### Changed
+- Renamed the visit-summary screen to “記録の集計” and aligned its copy, print, and saved text labels.
 - Moved health-history display settings before CSV import and clarified that the importer accepts HeartWatch summary CSV files.
 - Replaced record-type emojis with reusable line SVG icons and unified management button labels.
 - Updated medication, pain-state, and comparison-period settings to show existing entries first and open add/edit forms only when needed.

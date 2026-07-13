@@ -114,7 +114,8 @@
 
       <section class="card visit-summary-card" aria-labelledby="visit-summary-title">
         <details id="visit-summary-details" class="section-disclosure">
-          <summary id="visit-summary-title">診察用サマリー</summary>
+          <summary id="visit-summary-title">記録の集計</summary>
+          <p>痛みと服薬の記録を、期間を指定して集計します。</p>
           <div id="summary-period-picker"></div>
           <label for="summary-start-date" class="form-field-label">集計開始日</label>
           <input id="summary-start-date" class="form-control-base form-control" type="date">
@@ -131,14 +132,14 @@
           </fieldset>
           <input id="summary-end-date" class="form-control-base form-control" type="date">
           <button id="run-visit-summary" class="button-base button-full primary-button" type="button">集計する</button>
-          <div id="visit-summary-actions" class="result-actions" aria-label="診察用サマリーの操作" hidden>
+          <div id="visit-summary-actions" class="result-actions" aria-label="記録の集計の操作" hidden>
             <button id="copy-visit-summary" class="button-base button-full secondary-button" type="button">コピー</button>
             <button id="save-visit-summary-text" class="button-base button-full secondary-button" type="button">テキスト保存</button>
             <button id="show-visit-summary-print" class="button-base button-full secondary-button result-print-action" type="button">印刷用に表示</button>
           </div>
           <p id="visit-summary-message" class="message" role="alert"></p>
           <div id="visit-summary-print-content" class="print-content">
-            <h2 class="print-only print-document-title" hidden>診察用サマリー</h2>
+            <h2 class="print-only print-document-title" hidden>記録の集計</h2>
             <div id="visit-summary-result"></div>
           </div>
         </details>
@@ -212,7 +213,7 @@
             <input id="medication-default-amount" class="form-control-base form-control" type="number" inputmode="decimal" step="any" value="1" required>
             <label for="medication-unit" class="form-field-label">単位</label>
             <input id="medication-unit" class="form-control-base form-control" type="text" autocomplete="off" placeholder="例：錠、包、回" aria-describedby="medication-unit-help">
-            <p id="medication-unit-help" class="field-help supplemental-text">単位が違う記録は、診察用サマリーで別に集計されます。</p>
+            <p id="medication-unit-help" class="field-help supplemental-text">単位が違う記録は、記録の集計で別に集計されます。</p>
             <label for="medication-sort-order" class="form-field-label">表示順</label>
             <input id="medication-sort-order" class="form-control-base form-control" type="number" inputmode="decimal" step="any" required>
             <label class="checkbox-row" for="medication-active">
@@ -232,7 +233,7 @@
           <p>痛み記録で選ぶ状態名と、表示順を設定できます。</p>
           <p class="supplemental-text">別の状態に変更する場合は、名前を上書きせず、元の状態を非表示にしてから、新しい状態を追加してください。
 
-名前を上書きすると、過去の記録や診察用サマリーの状態別集計が分かりにくくなることがあります。非表示にしても過去の記録は残り、再開するときは表示に戻せます。</p>
+名前を上書きすると、過去の記録や記録の集計の状態別集計が分かりにくくなることがあります。非表示にしても過去の記録は残り、再開するときは表示に戻せます。</p>
           <div id="pain-state-settings-list" class="settings-list-block"></div>
           <button id="open-pain-state-option-form" class="button-base button-full secondary-button settings-add-button" type="button">新しい状態を追加</button>
           <form id="pain-state-option-form" class="settings-form-panel" aria-labelledby="pain-state-option-form-title" hidden>
@@ -282,7 +283,7 @@
     </div>
   </main>
 
-  <script src="app.js?v=26" defer></script>
+  <script src="app.js?v=27" defer></script>
   <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fcd3243fc5f04e899f9d5c8b46a3bc8e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

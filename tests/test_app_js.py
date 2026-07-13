@@ -1726,7 +1726,7 @@ def test_visit_summary_text_uses_shared_summary_data_without_ui_labels() -> None
         };
         const summary = buildVisitSummaryData('2026-02-16', '2026-02-16');
         const text = buildVisitSummaryText(summary);
-        assert.match(text, /^Tide Trace 診察用サマリー/);
+        assert.match(text, /^TideTrace 記録の集計/);
         assert.equal(text.includes('範囲：2026/02/16〜2026/02/16'), true);
         assert.equal(text.includes('服薬\\n現在薬A：合計 1錠 / 1日平均 1.00錠'), true);
         assert.equal(text.includes('状態別の痛み\\n現在状態：記録日数 1日 / 最大 6(1日) / 平均 4.5'), true);
@@ -1736,7 +1736,7 @@ def test_visit_summary_text_uses_shared_summary_data_without_ui_labels() -> None
         assert.equal(text.includes('旧状態'), false);
         assert.equal(text.includes('コピー'), false);
         assert.equal(text.includes('テキスト保存'), false);
-        assert.equal(visitSummaryTextFilename(summary), 'tide-trace-summary-2026-02-16_2026-02-16.txt');
+        assert.equal(visitSummaryTextFilename(summary), 'tidetrace-record-summary-2026-02-16_2026-02-16.txt');
         """
     )
 
@@ -1812,6 +1812,8 @@ def test_visit_summary_copy_and_save_use_current_generated_text_without_rebuildi
         saveVisitSummaryText();
 
         assert.equal(clipboardText, generatedText);
+        assert.equal(clipboardText.startsWith('TideTrace 記録の集計'), true);
+        assert.equal(blobText.startsWith('TideTrace 記録の集計'), true);
         assert.equal(blobText, generatedText);
         })();
         """
@@ -1824,7 +1826,7 @@ def test_visit_summary_actions_are_below_run_button_and_initially_hidden() -> No
     actions_index = html.index('id="visit-summary-actions"')
     result_index = html.index('id="visit-summary-result"')
     assert run_index < actions_index < result_index
-    assert 'id="visit-summary-actions" class="result-actions" aria-label="診察用サマリーの操作" hidden' in html
+    assert 'id="visit-summary-actions" class="result-actions" aria-label="記録の集計の操作" hidden' in html
 
 
 
@@ -1854,14 +1856,16 @@ def test_result_action_print_structure_and_css_regression() -> None:
     css = (root / "docs" / "styles.css").read_text()
     app_js = (root / "docs" / "app.js").read_text()
 
-    assert 'id="visit-summary-actions" class="result-actions" aria-label="診察用サマリーの操作" hidden' in html
+    assert 'id="visit-summary-actions" class="result-actions" aria-label="記録の集計の操作" hidden' in html
     assert 'id="health-history-actions" class="result-actions" aria-label="過去の記録とヘルスケアデータの操作" hidden' in html
     assert '<button id="show-visit-summary-print" class="button-base button-full secondary-button result-print-action" type="button">印刷用に表示</button>' in html
     assert '<button id="show-health-history-print" class="button-base button-full secondary-button result-print-action" type="button">印刷用に表示</button>' in html
     assert html.index('id="copy-visit-summary"') < html.index('id="save-visit-summary-text"') < html.index('id="show-visit-summary-print"')
     assert html.index('id="copy-health-history-text"') < html.index('id="copy-health-history-tsv"') < html.index('id="show-health-history-print"')
     assert 'id="visit-summary-print-content"' in html
-    assert 'class="print-only print-document-title" hidden>診察用サマリー</h2>' in html
+    assert 'class="print-only print-document-title" hidden>記録の集計</h2>' in html
+    assert "showToast('記録の集計をコピーしました');" in app_js
+    assert "showToast('記録の集計を保存しました');" in app_js
     assert 'id="health-history-print-help"' not in html
 
     assert '.result-actions[hidden]' in css
@@ -1987,8 +1991,8 @@ def test_static_asset_versions_are_current_for_input_header_update() -> None:
 
 def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=26"' in html
-    assert 'app.js?v=25"' not in html
+    assert 'src="app.js?v=27"' in html
+    assert 'app.js?v=26"' not in html
 
 
 
@@ -1999,7 +2003,7 @@ def test_disclosure_html_roles_are_explicit_and_existing_relationships_remain() 
 
     assert '<details id="history-details" class="section-disclosure">\n          <summary id="history-title">過去の記録</summary>' in html
     assert '<section class="card history-card" aria-labelledby="history-title">' in html
-    assert '<details id="visit-summary-details" class="section-disclosure">\n          <summary id="visit-summary-title">診察用サマリー</summary>' in html
+    assert '<details id="visit-summary-details" class="section-disclosure">\n          <summary id="visit-summary-title">記録の集計</summary>\n          <p>痛みと服薬の記録を、期間を指定して集計します。</p>' in html
     assert '<section class="card visit-summary-card" aria-labelledby="visit-summary-title">' in html
     assert '<details id="health-history-details" class="section-disclosure">\n          <summary id="health-history-title">過去の記録とヘルスケアデータ</summary>' in html
     assert '<section class="card health-history-card" aria-labelledby="health-history-title">' in html

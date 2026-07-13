@@ -1486,7 +1486,7 @@ function appendVisitSummaryTextSection(lines, heading, rows, emptyText, rowForma
 function buildVisitSummaryText(summary) {
   const data = summary || buildVisitSummaryData(...Object.values(visitSummaryRangeFromControls()));
   const lines = [
-    'Tide Trace 診察用サマリー',
+    'TideTrace 記録の集計',
     `範囲：${formatFullDate(data.startDate)}〜${formatFullDate(data.endDate)}`,
     `日数：${data.days}日`
   ];
@@ -1565,7 +1565,7 @@ async function copyVisitSummary() {
   }
   try {
     await navigator.clipboard.writeText(text);
-    showToast('診察用サマリーをコピーしました');
+    showToast('記録の集計をコピーしました');
   } catch {
     showToast('コピーできませんでした');
   }
@@ -1573,9 +1573,9 @@ async function copyVisitSummary() {
 
 function visitSummaryTextFilename(summary) {
   if (summary && isValidDateString(summary.startDate) && isValidDateString(summary.endDate)) {
-    return `tide-trace-summary-${summary.startDate}_${summary.endDate}.txt`;
+    return `tidetrace-record-summary-${summary.startDate}_${summary.endDate}.txt`;
   }
-  return `tide-trace-summary-${nowParts().localDate}.txt`;
+  return `tidetrace-record-summary-${nowParts().localDate}.txt`;
 }
 
 function saveVisitSummaryText() {
@@ -1593,7 +1593,7 @@ function saveVisitSummaryText() {
     link.href = url;
     link.download = visitSummaryTextFilename(summary);
     link.click();
-    showToast('診察用サマリーを保存しました');
+    showToast('記録の集計を保存しました');
   } catch {
     showToast('テキスト保存できませんでした');
   } finally {
