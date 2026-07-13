@@ -803,17 +803,31 @@ hr {
   font-size: 1.1rem;
 }
 
-.visit-summary-actions {
-  display: flex;
-  flex-wrap: wrap;
+.result-actions {
+  display: grid;
   gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   margin: 8px 0 12px;
 }
 
-.visit-summary-actions button {
-  flex: 1 1 9rem;
+.result-actions[hidden] {
+  display: none;
+}
+
+.result-actions button {
   margin: 0;
   min-height: 44px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.result-print-action {
+  grid-column: 1 / -1;
+}
+
+.print-only {
+  display: none;
 }
 
 .summary-end-mode {
@@ -939,18 +953,124 @@ hr {
 }
 
 @media print {
-  body.health-history-print-mode .card:not(.health-history-card),
+  body.visit-summary-print-mode,
+  body.health-history-print-mode {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body.visit-summary-print-mode .app-header,
   body.health-history-print-mode .app-header,
-  body.health-history-print-mode .notice:not(.health-history-card) {
+  body.visit-summary-print-mode #toast-feedback,
+  body.health-history-print-mode #toast-feedback,
+  body.visit-summary-print-mode #edit-event-panel,
+  body.health-history-print-mode #edit-event-panel,
+  body.visit-summary-print-mode .result-actions,
+  body.health-history-print-mode .result-actions {
     display: none !important;
   }
 
+  body.visit-summary-print-mode main,
+  body.health-history-print-mode main {
+    margin: 0;
+    max-width: none;
+    padding: 0;
+  }
+
+  body.visit-summary-print-mode .card:not(.visit-summary-card),
+  body.health-history-print-mode .card:not(.health-history-card) {
+    display: none !important;
+  }
+
+  body.visit-summary-print-mode .visit-summary-card,
   body.health-history-print-mode .health-history-card {
+    background: #fff !important;
+    border: 0;
+    border-radius: 0;
     box-shadow: none;
+    color: #000 !important;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  body.visit-summary-print-mode #visit-summary-details > summary,
+  body.visit-summary-print-mode #summary-period-picker,
+  body.visit-summary-print-mode label[for="summary-start-date"],
+  body.visit-summary-print-mode #summary-start-date,
+  body.visit-summary-print-mode .summary-end-mode,
+  body.visit-summary-print-mode #summary-end-date,
+  body.visit-summary-print-mode #run-visit-summary,
+  body.visit-summary-print-mode #visit-summary-message,
+  body.health-history-print-mode #health-history-details > summary,
+  body.health-history-print-mode #health-history-details > p,
+  body.health-history-print-mode .file-action-label,
+  body.health-history-print-mode #heartwatch-csv-file,
+  body.health-history-print-mode #health-history-message,
+  body.health-history-print-mode #health-history-columns-panel,
+  body.health-history-print-mode #health-history-result .visit-summary-notice,
+  body.health-history-print-mode #health-history-result .empty {
+    display: none !important;
+  }
+
+  body.visit-summary-print-mode .print-only {
+    display: block;
+  }
+
+  body.visit-summary-print-mode .print-document-title,
+  body.health-history-print-mode #health-history-result h3 {
+    break-after: avoid;
+    color: #000 !important;
+  }
+
+  body.visit-summary-print-mode #visit-summary-print-content,
+  body.visit-summary-print-mode #visit-summary-result,
+  body.health-history-print-mode #health-history-print-content,
+  body.health-history-print-mode #health-history-result {
+    background: #fff !important;
+    color: #000 !important;
+    display: block;
+    width: 100%;
+  }
+
+  body.visit-summary-print-mode .visit-summary-result-block,
+  body.health-history-print-mode .visit-summary-result-block {
+    background: #fff !important;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: #000 !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  body.visit-summary-print-mode .visit-summary-result-block h3,
+  body.visit-summary-print-mode .visit-summary-dose-pain-item > summary {
+    break-after: avoid;
+  }
+
+  body.visit-summary-print-mode .visit-summary-medication-item,
+  body.visit-summary-print-mode .visit-summary-state-pain-item,
+  body.visit-summary-print-mode .visit-summary-pain-change-item,
+  body.visit-summary-print-mode .visit-summary-dose-pain-row {
+    break-inside: avoid;
   }
 
   body.health-history-print-mode .health-history-table-wrap {
     overflow: visible;
+  }
+
+  body.health-history-print-mode .health-history-table {
+    color: #000 !important;
+    width: 100%;
+  }
+
+  body.health-history-print-mode .health-history-table thead {
+    display: table-header-group;
+  }
+
+  body.health-history-print-mode .health-history-table tr {
+    break-inside: avoid;
   }
 }
 

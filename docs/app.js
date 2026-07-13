@@ -1744,8 +1744,73 @@ function buildHealthHistoryText(rows) { const columns = selectedHealthHistoryCol
 function buildHealthHistoryTsv(rows) { const columns = selectedHealthHistoryColumns(); return [columns.map((column) => column.shortLabel).join('\t'), ...rows.map((row) => healthHistoryValues(row, columns).join('\t'))].join('\n'); }
 async function copyHealthHistoryText() { if (!currentHealthHistoryRows.length || !navigator.clipboard) return showToast('コピーできませんでした'); try { await navigator.clipboard.writeText(buildHealthHistoryText(currentHealthHistoryRows)); showToast('テキストをコピーしました'); } catch { showToast('コピーできませんでした'); } }
 async function copyHealthHistoryTsv() { if (!currentHealthHistoryRows.length || !navigator.clipboard) return showToast('コピーできませんでした'); try { await navigator.clipboard.writeText(buildHealthHistoryTsv(currentHealthHistoryRows)); showToast('TSVをコピーしました'); } catch { showToast('コピーできませんでした'); } }
-function showHealthHistoryPrint() { if (!currentHealthHistoryRows.length) return; $('health-history-print-help').hidden = false; $('health-history-details').open = true; document.body.classList.add('health-history-print-mode'); window.print(); }
-function handleHeartWatchCsvSelected(event) { const input = event.target; const file = input.files && input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { const parsed = parseHeartWatchCsv(String(reader.result)); const message = $('health-history-message'); message.textContent = ''; message.classList.remove('error'); currentHealthHistoryRows = []; currentHeartWatchData = null; $('health-history-actions').hidden = true; if (parsed.error) { message.textContent = 'HeartWatch CSVとして読み込めませんでした。'; message.classList.add('error'); $('health-history-result').innerHTML = ''; } else { currentHeartWatchData = parsed.data; currentHealthHistoryRows = buildHealthHistoryRows(parsed.data); renderHealthHistoryRows(currentHealthHistoryRows, hasMissingHeartWatchDates(currentHealthHistoryRows, parsed.data)); showToast('HeartWatch CSVを読み込みました'); } input.value = ''; }; reader.onerror = () => { $('health-history-message').textContent = 'HeartWatch CSVとして読み込めませんでした。'; $('health-history-message').classList.add('error'); input.value = ''; }; reader.readAsText(file); }
+function clearPrintModes() {
+  document.body.classList.remove('visit-summary-print-mode', 'health-history-print-mode');
+}
+
+function printResultView(modeClass, detailsId) {
+  clearPrintModes();
+  const details = $(detailsId);
+  if (details) details.open = true;
+  document.body.classList.add(modeClass);
+  const clearMode = () => clearPrintModes();
+  window.addEventListener('afterprint', clearMode, { once: true });
+  try {
+    window.print();
+  } catch (error) {
+    clearMode();
+  }
+}
+
+function showVisitSummaryPrint() {
+  if (!currentVisitSummaryDataForAction() || !currentVisitSummaryTextForAction()) return;
+  printResultView('visit-summary-print-mode', 'visit-summary-details');
+}
+
+function showHealthHistoryPrint() {
+  if (!currentHealthHistoryRows.length) return;
+  printResultView('health-history-print-mode', 'health-history-details');
+}
+function resetHealthHistoryResult() {
+  currentHealthHistoryRows = [];
+  currentHeartWatchData = null;
+  $('health-history-actions').hidden = true;
+  $('health-history-result').innerHTML = '';
+}
+
+function handleHeartWatchCsvSelected(event) {
+  const input = event.target;
+  const file = input.files && input.files[0];
+  if (!file) return;
+  resetHealthHistoryResult();
+  const message = $('health-history-message');
+  message.textContent = '';
+  message.classList.remove('error');
+  const reader = new FileReader();
+  reader.onload = () => {
+    const parsed = parseHeartWatchCsv(String(reader.result));
+    message.textContent = '';
+    message.classList.remove('error');
+    if (parsed.error) {
+      message.textContent = 'HeartWatch CSVとして読み込めませんでした。';
+      message.classList.add('error');
+      resetHealthHistoryResult();
+    } else {
+      currentHeartWatchData = parsed.data;
+      currentHealthHistoryRows = buildHealthHistoryRows(parsed.data);
+      renderHealthHistoryRows(currentHealthHistoryRows, hasMissingHeartWatchDates(currentHealthHistoryRows, parsed.data));
+      showToast('HeartWatch CSVを読み込みました');
+    }
+    input.value = '';
+  };
+  reader.onerror = () => {
+    message.textContent = 'HeartWatch CSVとして読み込めませんでした。';
+    message.classList.add('error');
+    resetHealthHistoryResult();
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
 
 function setSettingsFormPanelState(formId, addButtonId, isOpen, focusId = null) {
   const form = $(formId);
@@ -2801,6 +2866,7 @@ function wireEvents() {
   $('run-visit-summary').addEventListener('click', runVisitSummary);
   $('copy-visit-summary').addEventListener('click', copyVisitSummary);
   $('save-visit-summary-text').addEventListener('click', saveVisitSummaryText);
+  $('show-visit-summary-print').addEventListener('click', showVisitSummaryPrint);
   $('heartwatch-csv-file').addEventListener('change', handleHeartWatchCsvSelected);
   $('copy-health-history-text').addEventListener('click', copyHealthHistoryText);
   $('copy-health-history-tsv').addEventListener('click', copyHealthHistoryTsv);
