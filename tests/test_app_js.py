@@ -1113,7 +1113,13 @@ def test_management_button_labels_are_unified() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
     assert 'バックアップを書き出す' in html
     assert 'バックアップから読み込む' in html
+    assert '<label for="csv-export-type" class="form-field-label">書き出す内容</label>' in html
+    assert '<label for="csv-export-type" class="form-field-label">CSV書き出し</label>' not in html
     assert 'CSVを書き出す' in html
+    assert '<option value="all">全記録</option>' in html
+    assert '<option value="pain">痛みのみ</option>' in html
+    assert '<option value="medication">服薬のみ</option>' in html
+    assert '<option value="note">メモのみ</option>' in html
     assert 'バックアップを書き出し</button>' not in html
     assert 'バックアップから読み込み</button>' not in html
 
@@ -1583,8 +1589,8 @@ def test_history_daily_summary_rows_use_accessible_icons_and_commas() -> None:
         global.document = { createElement: makeElement, createElementNS(ns, tag) { return makeElement(tag); } };
         appData = { settings: { medicationOptions: [] }, periods: [], events: [] };
         const summary = buildDailySummary([
-          { id: 'p1', type: 'pain', localDate: '2026-07-11', localTime: '09:00', painScore: 9 },
-          { id: 'p2', type: 'pain', localDate: '2026-07-11', localTime: '12:00', painScore: 2 },
+          { id: 'p1', type: 'pain', localDate: '2026-07-11', localTime: '09:00', painScore: 10 },
+          { id: 'p2', type: 'pain', localDate: '2026-07-11', localTime: '12:00', painScore: 4 },
           { id: 'm1', type: 'medication', localDate: '2026-07-11', localTime: '10:00', medicationLabel: 'Dummy A', amount: 2, unit: '錠' },
           { id: 'm2', type: 'medication', localDate: '2026-07-11', localTime: '11:00', medicationLabel: 'Dummy B', amount: 3, unit: '錠' },
           { id: 'n1', type: 'note', localDate: '2026-07-11', localTime: '08:00', note: 'Dummy note' },
@@ -1598,7 +1604,8 @@ def test_history_daily_summary_rows_use_accessible_icons_and_commas() -> None:
         assert.deepEqual(rows.map((row) => row.queryByClass('visually-hidden').textContent), ['痛み', '服薬', 'メモ']);
         assert.deepEqual(rows.map((row) => row.queryByClass('history-summary-icon').tag), ['svg', 'svg', 'svg']);
         assert.deepEqual(rows.map((row) => row.queryByClass('history-summary-icon').getAttribute('aria-hidden')), ['true', 'true', 'true']);
-        assert.equal(rows[0].queryByClass('history-summary-text').textContent, '最大9、平均5.5');
+        assert.equal(rows[0].queryByClass('history-summary-text').textContent, '平均7.0、最大10');
+        assert.notEqual(rows[0].queryByClass('history-summary-text').textContent, '最大10、平均7.0');
         assert.equal(rows[1].queryByClass('history-summary-text').textContent, 'Dummy A2錠、Dummy B3錠');
         assert.equal(rows[2].queryByClass('history-summary-text').textContent, 'Dummy note、ほか2件');
         assert.equal(container.allText().includes(' / '), false);
@@ -1614,8 +1621,8 @@ def test_history_summary_copy_text_uses_range_data_and_omits_details() -> None:
           settings: { medicationOptions: [] }, periods: [],
           events: [
             { id: 'out', type: 'note', localDate: '2026-07-04', localTime: '09:00', note: 'outside' },
-            { id: 'p1', type: 'pain', localDate: '2026-07-11', localTime: '09:00', painScore: 9 },
-            { id: 'p2', type: 'pain', localDate: '2026-07-11', localTime: '12:00', painScore: 2 },
+            { id: 'p1', type: 'pain', localDate: '2026-07-11', localTime: '09:00', painScore: 10 },
+            { id: 'p2', type: 'pain', localDate: '2026-07-11', localTime: '12:00', painScore: 4 },
             { id: 'm1', type: 'medication', localDate: '2026-07-11', localTime: '10:00', medicationLabel: 'Dummy A', amount: 2, unit: '錠' },
             { id: 'm2', type: 'medication', localDate: '2026-07-11', localTime: '11:00', medicationLabel: 'Dummy B', amount: 3, unit: '錠' },
             { id: 'n1', type: 'note', localDate: '2026-07-11', localTime: '08:00', note: 'Dummy note' },
@@ -1632,13 +1639,14 @@ def test_history_summary_copy_text_uses_range_data_and_omits_details() -> None:
           '表示範囲：2026/07/10〜2026/07/11',
           '',
           '7/11 土',
-          '痛み：最大9、平均5.5',
+          '痛み：平均7.0、最大10',
           '服薬：Dummy A2錠、Dummy B3錠',
           'メモ：Dummy note、ほか2件',
           '',
           '7/10 金',
           'メモ：Only note'
         ].join('\n'));
+        assert.equal(text.includes('最大10、平均7.0'), false);
         assert.equal(text.includes('/ '), false);
         assert.equal(text.includes('outside'), false);
         assert.equal(text.endsWith('\n'), false);
@@ -2023,9 +2031,9 @@ def test_static_asset_versions_are_current_for_input_header_update() -> None:
     assert 'styles.css?v=23' not in html
 
 
-def test_app_js_asset_version_is_current_for_medication_button_update() -> None:
+def test_app_js_asset_version_is_current_for_past_record_summary_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=28"' in html
+    assert 'src="app.js?v=29"' in html
     assert 'app.js?v=26"' not in html
 
 
