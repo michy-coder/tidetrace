@@ -109,6 +109,30 @@ h1, h2, h3 { margin: 0 0 10px; }
 
 p { margin: 0 0 10px; }
 
+.nav-icon-sprite {
+  display: none;
+}
+
+.section-title-label {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.5rem;
+  min-width: 0;
+  vertical-align: top;
+}
+
+.section-title-icon {
+  color: color-mix(in srgb, var(--text) 72%, var(--text-muted));
+  flex: 0 0 auto;
+  fill: none;
+  height: 1.15em;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+  width: 1.15em;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);

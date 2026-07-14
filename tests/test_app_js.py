@@ -2025,10 +2025,10 @@ def test_last_medication_css_is_compact_without_note_button_changes() -> None:
     assert 'margin-top: 10px;' in note_block
     assert 'padding: 10px 14px;' in note_block
 
-def test_static_asset_versions_are_current_for_input_header_update() -> None:
+def test_static_asset_versions_are_current_for_fixed_menu_icon_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=26"' in html
-    assert 'styles.css?v=23' not in html
+    assert 'href="styles.css?v=27"' in html
+    assert 'styles.css?v=26"' not in html
 
 
 def test_app_js_asset_version_is_current_for_past_record_summary_update() -> None:
@@ -2043,11 +2043,11 @@ def test_app_js_asset_version_is_current_for_past_record_summary_update() -> Non
 def test_disclosure_html_roles_are_explicit_and_existing_relationships_remain() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
 
-    assert '<details id="history-details" class="section-disclosure">\n          <summary id="history-title">過去の記録</summary>' in html
+    assert '<details id="history-details" class="section-disclosure">\n          <summary id="history-title"><span class="section-title-label"><svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-record-history"></use></svg>過去の記録</span></summary>' in html
     assert '<section class="card history-card" aria-labelledby="history-title">' in html
-    assert '<details id="visit-summary-details" class="section-disclosure">\n          <summary id="visit-summary-title">記録の集計</summary>\n          <p>痛みと服薬の記録を、期間を指定して集計します。</p>' in html
+    assert '<details id="visit-summary-details" class="section-disclosure">\n          <summary id="visit-summary-title"><span class="section-title-label"><svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-record-summary"></use></svg>記録の集計</span></summary>\n          <p>痛みと服薬の記録を、期間を指定して集計します。</p>' in html
     assert '<section class="card visit-summary-card" aria-labelledby="visit-summary-title">' in html
-    assert '<details id="health-history-details" class="section-disclosure">\n          <summary id="health-history-title">過去の記録とヘルスケアデータ</summary>' in html
+    assert '<details id="health-history-details" class="section-disclosure">\n          <summary id="health-history-title"><span class="section-title-label"><svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-record-health"></use></svg>過去の記録とヘルスケアデータ</span></summary>' in html
     assert '<section class="card health-history-card" aria-labelledby="health-history-title">' in html
     assert '<details id="health-history-columns-panel" class="health-history-columns-panel settings-disclosure">\n            <summary>表示項目</summary>' in html
     assert '<details class="medication-settings settings-disclosure">\n          <summary id="medication-settings-title"><span id="medication-settings-summary">薬設定</span></summary>' in html
