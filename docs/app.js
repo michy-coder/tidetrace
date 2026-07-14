@@ -2425,7 +2425,7 @@ function dailySummaryPainText(summary) {
   if (!summary.painScores.length) return '';
   const max = Math.max(...summary.painScores);
   const average = summary.painScores.reduce((total, score) => total + score, 0) / summary.painScores.length;
-  return `最大${max}、平均${average.toFixed(1)}`;
+  return `平均${average.toFixed(1)}、最大${max}`;
 }
 
 function dailySummaryMedicationText(summary) {
