@@ -2050,9 +2050,12 @@ def test_disclosure_html_roles_are_explicit_and_existing_relationships_remain() 
     assert '<details id="health-history-details" class="section-disclosure">\n          <summary id="health-history-title"><span class="section-title-label"><svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-record-health"></use></svg>過去の記録とヘルスケアデータ</span></summary>' in html
     assert '<section class="card health-history-card" aria-labelledby="health-history-title">' in html
     assert '<details id="health-history-columns-panel" class="health-history-columns-panel settings-disclosure">\n            <summary>表示項目</summary>' in html
-    assert '<details class="medication-settings settings-disclosure">\n          <summary id="medication-settings-title"><span id="medication-settings-summary">薬設定</span></summary>' in html
-    assert '<details class="pain-state-settings settings-disclosure">\n          <summary id="pain-state-settings-title"><span id="pain-state-settings-summary">痛み状態設定</span></summary>' in html
-    assert '<details class="comparison-period-settings settings-disclosure">\n          <summary id="comparison-period-title"><span id="comparison-period-summary">体調比較用期間の設定</span></summary>' in html
+    assert '<details class="medication-settings settings-disclosure">\n          <summary id="medication-settings-title"><span class="settings-summary-label"><svg class="settings-summary-icon" aria-hidden="true" focusable="false"><use href="#icon-medication-settings"></use></svg><span id="medication-settings-summary">薬設定</span></span></summary>' in html
+    assert '<details class="pain-state-settings settings-disclosure">\n          <summary id="pain-state-settings-title"><span class="settings-summary-label"><svg class="settings-summary-icon" aria-hidden="true" focusable="false"><use href="#icon-pain-settings"></use></svg><span id="pain-state-settings-summary">痛み状態設定</span></span></summary>' in html
+    assert '<details class="comparison-period-settings settings-disclosure">\n          <summary id="comparison-period-title"><span class="settings-summary-label"><svg class="settings-summary-icon" aria-hidden="true" focusable="false"><use href="#icon-period-settings"></use></svg><span id="comparison-period-summary">体調比較用期間の設定</span></span></summary>' in html
+    assert '<symbol id="icon-medication-settings" viewBox="0 0 24 24">' in html
+    assert '<symbol id="icon-pain-settings" viewBox="0 0 24 24">' in html
+    assert '<symbol id="icon-period-settings" viewBox="0 0 24 24">' in html
 
 
 def test_disclosure_css_uses_role_selectors_without_global_summary_rule() -> None:

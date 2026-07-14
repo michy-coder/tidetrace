@@ -121,16 +121,26 @@ p { margin: 0 0 10px; }
   vertical-align: top;
 }
 
-.section-title-icon {
+.section-title-icon,
+.settings-summary-icon {
   color: color-mix(in srgb, var(--text) 72%, var(--text-muted));
   flex: 0 0 auto;
   fill: none;
-  height: 1.15em;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.section-title-icon {
+  height: 1.15em;
   stroke-width: 1.7;
   width: 1.15em;
+}
+
+.settings-summary-icon {
+  height: 1.05em;
+  stroke-width: 1.8;
+  width: 1.05em;
 }
 
 .card {
@@ -708,6 +718,14 @@ hr {
 
 .settings-disclosure {
   margin-bottom: 14px;
+}
+
+.settings-summary-label {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.45rem;
+  min-width: 0;
+  vertical-align: top;
 }
 
 .settings-disclosure > summary {
