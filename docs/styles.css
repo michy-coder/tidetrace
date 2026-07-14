@@ -583,7 +583,14 @@ hr {
   align-self: flex-start;
   display: inline-flex;
   flex: 0 0 auto;
-  gap: 0.3rem;
+  gap: 0.5rem;
+}
+
+.event-actions .button-icon {
+  height: 44px;
+  min-height: 44px;
+  min-width: 44px;
+  width: 44px;
 }
 
 .edit-event-button {

@@ -350,6 +350,8 @@ def test_event_row_css_wraps_body_without_truncation() -> None:
     body_block = re.search(r"\.event-body \{(?P<body>[^}]+)\}", css).group('body')
     time_block = re.search(r"\.event-time \{(?P<body>[^}]+)\}", css).group('body')
     type_block = re.search(r"\.event-type \{(?P<body>[^}]+)\}", css).group('body')
+    actions_block = re.search(r"\.event-actions \{(?P<body>[^}]+)\}", css).group('body')
+    action_icon_block = re.search(r"\.event-actions \.button-icon \{(?P<body>[^}]+)\}", css).group('body')
 
     assert 'display: grid;' in event_block
     assert 'grid-template-columns: auto auto minmax(0, 1fr) auto;' in event_block
@@ -361,6 +363,11 @@ def test_event_row_css_wraps_body_without_truncation() -> None:
     assert 'line-clamp' not in body_block
     assert 'white-space: nowrap;' in time_block
     assert 'white-space: nowrap;' in type_block
+    assert 'gap: 0.5rem;' in actions_block
+    assert 'height: 44px;' in action_icon_block
+    assert 'min-height: 44px;' in action_icon_block
+    assert 'min-width: 44px;' in action_icon_block
+    assert 'width: 44px;' in action_icon_block
 
 
 def test_unedited_exported_backup_import_replaces_storage_and_preserves_data() -> None:
