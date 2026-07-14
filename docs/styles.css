@@ -586,11 +586,11 @@ hr {
   gap: 0.5rem;
 }
 
-.event-actions .button-icon {
-  height: 44px;
-  min-height: 44px;
-  min-width: 44px;
-  width: 44px;
+.event .event-actions .button-icon {
+  height: 32px;
+  min-height: 32px;
+  min-width: 32px;
+  width: 32px;
 }
 
 .edit-event-button {

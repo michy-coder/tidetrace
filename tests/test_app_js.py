@@ -364,10 +364,19 @@ def test_event_row_css_wraps_body_without_truncation() -> None:
     assert 'white-space: nowrap;' in time_block
     assert 'white-space: nowrap;' in type_block
     assert 'gap: 0.5rem;' in actions_block
-    assert 'height: 44px;' in action_icon_block
-    assert 'min-height: 44px;' in action_icon_block
-    assert 'min-width: 44px;' in action_icon_block
-    assert 'width: 44px;' in action_icon_block
+    assert 'height: 32px;' in action_icon_block
+    assert 'min-height: 32px;' in action_icon_block
+    assert 'min-width: 32px;' in action_icon_block
+    assert 'width: 32px;' in action_icon_block
+    assert '::before' not in action_icon_block
+    assert '::after' not in action_icon_block
+    assert 'margin' not in action_icon_block
+    assert 'position' not in action_icon_block
+    assert 'z-index' not in action_icon_block
+
+    global_icon_block = re.search(r"\.button-icon \{(?P<body>[^}]+)\}", css).group('body')
+    assert 'height: 32px;' not in global_icon_block
+    assert 'width: 32px;' not in global_icon_block
 
 
 def test_unedited_exported_backup_import_replaces_storage_and_preserves_data() -> None:
@@ -445,6 +454,50 @@ def test_unedited_exported_backup_import_replaces_storage_and_preserves_data() -
         assert.equal(appData.events[1].painScore, 3);
         assert.equal(appData.periods[0].label, 'Compare');
         assert.equal(appData.settings.lastJsonExportedAtUtc, '2026-06-19T00:00:00.000Z');
+        """
+    )
+
+
+def test_delete_event_requires_confirmation_and_cancel_keeps_record() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = { events: [{ id: 'keep' }, { id: 'delete' }], settings: {}, periods: [] };
+        let confirmCalls = 0;
+        global.confirm = (message) => {
+          confirmCalls += 1;
+          assert.equal(message, 'この記録を削除しますか？');
+          return false;
+        };
+        saveData = () => { throw new Error('saveData should not run when deletion is canceled'); };
+        render = () => { throw new Error('render should not run when deletion is canceled'); };
+
+        deleteEvent('delete');
+
+        assert.equal(confirmCalls, 1);
+        assert.deepEqual(appData.events.map((event) => event.id), ['keep', 'delete']);
+        """
+    )
+
+
+def test_delete_event_removes_record_after_confirmation() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        appData = { events: [{ id: 'keep' }, { id: 'delete' }], settings: {}, periods: [] };
+        let saved = false;
+        let rendered = false;
+        global.confirm = () => true;
+        saveData = () => { saved = true; };
+        render = () => { rendered = true; };
+        lastSavedEventId = 'delete';
+        clearSaveFeedback = () => {};
+
+        deleteEvent('delete');
+
+        assert.deepEqual(appData.events.map((event) => event.id), ['keep']);
+        assert.equal(saved, true);
+        assert.equal(rendered, true);
         """
     )
 
@@ -2034,8 +2087,8 @@ def test_last_medication_css_is_compact_without_note_button_changes() -> None:
 
 def test_static_asset_versions_are_current_for_fixed_menu_icon_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=27"' in html
-    assert 'styles.css?v=26"' not in html
+    assert 'href="styles.css?v=28"' in html
+    assert 'styles.css?v=27"' not in html
 
 
 def test_app_js_asset_version_is_current_for_past_record_summary_update() -> None:
@@ -2046,6 +2099,27 @@ def test_app_js_asset_version_is_current_for_past_record_summary_update() -> Non
 
 
 
+
+
+def test_record_health_icon_is_table_only_and_other_section_icons_stay_unchanged() -> None:
+    html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
+    symbol_match = re.search(r'<symbol id="icon-record-health" viewBox="0 0 24 24">(?P<body>.*?)</symbol>', html, re.S)
+    assert symbol_match
+    body = symbol_match.group('body')
+
+    assert '<rect x="4.8" y="5.2" width="14.4" height="13.6" rx="1.8" />' in body
+    assert 'M4.8 9.3h14.4' in body
+    assert 'M9.6 5.2v13.6' in body
+    assert 'M14.4 5.2v13.6' in body
+    assert 'M6.7 14.8h2l1-2.1 1.8 4.1 1.6-3h1.6l1-1.5 1.7 2.5' not in body
+    assert not re.search(r'<(?:circle|polyline|polygon)\b', body)
+    assert 'use href="#icon-record-health"' in html
+    assert '<svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-record-health"></use></svg>' in html
+
+    assert '<symbol id="icon-record-today" viewBox="0 0 24 24">\n      <rect x="5.5" y="4.5" width="10.5" height="15" rx="2" />' in html
+    assert '<symbol id="icon-record-history" viewBox="0 0 24 24">\n      <circle cx="9.2" cy="12" r="5.2" />' in html
+    assert '<symbol id="icon-record-summary" viewBox="0 0 24 24">\n      <path d="M5 19h14" />' in html
+    assert '<symbol id="icon-management" viewBox="0 0 24 24">' in html
 
 def test_disclosure_html_roles_are_explicit_and_existing_relationships_remain() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
