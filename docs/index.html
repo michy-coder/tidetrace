@@ -10,9 +10,38 @@
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <link rel="manifest" href="./site.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=26">
+  <link rel="stylesheet" href="styles.css?v=27">
 </head>
 <body>
+  <svg class="nav-icon-sprite" aria-hidden="true" focusable="false" width="0" height="0">
+    <symbol id="icon-record-today" viewBox="0 0 24 24">
+      <path d="M7.5 4.6h7l3 3.1v10.1a1.9 1.9 0 0 1-1.9 1.9H7.5a1.9 1.9 0 0 1-1.9-1.9V6.5a1.9 1.9 0 0 1 1.9-1.9z" />
+      <path d="M14.4 4.8v3.1h3" />
+      <path d="M8.8 11.2h4.2M8.8 14h3" />
+      <path d="M13.9 16.8l3.3-3.3 1.2 1.2-3.3 3.3-1.7.5.5-1.7z" />
+    </symbol>
+    <symbol id="icon-record-history" viewBox="0 0 24 24">
+      <path d="M7.3 4.6h7.2l3 3.1v10.1a1.9 1.9 0 0 1-1.9 1.9H7.3a1.9 1.9 0 0 1-1.9-1.9V6.5a1.9 1.9 0 0 1 1.9-1.9z" />
+      <path d="M14.4 4.8v3.1h3" />
+      <path d="M9 11.2h5.6M9 14.2h5.6M9 17.2h3.8" />
+      <path d="M6.6 9.7a4.2 4.2 0 0 0-2.1 3.7" />
+      <path d="M3.5 12.1l1 1.5 1.5-1" />
+    </symbol>
+    <symbol id="icon-record-summary" viewBox="0 0 24 24">
+      <path d="M5 18.8h14" />
+      <path d="M7.2 15.9v-4.2M12 15.9V7.8M16.8 15.9v-6" />
+      <path d="M6.3 5.2h11.4a1.6 1.6 0 0 1 1.6 1.6v10.4a1.6 1.6 0 0 1-1.6 1.6H6.3a1.6 1.6 0 0 1-1.6-1.6V6.8a1.6 1.6 0 0 1 1.6-1.6z" />
+    </symbol>
+    <symbol id="icon-record-health" viewBox="0 0 24 24">
+      <path d="M7.2 4.6h7.1l3 3.1v10.1a1.9 1.9 0 0 1-1.9 1.9H7.2a1.9 1.9 0 0 1-1.9-1.9V6.5a1.9 1.9 0 0 1 1.9-1.9z" />
+      <path d="M14.2 4.8v3.1h3" />
+      <path d="M8.6 11.3h7M8.6 14.2h7M8.6 17.1h7M11.9 11.3v5.8" />
+    </symbol>
+    <symbol id="icon-management" viewBox="0 0 24 24">
+      <path d="M10.1 4.7h3.8l.5 2a6.3 6.3 0 0 1 1.5.9l2-.6 1.9 3.2-1.5 1.4a6.4 6.4 0 0 1 0 1.8l1.5 1.4-1.9 3.2-2-.6a6.3 6.3 0 0 1-1.5.9l-.5 2h-3.8l-.5-2a6.3 6.3 0 0 1-1.5-.9l-2 .6-1.9-3.2 1.5-1.4a6.4 6.4 0 0 1 0-1.8l-1.5-1.4L6.1 7l2 .6a6.3 6.3 0 0 1 1.5-.9l.5-2z" />
+      <circle cx="12" cy="12.5" r="2.4" />
+    </symbol>
+  </svg>
   <header class="app-header">
     <div class="brand-logo" aria-hidden="true">
       <img class="brand-logo-mark" src="icon.svg" alt="" width="72" height="72">
@@ -101,20 +130,20 @@
       </section>
 
       <section class="card" aria-labelledby="today-title">
-        <h2 id="today-title">今日の記録</h2>
+        <h2 id="today-title"><span class="section-title-label"><svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-record-today"></use></svg>今日の記録</span></h2>
         <div id="today-list"></div>
       </section>
 
       <section class="card history-card" aria-labelledby="history-title">
         <details id="history-details" class="section-disclosure">
-          <summary id="history-title">過去の記録</summary>
+          <summary id="history-title"><span class="section-title-label"><svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-record-history"></use></svg>過去の記録</span></summary>
           <div id="history-list"></div>
         </details>
       </section>
 
       <section class="card visit-summary-card" aria-labelledby="visit-summary-title">
         <details id="visit-summary-details" class="section-disclosure">
-          <summary id="visit-summary-title">記録の集計</summary>
+          <summary id="visit-summary-title"><span class="section-title-label"><svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-record-summary"></use></svg>記録の集計</span></summary>
           <p>痛みと服薬の記録を、期間を指定して集計します。</p>
           <div id="summary-period-picker"></div>
           <label for="summary-start-date" class="form-field-label">集計開始日</label>
@@ -147,7 +176,7 @@
 
       <section class="card health-history-card" aria-labelledby="health-history-title">
         <details id="health-history-details" class="section-disclosure">
-          <summary id="health-history-title">過去の記録とヘルスケアデータ</summary>
+          <summary id="health-history-title"><span class="section-title-label"><svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-record-health"></use></svg>過去の記録とヘルスケアデータ</span></summary>
           <p>記録とヘルスケアデータを日ごとに表示します。</p>
           <p class="supplemental-text">今日のデータは対象外です。<br>読み込んだデータは保存せず、表示・印刷・コピーにだけ使います。</p>
           <details id="health-history-columns-panel" class="health-history-columns-panel settings-disclosure">
@@ -175,7 +204,7 @@
       </section>
 
       <section class="card management" aria-labelledby="manage-title">
-        <h2 id="manage-title">管理</h2>
+        <h2 id="manage-title"><span class="section-title-label"><svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-management"></use></svg>管理</span></h2>
 
         <div class="export-status" aria-live="polite">
           <p>最終バックアップ：<span id="last-json-exported-at"></span></p>
