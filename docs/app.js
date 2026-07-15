@@ -1101,11 +1101,11 @@ function medicationSummaryMetrics(row, days) {
 }
 
 function painSummaryMetrics(row) {
-  return [`記録日数 ${row.recordDays}日`, `平均 ${row.averagePain.toFixed(1)}`, `最大 ${formatPainValue(row.maxPain)}${formatMaxPainDays(row.maxPainDays)}`];
+  return [`記録 ${row.recordDays}日`, `平均 ${row.averagePain.toFixed(1)}`, `最大 ${formatPainValue(row.maxPain)}${formatMaxPainDays(row.maxPainDays)}`];
 }
 
 function dosePainMetrics(group) {
-  return [`日数 ${group.targetDays}日（うち痛み記録 ${group.painDays}日）`, `平均 ${formatAveragePain(group)}`, `最大 ${formatPainValue(group.maxPain)}${formatMaxPainDays(group.maxPainDays)}`];
+  return [`${group.targetDays}日（痛み記録 ${group.painDays}日）`, `平均 ${formatAveragePain(group)}`, `最大 ${formatPainValue(group.maxPain)}${formatMaxPainDays(group.maxPainDays)}`];
 }
 
 function painChangeMetrics(row) {
