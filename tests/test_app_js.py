@@ -1173,9 +1173,11 @@ def test_management_button_labels_are_unified() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
     assert 'バックアップを書き出す' in html
     assert 'バックアップから読み込む' in html
-    assert '<label for="csv-export-type" class="form-field-label">書き出す内容</label>' in html
+    assert '<label for="csv-export-type" class="form-field-label visually-hidden">書き出す内容</label>' in html
     assert '<label for="csv-export-type" class="form-field-label">CSV書き出し</label>' not in html
     assert 'CSVを書き出す' in html
+    assert '<option value="" disabled selected>書き出す内容を選択してください</option>' in html
+    assert '<button id="export-csv" class="button-base button-full primary-button csv-export-button" type="button" disabled>CSVを書き出す</button>' in html
     assert '<option value="all">全記録</option>' in html
     assert '<option value="pain">痛みのみ</option>' in html
     assert '<option value="medication">服薬のみ</option>' in html
@@ -1183,6 +1185,66 @@ def test_management_button_labels_are_unified() -> None:
     assert 'バックアップを書き出し</button>' not in html
     assert 'バックアップから読み込み</button>' not in html
 
+
+def test_csv_export_selection_controls_button_and_export() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const elements = {
+          'csv-export-type': { value: '' },
+          'export-csv': { disabled: false },
+        };
+        global.document = { getElementById: (id) => elements[id] };
+        appData = {
+          schemaVersion: 1,
+          appName: 'Tide Trace',
+          settings: { lastCsvExportedAtUtc: null, painStateOptions: [], medicationOptions: [] },
+          periods: [],
+          events: [
+            { id: 'p1', type: 'pain', localDate: '2026-07-01', localTime: '09:00', recordedAtUtc: '2026-07-01T00:00:00.000Z', timezone: 'Asia/Tokyo', painScore: 4, stateOptionId: '', note: 'pain note', createdAtUtc: '2026-07-01T00:00:00.000Z', updatedAtUtc: '2026-07-01T00:00:00.000Z' },
+            { id: 'm1', type: 'medication', localDate: '2026-07-01', localTime: '10:00', recordedAtUtc: '2026-07-01T01:00:00.000Z', timezone: 'Asia/Tokyo', medicationOptionId: '', medicationLabel: 'Recorded med', note: '', createdAtUtc: '2026-07-01T01:00:00.000Z', updatedAtUtc: '2026-07-01T01:00:00.000Z' },
+            { id: 'n1', type: 'note', localDate: '2026-07-01', localTime: '11:00', recordedAtUtc: '2026-07-01T02:00:00.000Z', timezone: 'Asia/Tokyo', note: 'memo', createdAtUtc: '2026-07-01T02:00:00.000Z', updatedAtUtc: '2026-07-01T02:00:00.000Z' }
+          ]
+        };
+        saveData = () => { saveData.calls = (saveData.calls || 0) + 1; };
+        renderExportStatus = () => { renderExportStatus.calls = (renderExportStatus.calls || 0) + 1; };
+        const downloads = [];
+        downloadCsv = (csvText, filename) => downloads.push({ csvText, filename });
+
+        updateCsvExportControl();
+        assert.equal(elements['csv-export-type'].value, '');
+        assert.equal(elements['export-csv'].disabled, true);
+
+        for (const type of ['all', 'pain', 'medication', 'note']) {
+          elements['csv-export-type'].value = type;
+          updateCsvExportControl();
+          assert.equal(elements['export-csv'].disabled, false);
+        }
+
+        for (const invalidType of ['', 'unexpected']) {
+          appData.settings.lastCsvExportedAtUtc = null;
+          elements['csv-export-type'].value = invalidType;
+          updateCsvExportControl();
+          exportCsv();
+          assert.equal(elements['export-csv'].disabled, true);
+          assert.equal(downloads.length, 0);
+          assert.equal(appData.settings.lastCsvExportedAtUtc, null);
+        }
+
+        const expected = { all: 'tide-trace-all-', pain: 'tide-trace-pain-', medication: 'tide-trace-medication-', note: 'tide-trace-notes-' };
+        for (const type of ['all', 'pain', 'medication', 'note']) {
+          elements['csv-export-type'].value = type;
+          exportCsv();
+          assert.equal(elements['csv-export-type'].value, type);
+          assert.equal(downloads.at(-1).filename.startsWith(expected[type]), true);
+          assert.equal(downloads.at(-1).csvText.startsWith(CSV_EXPORT_TYPES[type].headers.join(',')), true);
+          assert.notEqual(appData.settings.lastCsvExportedAtUtc, null);
+        }
+        assert.equal(downloads.length, 4);
+        assert.equal(saveData.calls, 4);
+        assert.equal(renderExportStatus.calls, 4);
+        """
+    )
 
 def test_record_action_icon_decorator_keeps_text_labels_accessible() -> None:
     run_app_js(
@@ -2087,13 +2149,13 @@ def test_last_medication_css_is_compact_without_note_button_changes() -> None:
 
 def test_static_asset_versions_are_current_for_fixed_menu_icon_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=28"' in html
+    assert 'href="styles.css?v=29"' in html
     assert 'styles.css?v=27"' not in html
 
 
 def test_app_js_asset_version_is_current_for_past_record_summary_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=29"' in html
+    assert 'src="app.js?v=30"' in html
     assert 'app.js?v=26"' not in html
 
 

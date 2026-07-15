@@ -196,7 +196,8 @@ The result actions are shown only after a HeartWatch summary CSV is successfully
 
 ### CSV export
 
-- CSV export is available for all records, pain records only, medication records only, or note records only.
+- CSV export is available after the user selects an export target: all records, pain records only, medication records only, or note records only.
+- The CSV export target starts unselected, and the CSV export button remains disabled until a target is selected. The selection is not saved and returns to unselected on a new page load.
 - The app downloads a UTF-8 CSV with a BOM, then updates `settings.lastCsvExportedAtUtc`, saves data, and updates the export status display.
 - CSV rows are sorted ascending by local date, local time, and creation timestamp.
 - CSV export is an output format only; CSV import is not implemented.

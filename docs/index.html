@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <link rel="manifest" href="./site.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=28">
+  <link rel="stylesheet" href="styles.css?v=29">
 </head>
 <body>
   <svg class="nav-icon-sprite" aria-hidden="true" focusable="false" width="0" height="0">
@@ -229,15 +229,16 @@
           <p>最終CSV出力：<span id="last-csv-exported-at"></span></p>
         </div>
         <div class="field-row">
-          <label for="csv-export-type" class="form-field-label">書き出す内容</label>
+          <label for="csv-export-type" class="form-field-label visually-hidden">書き出す内容</label>
           <select id="csv-export-type" class="form-control-base form-control-full">
+            <option value="" disabled selected>書き出す内容を選択してください</option>
             <option value="all">全記録</option>
             <option value="pain">痛みのみ</option>
             <option value="medication">服薬のみ</option>
             <option value="note">メモのみ</option>
           </select>
         </div>
-        <button id="export-csv" class="button-base button-full primary-button" type="button">CSVを書き出す</button>
+        <button id="export-csv" class="button-base button-full primary-button csv-export-button" type="button" disabled>CSVを書き出す</button>
         <hr>
         <details class="medication-settings settings-disclosure">
           <summary id="medication-settings-title"><span class="settings-summary-label"><svg class="settings-summary-icon" aria-hidden="true" focusable="false"><use href="#icon-medication-settings"></use></svg><span id="medication-settings-summary">薬設定</span></span></summary>
@@ -324,7 +325,7 @@
     </div>
   </main>
 
-  <script src="app.js?v=29" defer></script>
+  <script src="app.js?v=30" defer></script>
   <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fcd3243fc5f04e899f9d5c8b46a3bc8e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

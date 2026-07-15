@@ -391,6 +391,13 @@ input[type="time"].form-control-full {
 
 .primary-button:active { background: var(--button-active-bg); }
 
+.csv-export-button:disabled {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
 .danger {
   background: var(--danger-bg);
   border: 0;

@@ -15,6 +15,7 @@ All notable changes to TideTrace will be documented in this file.
 - Added time-of-day pain summaries to visit summaries, grouping pain records by late night/early morning, morning, afternoon, and night without assessing causes or medication effects.
 
 ### Changed
+- Changed management CSV export to require choosing an explicit export target before writing the CSV.
 - Reduced record-row edit and delete actions to their previous compact size and simplified the healthcare-data section icon to a table.
 - Aligned past-record pain summaries with record summaries by showing average pain before maximum pain on screen and in copied text.
 - Improved record-summary readability by removing slash separators, showing average pain before maximum pain, and clarifying dose-group rows across screen, copy, text, and print output.

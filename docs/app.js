@@ -2693,9 +2693,17 @@ const CSV_EXPORT_TYPES = {
   }
 };
 
+function isValidCsvExportType(type) {
+  return Object.prototype.hasOwnProperty.call(CSV_EXPORT_TYPES, type);
+}
+
 function getCsvExportType() {
   const selectedType = $('csv-export-type').value;
-  return Object.prototype.hasOwnProperty.call(CSV_EXPORT_TYPES, selectedType) ? selectedType : 'all';
+  return isValidCsvExportType(selectedType) ? selectedType : '';
+}
+
+function updateCsvExportControl() {
+  $('export-csv').disabled = !isValidCsvExportType(getCsvExportType());
 }
 
 function filterEventsForCsv(type) {
@@ -2736,6 +2744,10 @@ function downloadCsv(csvText, filename) {
 
 function exportCsv() {
   const type = getCsvExportType();
+  if (!isValidCsvExportType(type)) {
+    updateCsvExportControl();
+    return;
+  }
   const config = CSV_EXPORT_TYPES[type];
   const events = filterEventsForCsv(type);
   const rows = buildCsvRows(events, type);
@@ -2917,6 +2929,8 @@ function wireEvents() {
     closePeriodForm();
     setPeriodMessage('');
   });
+  $('csv-export-type').addEventListener('change', updateCsvExportControl);
+  updateCsvExportControl();
   $('export-csv').addEventListener('click', exportCsv);
   $('export-json').addEventListener('click', exportJson);
   $('toast-undo-button').addEventListener('click', undoLastSavedEvent);
