@@ -2087,10 +2087,50 @@ def test_last_medication_css_is_compact_without_note_button_changes() -> None:
     assert 'margin-top: 10px;' in note_block
     assert 'padding: 10px 14px;' in note_block
 
-def test_static_asset_versions_are_current_for_fixed_menu_icon_update() -> None:
+
+def test_targeted_icon_size_css_overrides_only_requested_contexts() -> None:
+    css = (Path(__file__).parents[1] / "docs" / "styles.css").read_text()
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'href="styles.css?v=28"' in html
-    assert 'styles.css?v=27"' not in html
+
+    section_icon = css_rule_body(css, ".section-title-icon")
+    assert_declarations(section_icon, ["height: 1.05em;", "width: 1.05em;", "stroke-width: 1.55;"])
+
+    disclosure_section_icon = css_rule_body(css, ".section-disclosure > summary .section-title-icon")
+    assert_declarations(disclosure_section_icon, ["height: 1.15em;", "width: 1.15em;"])
+    assert "stroke-width" not in disclosure_section_icon
+
+    assert '<h2 id="today-title"><span class="section-title-label"><svg class="section-title-icon"' in html
+    assert '<h2 id="manage-title"><span class="section-title-label"><svg class="section-title-icon"' in html
+    assert '<summary id="history-title"><span class="section-title-label"><svg class="section-title-icon"' in html
+    assert '<summary id="visit-summary-title"><span class="section-title-label"><svg class="section-title-icon"' in html
+    assert '<summary id="health-history-title"><span class="section-title-label"><svg class="section-title-icon"' in html
+
+    settings_icon = re.search(r"(?<!\.section-title-icon,\n)^\.settings-summary-icon\s*\{(?P<body>.*?)\n\}", css, re.S | re.M).group("body")
+    assert_declarations(settings_icon, ["height: 0.95em;", "width: 0.95em;", "stroke-width: 1.6;"])
+
+    settings_summary_icon = css_rule_body(css, ".settings-disclosure > summary .settings-summary-icon")
+    assert_declarations(settings_summary_icon, ["height: 1.05em;", "width: 1.05em;"])
+    assert "stroke-width" not in settings_summary_icon
+
+    button_icon = css_rule_body(css, ".button-type-icon")
+    assert_declarations(button_icon, ["flex: 0 0 auto;", "height: 20px;", "width: 20px;"])
+
+    record_button_icon = css_rule_body(css, ".record-input-section .button-type-icon")
+    assert_declarations(record_button_icon, ["height: 22px;", "width: 22px;"])
+
+    action_icon = css_rule_body(css, ".event .event-actions .button-icon")
+    assert_declarations(action_icon, ["height: 32px;", "min-height: 32px;", "min-width: 32px;", "width: 32px;"])
+
+    event_icon = css_rule_body(css, ".event-type-icon")
+    assert_declarations(event_icon, ["height: 18px;", "width: 18px;"])
+
+    assert 'src="app.js?v=30"' in html
+
+
+def test_static_asset_versions_are_current_for_targeted_icon_size_update() -> None:
+    html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
+    assert 'href="styles.css?v=29"' in html
+    assert 'styles.css?v=28"' not in html
 
 
 def test_app_js_asset_version_is_current_for_past_record_summary_update() -> None:

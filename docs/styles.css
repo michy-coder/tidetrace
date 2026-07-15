@@ -137,10 +137,20 @@ p { margin: 0 0 10px; }
   width: 1.05em;
 }
 
+.section-disclosure > summary .section-title-icon {
+  height: 1.15em;
+  width: 1.15em;
+}
+
 .settings-summary-icon {
   height: 0.95em;
   stroke-width: 1.6;
   width: 0.95em;
+}
+
+.settings-disclosure > summary .settings-summary-icon {
+  height: 1.05em;
+  width: 1.05em;
 }
 
 .card {
@@ -343,6 +353,11 @@ input[type="time"].form-control-full {
   flex: 0 0 auto;
   height: 20px;
   width: 20px;
+}
+
+.record-input-section .button-type-icon {
+  height: 22px;
+  width: 22px;
 }
 
 .button-full {
