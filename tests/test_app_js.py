@@ -797,8 +797,8 @@ def test_visit_summary_state_pain_display_uses_compact_labels_and_notice() -> No
 
         const stateItem = block.children.find((child) => child.className === 'visit-summary-state-pain-item');
         const notice = block.children.at(-1);
-        assert.match(stateItem.innerHTML, /排便後<\\/strong>：<span class=\"visit-summary-metric-group\"><span class=\"visit-summary-metric\">記録日数 6日<\\/span><span class=\"visit-summary-metric\">平均 7\\.6<\\/span><span class=\"visit-summary-metric\">最大 9（3日）<\\/span><\\/span>/);
-        assert.doesNotMatch(stateItem.innerHTML, /最大痛み|平均痛み/);
+        assert.match(stateItem.innerHTML, /排便後<\\/strong>：<span class=\"visit-summary-metric-group\"><span class=\"visit-summary-metric\">記録 6日<\\/span><span class=\"visit-summary-metric\">平均 7\\.6<\\/span><span class=\"visit-summary-metric\">最大 9（3日）<\\/span><\\/span>/);
+        assert.doesNotMatch(stateItem.innerHTML, /記録日数|最大痛み|平均痛み/);
         assert.equal(notice.className.includes('visit-summary-notice'), true);
         assert.equal(notice.textContent, '同じ日・同じ状態の痛みを日単位で集計しています。服薬前後や他の薬との併用条件は分けていません。');
         """
@@ -870,8 +870,8 @@ def test_visit_summary_dose_pain_display_uses_compact_pain_labels_and_notice() -
         const doseItem = block.children.find((child) => child.className === 'visit-summary-dose-pain-item');
         const doseRow = doseItem.children[1].children[0];
         const notice = block.children.at(-1);
-        assert.match(doseRow.innerHTML, /<strong class=\"visit-summary-dose-heading\">2錠の日<\\/strong><div class=\"visit-summary-metric-group\"><span class=\"visit-summary-metric\">日数 7日（うち痛み記録 5日）<\\/span><span class=\"visit-summary-metric\">平均 5\\.4<\\/span><span class=\"visit-summary-metric\">最大 7（2日）<\\/span><\\/div>/);
-        assert.doesNotMatch(doseRow.innerHTML, /最大痛み|平均痛み/);
+        assert.match(doseRow.innerHTML, /<strong class=\"visit-summary-dose-heading\">2錠の日<\\/strong><div class=\"visit-summary-metric-group\"><span class=\"visit-summary-metric\">7日（痛み記録 5日）<\\/span><span class=\"visit-summary-metric\">平均 5\\.4<\\/span><span class=\"visit-summary-metric\">最大 7（2日）<\\/span><\\/div>/);
+        assert.doesNotMatch(doseRow.innerHTML, /日数 7日|うち|痛みあり|対象|最大痛み|平均痛み/);
         assert.equal(notice.className.includes('visit-summary-notice'), true);
         assert.equal(notice.textContent, '薬ごとに日単位で集計しています。他の薬との併用条件は分けていません。');
         """
@@ -908,7 +908,8 @@ def test_visit_summary_time_pain_groups_by_local_time_and_restored_utc() -> None
           [2, 2, 8, 1, '7.0'],
           [2, 2, 5, 1, '4.0']
         ]);
-        assert.equal(formatTimePainSummaryRow(rows[0]), '深夜：記録日数 2日　平均 6.7　最大 9（1日）');
+        assert.equal(formatTimePainSummaryRow(rows[0]), '深夜：記録 2日　平均 6.7　最大 9（1日）');
+        assert.doesNotMatch(formatTimePainSummaryRow(rows[0]), /記録日数/);
         """
     )
 
@@ -926,7 +927,8 @@ def test_visit_summary_time_pain_display_and_empty_notice() -> None:
 
         renderTimePainSummary(block, [{ label: '午前', recordDays: 1, count: 2, maxPain: 8, maxPainDays: 1, averagePain: 6.5 }]);
         assert.equal(block.children[0].textContent, '時間帯別の痛み');
-        assert.match(block.children[1].innerHTML, /午前<\/strong>：<span class="visit-summary-metric-group"><span class="visit-summary-metric">記録日数 1日<\/span><span class="visit-summary-metric">平均 6.5<\/span><span class="visit-summary-metric">最大 8（1日）<\/span><\/span>/);
+        assert.match(block.children[1].innerHTML, /午前<\/strong>：<span class="visit-summary-metric-group"><span class="visit-summary-metric">記録 1日<\/span><span class="visit-summary-metric">平均 6.5<\/span><span class="visit-summary-metric">最大 8（1日）<\/span><\/span>/);
+        assert.doesNotMatch(block.children[1].innerHTML, /記録日数/);
         assert.equal(block.children[2].className, 'visit-summary-notice supplemental-text');
         assert.equal(block.children[2].textContent, '同じ日・同じ時間帯の痛みを日単位で集計しています。姿勢・状態・服薬前後・他の薬との併用条件は分けていません。');
 
@@ -1801,8 +1803,8 @@ def test_visit_summary_text_uses_shared_summary_data_without_ui_labels() -> None
         assert.match(text, /^TideTrace 記録の集計/);
         assert.equal(text.includes('範囲：2026/02/16〜2026/02/16'), true);
         assert.equal(text.includes('服薬\\n現在薬A：合計 1錠　1日平均 1.00錠'), true);
-        assert.equal(text.includes('状態別の痛み\\n現在状態：記録日数 1日　平均 4.5　最大 6（1日）'), true);
-        assert.equal(text.includes('時間帯別の痛み\\n午前：記録日数 1日　平均 4.5　最大 6（1日）'), true);
+        assert.equal(text.includes('状態別の痛み\\n現在状態：記録 1日　平均 4.5　最大 6（1日）'), true);
+        assert.equal(text.includes('時間帯別の痛み\\n午前：記録 1日　平均 4.5　最大 6（1日）'), true);
         assert.equal(text.includes('服薬前後の痛み変化\\n現在薬A：対象 1回　50%低下　前後 6→3'), true);
         assert.equal(text.includes('旧薬A'), false);
         assert.equal(text.includes('旧状態'), false);
@@ -1833,12 +1835,12 @@ def test_visit_summary_metric_display_uses_grouped_spans_and_new_order() -> None
         );
         function collectHtml(node) { return [node.innerHTML || node.textContent || '', ...(node.children || []).flatMap(collectHtml)].join('\\n'); }
         const html = collectHtml(elements['visit-summary-result'].children[0]);
-        assert.match(html, /立位<\/strong>：<span class="visit-summary-metric-group"><span class="visit-summary-metric">記録日数 18日<\/span><span class="visit-summary-metric">平均 6\.4<\/span><span class="visit-summary-metric">最大 9（1日）<\/span><\/span>/);
-        assert.match(html, /午後<\/strong>：<span class="visit-summary-metric-group"><span class="visit-summary-metric">記録日数 12日<\/span><span class="visit-summary-metric">平均 5\.8<\/span><span class="visit-summary-metric">最大 8（2日）<\/span><\/span>/);
-        assert.match(html, /<strong class="visit-summary-dose-heading">2錠の日<\/strong><div class="visit-summary-metric-group"><span class="visit-summary-metric">日数 8日（うち痛み記録 6日）<\/span><span class="visit-summary-metric">平均 6\.4<\/span><span class="visit-summary-metric">最大 9（2日）<\/span><\/div>/);
-        assert.match(html, /<strong class="visit-summary-dose-heading">0錠の日<\/strong><div class="visit-summary-metric-group"><span class="visit-summary-metric">日数 5日（うち痛み記録 0日）<\/span><span class="visit-summary-metric">平均 —<\/span><span class="visit-summary-metric">最大 —<\/span><\/div>/);
+        assert.match(html, /立位<\/strong>：<span class="visit-summary-metric-group"><span class="visit-summary-metric">記録 18日<\/span><span class="visit-summary-metric">平均 6\.4<\/span><span class="visit-summary-metric">最大 9（1日）<\/span><\/span>/);
+        assert.match(html, /午後<\/strong>：<span class="visit-summary-metric-group"><span class="visit-summary-metric">記録 12日<\/span><span class="visit-summary-metric">平均 5\.8<\/span><span class="visit-summary-metric">最大 8（2日）<\/span><\/span>/);
+        assert.match(html, /<strong class="visit-summary-dose-heading">2錠の日<\/strong><div class="visit-summary-metric-group"><span class="visit-summary-metric">8日（痛み記録 6日）<\/span><span class="visit-summary-metric">平均 6\.4<\/span><span class="visit-summary-metric">最大 9（2日）<\/span><\/div>/);
+        assert.match(html, /<strong class="visit-summary-dose-heading">0錠の日<\/strong><div class="visit-summary-metric-group"><span class="visit-summary-metric">5日（痛み記録 0日）<\/span><span class="visit-summary-metric">平均 —<\/span><span class="visit-summary-metric">最大 —<\/span><\/div>/);
         assert.match(html, /ロキソニン<\/strong>：<span class="visit-summary-metric-group"><span class="visit-summary-metric">対象 6回<\/span><span class="visit-summary-metric">平均 40%低下<\/span><span class="visit-summary-metric">中央 35%低下<\/span><span class="visit-summary-metric">前後 8→4\.8<\/span><\/span>/);
-        assert.doesNotMatch(html, / \/ /);
+        assert.doesNotMatch(html, /記録日数|うち痛み記録|痛みあり| \/ /);
         """
     )
 
@@ -2093,7 +2095,7 @@ def test_static_asset_versions_are_current_for_fixed_menu_icon_update() -> None:
 
 def test_app_js_asset_version_is_current_for_past_record_summary_update() -> None:
     html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
-    assert 'src="app.js?v=29"' in html
+    assert 'src="app.js?v=30"' in html
     assert 'app.js?v=26"' not in html
 
 
