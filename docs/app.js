@@ -8,6 +8,7 @@ let lastSavedEventId = null;
 let saveFeedbackTimer = null;
 let elapsedRefreshTimer = null;
 let editingEventId = null;
+let editEventReturnFocus = null;
 let editingPeriodId = null;
 let editingMedicationOptionId = null;
 let editingPainStateOptionId = null;
@@ -637,7 +638,8 @@ function renderEventList(container, events, sortEvents = sortedEvents, options =
     editButton.type = 'button';
     editButton.textContent = '✎';
     editButton.setAttribute('aria-label', '編集');
-    editButton.addEventListener('click', () => openEditEventPanel(event.id));
+    editButton.setAttribute('data-event-id', event.id);
+    editButton.addEventListener('click', (eventObject) => openEditEventPanel(event.id, eventObject?.currentTarget || editButton));
     const button = document.createElement('button');
     button.className = 'button-base button-icon danger delete-event-button';
     button.type = 'button';
@@ -713,10 +715,109 @@ function editEventSectionHtml(fieldsHtml, extraClass = '') {
     </section>`;
 }
 
-function openEditEventPanel(id) {
+function visibleFocusableElements(container) {
+  if (!container || !container.querySelectorAll) return [];
+  const selector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  return Array.from(container.querySelectorAll(selector)).filter((element) => {
+    if (element.hidden || element.getAttribute?.('aria-hidden') === 'true') return false;
+    if (element.offsetParent === null && element.getClientRects?.().length === 0) return false;
+    return true;
+  });
+}
+
+function focusElement(element) {
+  if (!element || typeof element.focus !== 'function') return;
+  if (!/^(A|BUTTON|INPUT|SELECT|TEXTAREA|SUMMARY)$/i.test(element.tagName || '') && !element.hasAttribute?.('tabindex')) {
+    element.setAttribute?.('tabindex', '-1');
+  }
+  element.focus();
+}
+
+function rememberEditEventReturnFocus(id, trigger) {
+  editEventReturnFocus = { eventId: id, element: trigger || document.activeElement || null };
+}
+
+function focusInitialEditEventField() {
+  const panel = $('edit-event-panel');
+  const firstEditable = panel.querySelector?.('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+  focusElement(firstEditable || visibleFocusableElements(panel)[0]);
+}
+
+function focusEditEventFallback() {
+  const fallback = $('today-list')?.querySelector?.('.edit-event-button') ||
+    $('history-list')?.querySelector?.('.edit-event-button') ||
+    $('today-title') || $('history-title') || $('app-screen');
+  focusElement(fallback);
+}
+
+function restoreEditEventFocus(eventId, originalElement) {
+  if (originalElement?.isConnected) {
+    focusElement(originalElement);
+    return;
+  }
+  const escapedEventId = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(eventId) : String(eventId).replace(/\"/g, '\\"');
+  const selector = `.edit-event-button[data-event-id="${escapedEventId}"]`;
+  const recreatedButton = document.querySelector?.(selector);
+  if (recreatedButton) {
+    focusElement(recreatedButton);
+    return;
+  }
+  focusEditEventFallback();
+}
+
+function closeEditEventPanel(options = {}) {
+  const returnFocus = options.returnFocus !== false;
+  const focusInfo = editEventReturnFocus;
+  const closedEventId = options.eventId || editingEventId || focusInfo?.eventId;
+  editingEventId = null;
+  $('edit-event-panel').hidden = true;
+  $('edit-event-fields').innerHTML = '';
+  editEventReturnFocus = null;
+  if (returnFocus && closedEventId) restoreEditEventFocus(closedEventId, focusInfo?.element);
+}
+
+function handleEditEventPanelKeydown(event) {
+  const panel = $('edit-event-panel');
+  if (panel.hidden) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeEditEventPanel();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+  const focusable = visibleFocusableElements(panel);
+  if (!focusable.length) {
+    event.preventDefault();
+    focusElement(panel);
+    return;
+  }
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    focusElement(last);
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    focusElement(first);
+  } else if (!panel.contains(document.activeElement)) {
+    event.preventDefault();
+    focusElement(event.shiftKey ? last : first);
+  }
+}
+
+function focusEditEventValidationError(dateInput, timeInput) {
+  const dateValue = dateInput?.value || '';
+  const timeValue = timeInput?.value || '';
+  if (!dateValue || !isDateString(dateValue)) focusElement(dateInput);
+  else if (!timeValue || !isTimeString(timeValue)) focusElement(timeInput);
+  else focusElement(dateInput || timeInput);
+}
+
+function openEditEventPanel(id, trigger = null) {
   const event = appData.events.find((item) => item.id === id);
   if (!event) return;
   editingEventId = id;
+  rememberEditEventReturnFocus(id, trigger);
   const fields = $('edit-event-fields');
   const contentSection = event.type === 'note' ? '' : editEventSectionHtml(editContentHtml(event));
   const note = event.note || '';
@@ -726,12 +827,7 @@ function openEditEventPanel(id) {
     ${editEventSectionHtml(editTextareaHtml(note))}
     <p id="edit-event-error" class="message error" role="alert"></p>`;
   $('edit-event-panel').hidden = false;
-}
-
-function closeEditEventPanel() {
-  editingEventId = null;
-  $('edit-event-panel').hidden = true;
-  $('edit-event-fields').innerHTML = '';
+  focusInitialEditEventField();
 }
 
 function setEditEventError(message) {
@@ -751,6 +847,7 @@ function saveEditedEvent() {
     dateTimeValidation = validateEditedDateTime(dateInput?.value || '', timeInput?.value || '');
     if (dateTimeValidation.error) {
       setEditEventError(dateTimeValidation.error);
+      focusEditEventValidationError(dateInput, timeInput);
       return;
     }
   }
@@ -794,8 +891,9 @@ function saveEditedEvent() {
   }
   event.updatedAtUtc = new Date().toISOString();
   saveData();
+  const savedEventId = editingEventId;
   render();
-  closeEditEventPanel();
+  closeEditEventPanel({ eventId: savedEventId });
   showToast('編集を保存しました');
 }
 
@@ -2925,6 +3023,7 @@ function wireEvents() {
     saveEditedEvent();
   });
   $('cancel-edit-event').addEventListener('click', closeEditEventPanel);
+  $('edit-event-panel').addEventListener('keydown', handleEditEventPanelKeydown);
   $('edit-event-panel').addEventListener('click', (event) => {
     if (event.target === $('edit-event-panel')) closeEditEventPanel();
   });

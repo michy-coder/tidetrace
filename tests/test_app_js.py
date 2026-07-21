@@ -1399,18 +1399,15 @@ def test_initial_setup_settings_validation_messages() -> None:
     )
 
 
-def test_open_edit_event_panel_shows_fields_without_focus() -> None:
+def test_open_edit_event_panel_shows_fields_and_moves_initial_focus() -> None:
     run_app_js(
         """
         const assert = require('node:assert/strict');
         let focused = false;
-        const fields = {
-          innerHTML: '',
-          querySelectorAll(selector) { return []; },
-          querySelector(selector) { focused = true; return { focus() { focused = true; } }; }
-        };
-        const panel = { hidden: true };
-        global.document = { getElementById(id) { return id === 'edit-event-fields' ? fields : panel; } };
+        const dateInput = { focus() { focused = true; } };
+        const fields = { innerHTML: '' };
+        const panel = { hidden: true, querySelector(selector) { return dateInput; }, querySelectorAll(selector) { return [dateInput]; } };
+        global.document = { activeElement: null, getElementById(id) { return id === 'edit-event-fields' ? fields : panel; } };
         appData = {
           settings: { medicationOptions: [{ id: 'med', label: 'Medication', defaultAmount: 1, unit: 'tablet', active: true, sortOrder: 1 }], painStateOptions: [] },
           periods: [],
@@ -1424,7 +1421,7 @@ def test_open_edit_event_panel_shows_fields_without_focus() -> None:
         openEditEventPanel('event-med');
 
         assert.equal(panel.hidden, false);
-        assert.equal(focused, false);
+        assert.equal(focused, true);
         assert.match(fields.innerHTML, /type="date" value="2026-06-27"/);
         assert.match(fields.innerHTML, /type="time" value="23:45"/);
         assert.equal(fields.innerHTML.includes('<label class="form-field-label" for="edit-medication-option">薬</label>'), true);
@@ -1436,6 +1433,118 @@ def test_open_edit_event_panel_shows_fields_without_focus() -> None:
         """
     )
 
+
+
+def test_edit_event_dialog_traps_focus_and_escape_closes() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        let active = null;
+        function makeElement(name) {
+          return {
+            hidden: false,
+            offsetParent: {},
+            getClientRects() { return [1]; },
+            getAttribute() { return null; },
+            focus() { active = this; document.activeElement = this; },
+            name
+          };
+        }
+        const first = makeElement('first');
+        const last = makeElement('last');
+        const fields = { innerHTML: '' };
+        const panel = {
+          hidden: false,
+          contains(element) { return element === first || element === last; },
+          querySelectorAll() { return [first, last]; }
+        };
+        global.document = { activeElement: last, getElementById(id) { return id === 'edit-event-fields' ? fields : panel; } };
+        editingEventId = 'event-note';
+        editEventReturnFocus = { eventId: 'event-note', element: null };
+
+        let prevented = false;
+        handleEditEventPanelKeydown({ key: 'Tab', shiftKey: false, preventDefault() { prevented = true; } });
+        assert.equal(prevented, true);
+        assert.equal(active, first);
+
+        document.activeElement = first;
+        prevented = false;
+        handleEditEventPanelKeydown({ key: 'Tab', shiftKey: true, preventDefault() { prevented = true; } });
+        assert.equal(prevented, true);
+        assert.equal(active, last);
+
+        prevented = false;
+        handleEditEventPanelKeydown({ key: 'Escape', preventDefault() { prevented = true; } });
+        assert.equal(prevented, true);
+        assert.equal(panel.hidden, true);
+        assert.equal(editingEventId, null);
+        """
+    )
+
+
+def test_close_edit_event_panel_restores_original_or_recreated_button_focus() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        let focused = '';
+        const original = { isConnected: true, focus() { focused = 'original'; } };
+        const recreated = { focus() { focused = 'recreated'; } };
+        const fields = { innerHTML: '' };
+        const panel = { hidden: false };
+        global.CSS = { escape(value) { return value; } };
+        global.document = {
+          getElementById(id) { return id === 'edit-event-fields' ? fields : panel; },
+          querySelector(selector) { return selector.includes('event-note') ? recreated : null; }
+        };
+
+        editingEventId = 'event-note';
+        editEventReturnFocus = { eventId: 'event-note', element: original };
+        closeEditEventPanel();
+        assert.equal(focused, 'original');
+
+        editingEventId = 'event-note';
+        original.isConnected = false;
+        editEventReturnFocus = { eventId: 'event-note', element: original };
+        closeEditEventPanel();
+        assert.equal(focused, 'recreated');
+        """
+    )
+
+
+def test_save_edited_event_invalid_datetime_keeps_panel_and_focuses_date_or_time() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        let focused = '';
+        const elements = {
+          'edit-local-date': { value: '', focus() { focused = 'date'; } },
+          'edit-local-time': { value: '', focus() { focused = 'time'; } },
+          'edit-note': { value: 'changed' },
+          'edit-event-error': { textContent: '' },
+          'edit-event-panel': { hidden: false },
+          'edit-event-fields': { innerHTML: 'kept' }
+        };
+        let saved = false;
+        global.document = { getElementById(id) { return elements[id]; } };
+        global.localStorage = { setItem() { saved = true; } };
+        appData = { settings: { medicationOptions: [], painStateOptions: [] }, periods: [], events: [{
+          id: 'event-note', type: 'note', localDate: '2026-06-28', localTime: '00:10', recordedAtUtc: '2026-06-28T00:10:00.000Z',
+          createdAtUtc: '2026-06-28T00:10:00.000Z', updatedAtUtc: '2026-06-28T00:10:00.000Z', note: 'original'
+        }] };
+        editingEventId = 'event-note';
+
+        saveEditedEvent();
+
+        assert.equal(saved, false);
+        assert.equal(elements['edit-event-panel'].hidden, false);
+        assert.equal(elements['edit-event-fields'].innerHTML, 'kept');
+        assert.equal(elements['edit-event-error'].textContent, '日付を入力してください。');
+        assert.equal(focused, 'date');
+        elements['edit-local-date'].value = '2026-06-28';
+        saveEditedEvent();
+        assert.equal(focused, 'time');
+        """
+    )
 
 def test_save_edited_event_without_visible_datetime_preserves_datetime_values() -> None:
     run_app_js(
