@@ -2071,8 +2071,9 @@ def test_result_action_print_structure_and_css_regression() -> None:
 
     assert 'id="visit-summary-actions" class="result-actions" aria-label="記録の集計の操作" hidden' in html
     assert 'id="health-history-actions" class="result-actions" aria-label="過去の記録とヘルスケアデータの操作" hidden' in html
-    assert '<button id="show-visit-summary-print" class="button-base button-full secondary-button result-print-action" type="button">印刷用に表示</button>' in html
-    assert '<button id="show-health-history-print" class="button-base button-full secondary-button result-print-action" type="button">印刷用に表示</button>' in html
+    assert '<button id="show-visit-summary-print" class="button-base button-full secondary-button result-print-action" type="button">印刷／PDFとして保存</button>' in html
+    assert '<button id="show-health-history-print" class="button-base button-full secondary-button result-print-action" type="button">印刷／PDFとして保存</button>' in html
+    assert '印刷用に表示' not in html
     assert html.index('id="copy-visit-summary"') < html.index('id="save-visit-summary-text"') < html.index('id="show-visit-summary-print"')
     assert html.index('id="copy-health-history-text"') < html.index('id="copy-health-history-tsv"') < html.index('id="show-health-history-print"')
     assert 'id="visit-summary-print-content"' in html
