@@ -30,6 +30,7 @@ All notable changes to TideTrace will be documented in this file.
 - Added maximum-pain day counts to state and dose pain sections in visit summaries.
 
 ### Fixed
+- Improved edit-dialog keyboard behavior with Escape close, focus trapping, and focus return after save or close.
 - Fixed result actions appearing before data was generated and limited summary print views to their intended result content.
 - Fixed visit summaries so renamed pain states stay in one group and corrected medication names appear consistently across medication summaries.
 - Saved daily-summary display columns, order, and short labels now remain after reload and JSON restore.

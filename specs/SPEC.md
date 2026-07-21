@@ -213,6 +213,11 @@ Medication, pain, and note events can be edited from today’s records and past-
 - Changing a medication option also updates the event label, amount, and unit from the selected option.
 - Changing a pain state also updates the event state label from the selected option.
 - Saving an edit updates `updatedAtUtc`.
+- Opening the edit dialog moves focus inside the dialog, generally to the first editable input.
+- While the edit dialog is open, Tab and Shift+Tab cycle through focusable controls inside the dialog.
+- Escape, the cancel button, and the dialog background close the edit dialog without saving.
+- After saving or closing the edit dialog, focus returns to the edit starting point where possible, or to a stable records area if the edited row is no longer visible.
+- Validation errors keep the edit dialog open, preserve entered form values, show the error in the alert area, and move focus to the problematic date or time input.
 
 ### Event deletion
 
