@@ -5,9 +5,9 @@ All notable changes to TideTrace will be documented in this file.
 ## Unreleased
 
 ### Added
-- Added browser-standard printing and PDF saving for generated record summaries and the “日ごとのまとめ” table.
+- Added browser-standard printing and PDF saving for generated record summaries and the the daily summary table.
 - Added plain-text copying for the currently displayed past-record summaries.
-- Added configurable columns for the “日ごとのまとめ” table, text copy, TSV copy, and print view, including selectable TideTrace and HeartWatch metrics, custom short labels, and saved display order.
+- Added configurable columns for the daily summary table, text copy, TSV copy, and print view, including selectable TideTrace and HeartWatch metrics, custom short labels, and saved display order.
 - Added a past records and healthcare data view that temporarily loads HeartWatch summary CSV files, aligns them with TideTrace daily records, and supports text, TSV, and print output.
 - Added date and time editing for medication, pain, and note records.
 - Added medication pain-change summaries to record summaries, showing recorded before-and-after pain-score changes by medication without assessing medication effectiveness.
@@ -20,7 +20,7 @@ All notable changes to TideTrace will be documented in this file.
 - Updated today’s and past record details to use compact, accessible rows with line SVG type icons and wrapping memo text.
 - Updated past-record daily summaries to use SVG type markers and show average pain before maximum pain on screen and in copied text.
 - Improved record-summary readability by removing slash separators, showing average pain before maximum pain, shortening day-count labels, and clarifying medication-dose rows across screen, copy, text, and print output.
-- Renamed the summary screen to “記録の集計” and aligned its screen, copy, print, saved-text, and filename wording.
+- Renamed the summary screen to a neutral record-summary label and aligned its screen, copy, print, saved-text, and filename wording.
 - Sorted state-based pain summaries by average pain, then maximum pain.
 - Updated time-of-day pain summaries to match the state-based summary detail level and shortened the late-night label.
 - Improved past-record navigation with controls above and below the record list, year-inclusive range labels, and automatic scrolling after navigation.
