@@ -738,9 +738,7 @@ function rememberEditEventReturnFocus(id, trigger) {
 }
 
 function focusInitialEditEventField() {
-  const panel = $('edit-event-panel');
-  const firstEditable = panel.querySelector?.('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
-  focusElement(firstEditable || visibleFocusableElements(panel)[0]);
+  focusElement($('edit-event-title') || visibleFocusableElements($('edit-event-panel'))[0]);
 }
 
 function focusEditEventFallback() {
@@ -2465,6 +2463,7 @@ function render() {
   ensureSummaryDefaults();
   renderLastMedicationList();
   renderExportStatus();
+  updateCsvExportButtonState();
   renderMedicationSettingsSummary();
   renderMedicationSettingsList();
   renderPainStateSettingsSummary();
@@ -2793,7 +2792,13 @@ const CSV_EXPORT_TYPES = {
 
 function getCsvExportType() {
   const selectedType = $('csv-export-type').value;
-  return Object.prototype.hasOwnProperty.call(CSV_EXPORT_TYPES, selectedType) ? selectedType : 'all';
+  return Object.prototype.hasOwnProperty.call(CSV_EXPORT_TYPES, selectedType) ? selectedType : '';
+}
+
+function updateCsvExportButtonState() {
+  const button = $('export-csv');
+  if (!button) return;
+  button.disabled = !getCsvExportType();
 }
 
 function filterEventsForCsv(type) {
@@ -2834,6 +2839,10 @@ function downloadCsv(csvText, filename) {
 
 function exportCsv() {
   const type = getCsvExportType();
+  if (!type) {
+    updateCsvExportButtonState();
+    return;
+  }
   const config = CSV_EXPORT_TYPES[type];
   const events = filterEventsForCsv(type);
   const rows = buildCsvRows(events, type);
@@ -3015,6 +3024,7 @@ function wireEvents() {
     closePeriodForm();
     setPeriodMessage('');
   });
+  $('csv-export-type').addEventListener('change', updateCsvExportButtonState);
   $('export-csv').addEventListener('click', exportCsv);
   $('export-json').addEventListener('click', exportJson);
   $('toast-undo-button').addEventListener('click', undoLastSavedEvent);

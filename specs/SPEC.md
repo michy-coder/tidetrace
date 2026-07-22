@@ -197,7 +197,9 @@ The result actions are shown only after a HeartWatch summary CSV is successfully
 ### CSV export
 
 - CSV export is available for all records, pain records only, medication records only, or note records only.
-- The app downloads a UTF-8 CSV with a BOM, then updates `settings.lastCsvExportedAtUtc`, saves data, and updates the export status display.
+- On a new page load, the CSV export target starts unselected and the CSV export button is disabled.
+- The selected CSV export target is not saved; a new page load returns to the unselected state.
+- The app creates and downloads a UTF-8 CSV with a BOM only when a valid CSV export target is selected, then updates `settings.lastCsvExportedAtUtc`, saves data, and updates the export status display.
 - CSV rows are sorted ascending by local date, local time, and creation timestamp.
 - CSV export is an output format only; CSV import is not implemented.
 
@@ -213,11 +215,12 @@ Medication, pain, and note events can be edited from today’s records and past-
 - Changing a medication option also updates the event label, amount, and unit from the selected option.
 - Changing a pain state also updates the event state label from the selected option.
 - Saving an edit updates `updatedAtUtc`.
-- Opening the edit dialog moves focus inside the dialog, generally to the first editable input.
+- Opening the edit dialog moves focus inside the dialog to the dialog heading, not to an input.
+- Opening the edit dialog by itself does not focus the date or time input.
 - While the edit dialog is open, Tab and Shift+Tab cycle through focusable controls inside the dialog.
 - Escape, the cancel button, and the dialog background close the edit dialog without saving.
 - After saving or closing the edit dialog, focus returns to the edit starting point where possible, or to a stable records area if the edited row is no longer visible.
-- Validation errors keep the edit dialog open, preserve entered form values, show the error in the alert area, and move focus to the problematic date or time input.
+- Validation errors keep the edit dialog open, preserve entered form values, show the error in the alert area, and move focus to the problematic date or time input when the date or time is invalid.
 
 ### Event deletion
 

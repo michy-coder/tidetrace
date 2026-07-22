@@ -404,6 +404,18 @@ input[type="time"].form-control-full {
   background: var(--button-hover-bg, var(--button-bg));
 }
 
+.primary-button:disabled {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.primary-button:disabled:hover,
+.primary-button:disabled:active {
+  background: var(--surface-muted);
+}
+
 .primary-button:active { background: var(--button-active-bg); }
 
 .danger {
