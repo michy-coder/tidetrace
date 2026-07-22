@@ -4,6 +4,8 @@ All notable changes to TideTrace will be documented in this file.
 
 ## Unreleased
 
+## v0.2.0 - 2026-07-22
+
 ### Added
 - Added browser-standard printing and PDF saving for generated record summaries and the daily summary table.
 - Added plain-text copying for the currently displayed past-record summaries.
