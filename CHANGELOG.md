@@ -4,6 +4,12 @@ All notable changes to TideTrace will be documented in this file.
 
 ## Unreleased
 
+### Changed
+- Changed CSV export to require an explicit export target selection before creating a file.
+
+### Fixed
+- Fixed the edit dialog opening focus so pressing edit does not immediately focus the date input and open the date picker.
+
 ## v0.2.0 - 2026-07-22
 
 ### Added
