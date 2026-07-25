@@ -65,7 +65,14 @@
   </header>
 
   <main>
-    <section id="setup-screen" class="card setup-card hidden" aria-labelledby="setup-title">
+    <div id="setup-screen" class="setup-screen hidden">
+      <div class="initial-restore">
+        <input id="setup-import-file" class="visually-hidden-file-input" type="file" accept="application/json,.json" aria-label="Tide TraceのJSONバックアップを選択" tabindex="-1">
+        <button id="restore-initial-backup" class="button-base button-full secondary-button setup-restore-button" type="button">バックアップから復元</button>
+        <p id="initial-restore-error" class="error" role="alert"></p>
+      </div>
+
+      <section class="card setup-card" aria-labelledby="setup-title">
       <h2 id="setup-title">Tide Traceをはじめる</h2>
       <p>Tide Traceは、痛みや服薬の記録を自分で見返すためのアプリです。</p>
       <p>記録はお使いのブラウザ内に保存されます。必要に応じて、バックアップを保存してください。</p>
@@ -84,11 +91,10 @@
 
       <div class="setup-actions" aria-label="初回設定の操作">
         <button id="complete-initial-setup" class="button-base button-full primary-button setup-start-button" type="button">この設定ではじめる</button>
-        <input id="setup-import-file" class="visually-hidden-file-input" type="file" accept="application/json,.json" aria-label="Tide TraceのJSONバックアップを選択" tabindex="-1">
-        <button id="restore-initial-backup" class="button-base button-full secondary-button setup-restore-button" type="button">バックアップから復元</button>
       </div>
       <p id="setup-error" class="error" role="alert"></p>
-    </section>
+      </section>
+    </div>
 
     <div id="app-screen" class="hidden">
       <div id="toast-feedback" class="toast-feedback" role="status" aria-live="polite" hidden>
