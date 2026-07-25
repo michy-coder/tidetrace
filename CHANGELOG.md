@@ -6,6 +6,7 @@ All notable changes to TideTrace will be documented in this file.
 
 ### Changed
 - Changed CSV export to require an explicit export target selection before creating a file.
+- Moved the initial backup restore action before the first-use setup form and updated the initial pain-state labels.
 
 ### Fixed
 - Fixed the edit dialog opening focus so pressing edit does not immediately focus the date input and open the date picker.
