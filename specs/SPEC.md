@@ -31,10 +31,12 @@ Cloudflare Web Analytics may be present in the published page for public page-us
 
 If no valid stored data exists, the setup screen is shown. The user can:
 
+- Restore from a TideTrace JSON backup before starting the setup form. Restore errors are shown directly below the restore button.
 - Confirm or edit initial medication buttons.
 - Confirm or edit initial pain-state labels.
 - Start with those settings.
-- Restore from a TideTrace JSON backup.
+
+The initial pain-state labels are `☕️安静時`, `🪑座位`, `🧍立位`, `🚶‍♂️‍➡️歩行時`, `🛏️臥位`, and `その他`.
 
 Setup requires at least one medication option and at least one pain-state option.
 

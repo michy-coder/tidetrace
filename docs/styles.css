@@ -165,13 +165,28 @@ p { margin: 0 0 10px; }
 
 .hidden { display: none; }
 
+.setup-screen {
+  display: grid;
+  gap: 12px;
+}
+
+.setup-screen.hidden { display: none; }
+
+.initial-restore {
+  display: grid;
+  gap: 8px;
+}
+
+.initial-restore .error {
+  margin: 0;
+}
+
 .setup-card {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.setup-card.hidden { display: none; }
 
 .setup-card p {
   margin-bottom: 0;

@@ -28,11 +28,11 @@ const INITIAL_MEDICATION_OPTIONS = [
 ];
 
 const INITIAL_PAIN_STATE_OPTIONS = [
-  { id: 'ps_001', label: '安静時', active: true, sortOrder: 1 },
-  { id: 'ps_002', label: '座位', active: true, sortOrder: 2 },
-  { id: 'ps_003', label: '立位', active: true, sortOrder: 3 },
-  { id: 'ps_004', label: '歩行時', active: true, sortOrder: 4 },
-  { id: 'ps_005', label: '臥位', active: true, sortOrder: 5 },
+  { id: 'ps_001', label: '☕️安静時', active: true, sortOrder: 1 },
+  { id: 'ps_002', label: '🪑座位', active: true, sortOrder: 2 },
+  { id: 'ps_003', label: '🧍立位', active: true, sortOrder: 3 },
+  { id: 'ps_004', label: '🚶‍♂️‍➡️歩行時', active: true, sortOrder: 4 },
+  { id: 'ps_005', label: '🛏️臥位', active: true, sortOrder: 5 },
   { id: 'ps_006', label: 'その他', active: true, sortOrder: 6 }
 ];
 
@@ -244,7 +244,8 @@ function showSetup(message = '') {
   renderInitialSetupOptions();
   $('setup-screen').classList.remove('hidden');
   $('app-screen').classList.add('hidden');
-  $('setup-error').textContent = message;
+  $('setup-error').textContent = '';
+  $('initial-restore-error').textContent = message;
 }
 
 function showApp() {
@@ -370,12 +371,12 @@ function initializeFromText(text, errorElement) {
 
 
 function importInitialBackupText(text) {
-  const succeeded = initializeFromText(text, $('setup-error'));
+  const succeeded = initializeFromText(text, $('initial-restore-error'));
   if (succeeded) {
     showToast('バックアップを復元しました');
     return true;
   }
-  console.error('Initial backup restore failed', new Error($('setup-error').textContent || 'Invalid backup data'));
+  console.error('Initial backup restore failed', new Error($('initial-restore-error').textContent || 'Invalid backup data'));
   showSetup('バックアップを復元できませんでした。JSONバックアップを確認してください。');
   return false;
 }
@@ -405,7 +406,7 @@ function handleInitialBackupFileSelected(event) {
 }
 
 function requestInitialBackupRestore() {
-  $('setup-error').textContent = 'Tide TraceのJSONバックアップを選択してください。';
+  $('initial-restore-error').textContent = 'Tide TraceのJSONバックアップを選択してください。';
   const input = $('setup-import-file');
   if (!input) {
     console.error('Initial backup restore failed', new Error('Initial backup file input was not found'));
