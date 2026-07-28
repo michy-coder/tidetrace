@@ -19,10 +19,91 @@ let expandedHistoryDate = null;
 let historyRange = null;
 let currentVisitSummaryData = null;
 let currentVisitSummaryText = '';
-let activeAppScreenId = 'record-screen';
-let activeRecordInputId = 'medication';
+let activeAppScreen = 'record';
+let activeRecordTab = 'pain';
+let activeSummaryTab = 'records';
+let recordEntryExpanded = true;
 
 const $ = (id) => document.getElementById(id);
+const APP_SCREENS = ['record', 'history', 'summary', 'manage'];
+const RECORD_TABS = ['pain', 'medication', 'note'];
+const SUMMARY_TABS = ['records', 'health'];
+
+function setAppScreen(screenName, options = {}) {
+  if (!APP_SCREENS.includes(screenName)) return;
+  activeAppScreen = screenName;
+  document.querySelectorAll('[data-app-screen]').forEach((screen) => {
+    screen.hidden = screen.dataset.appScreen !== screenName;
+  });
+  document.querySelectorAll('[data-app-screen-target]').forEach((button) => {
+    const isCurrent = button.dataset.appScreenTarget === screenName;
+    if (isCurrent) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
+  });
+  if (screenName === 'history' && appData) {
+    if (!historyRange) historyRange = recentHistoryRange(nowParts().localDate);
+    renderHistory(nowParts().localDate);
+  }
+  if (screenName === 'record') {
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateLastMedicationOverflow);
+    else updateLastMedicationOverflow();
+  }
+  if (options.scroll !== false && typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+}
+
+function updateRecordMemoPresentation() {
+  const memo = $('record-note-input');
+  if (!memo) return;
+  const placeholders = {
+    pain: 'メモ（任意）例：立っていると強くなった',
+    medication: 'メモ（任意）例：夕食後に服用',
+    note: 'メモを入力してください'
+  };
+  memo.placeholder = placeholders[activeRecordTab];
+}
+
+function setRecordTab(tabName) {
+  if (!RECORD_TABS.includes(tabName)) return;
+  activeRecordTab = tabName;
+  const layout = $('record-form-layout');
+  if (layout) layout.dataset.activeRecordTab = tabName;
+  document.querySelectorAll('[data-record-tab]').forEach((tab) => {
+    tab.setAttribute('aria-selected', String(tab.dataset.recordTab === tabName));
+  });
+  document.querySelectorAll('[data-record-panel]').forEach((panel) => {
+    panel.hidden = panel.dataset.recordPanel !== tabName;
+  });
+  document.querySelectorAll('[data-record-action]').forEach((action) => {
+    action.hidden = action.dataset.recordAction !== tabName;
+  });
+  updateRecordMemoPresentation();
+}
+
+function setSummaryTab(tabName) {
+  if (!SUMMARY_TABS.includes(tabName)) return;
+  activeSummaryTab = tabName;
+  document.querySelectorAll('[data-summary-tab]').forEach((tab) => {
+    tab.setAttribute('aria-selected', String(tab.dataset.summaryTab === tabName));
+  });
+  document.querySelectorAll('[data-summary-panel]').forEach((panel) => {
+    panel.hidden = panel.dataset.summaryPanel !== tabName;
+  });
+}
+
+function setRecordEntryExpanded(expanded) {
+  recordEntryExpanded = Boolean(expanded);
+  const body = $('record-entry-body');
+  const button = $('record-entry-toggle');
+  if (body) body.hidden = !recordEntryExpanded;
+  if (!button) return;
+  button.setAttribute('aria-expanded', String(recordEntryExpanded));
+  const label = button.querySelector('.visually-hidden');
+  const mark = button.querySelector('.record-entry-toggle-mark');
+  if (label) label.textContent = recordEntryExpanded ? '記録入力欄を閉じる' : '記録入力欄を開く';
+  if (mark) mark.textContent = recordEntryExpanded ? '⌃' : '⌄';
+}
 
 const INITIAL_MEDICATION_OPTIONS = [
   { id: 'med_001', label: '鎮痛薬A', active: true, defaultAmount: 1, unit: '錠', sortOrder: 1 },
@@ -241,13 +322,13 @@ function loadStoredData() {
   return normalized;
 }
 
-function showSetup(message = '') {
+function showSetup() {
   stopElapsedRefresh();
   renderInitialSetupOptions();
   $('setup-screen').classList.remove('hidden');
   $('app-screen').classList.add('hidden');
   $('setup-error').textContent = '';
-  $('initial-restore-error').textContent = message;
+  $('setup-restore-error').textContent = '';
 }
 
 function showApp() {
@@ -257,39 +338,7 @@ function showApp() {
   ensureHealthReviewColumns(appData.settings);
   renderHealthHistoryColumnEditor();
   render();
-  switchAppScreen(activeAppScreenId, { focus: false });
-  switchRecordInput(activeRecordInputId, { focus: false });
-}
-
-function switchAppScreen(screenId, options = {}) {
-  if (typeof document.querySelectorAll !== 'function') return;
-  const screens = Array.from(document.querySelectorAll('.app-screen'));
-  if (!screens.some((screen) => screen.id === screenId)) return;
-  activeAppScreenId = screenId;
-  screens.forEach((screen) => { screen.hidden = screen.id !== screenId; });
-  document.querySelectorAll('.bottom-navigation-button').forEach((button) => {
-    const selected = button.dataset.screen === screenId;
-    if (selected) button.setAttribute('aria-current', 'page');
-    else button.removeAttribute('aria-current');
-  });
-  if (screenId === 'history-screen') {
-    $('history-details').open = true;
-    renderHistory(nowParts().localDate);
-  }
-  if (options.focus) $(screenId).scrollIntoView({ block: 'start' });
-}
-
-function switchRecordInput(inputId, options = {}) {
-  if (typeof document.querySelectorAll !== 'function') return;
-  const panelId = `${inputId}-input-panel`;
-  const panel = $(panelId);
-  if (!panel) return;
-  activeRecordInputId = inputId;
-  document.querySelectorAll('.record-input-panel').forEach((item) => { item.hidden = item.id !== panelId; });
-  document.querySelectorAll('.record-input-tab').forEach((tab) => {
-    tab.setAttribute('aria-selected', String(tab.dataset.recordInput === inputId));
-  });
-  if (options.focus) panel.querySelector('button, select, textarea, input')?.focus();
+  setAppScreen(activeAppScreen, { scroll: false });
 }
 
 function renderInitialSetupOptions() {
@@ -406,13 +455,14 @@ function initializeFromText(text, errorElement) {
 
 
 function importInitialBackupText(text) {
-  const succeeded = initializeFromText(text, $('initial-restore-error'));
+  const restoreError = $('setup-restore-error');
+  const succeeded = initializeFromText(text, restoreError);
   if (succeeded) {
     showToast('バックアップを復元しました');
     return true;
   }
-  console.error('Initial backup restore failed', new Error($('initial-restore-error').textContent || 'Invalid backup data'));
-  showSetup('バックアップを復元できませんでした。JSONバックアップを確認してください。');
+  console.error('Initial backup restore failed', new Error(restoreError.textContent || 'Invalid backup data'));
+  restoreError.textContent = 'バックアップを復元できませんでした。JSONバックアップを確認してください。';
   return false;
 }
 
@@ -427,25 +477,25 @@ function handleInitialBackupFileSelected(event) {
       importInitialBackupText(String(reader.result));
     } catch (error) {
       console.error('Initial backup restore failed', error);
-      showSetup('バックアップを復元できませんでした。JSONバックアップを確認してください。');
+      $('setup-restore-error').textContent = 'バックアップを復元できませんでした。JSONバックアップを確認してください。';
     } finally {
       input.value = '';
     }
   };
   reader.onerror = () => {
     console.error('Initial backup restore failed', reader.error);
-    showSetup('バックアップを復元できませんでした。JSONバックアップを確認してください。');
+    $('setup-restore-error').textContent = 'バックアップを復元できませんでした。JSONバックアップを確認してください。';
     input.value = '';
   };
   reader.readAsText(file);
 }
 
 function requestInitialBackupRestore() {
-  $('initial-restore-error').textContent = 'Tide TraceのJSONバックアップを選択してください。';
+  $('setup-restore-error').textContent = 'Tide TraceのJSONバックアップを選択してください。';
   const input = $('setup-import-file');
   if (!input) {
     console.error('Initial backup restore failed', new Error('Initial backup file input was not found'));
-    showSetup('復元できませんでした。画面を再読み込みしてから再度お試しください。');
+    $('setup-restore-error').textContent = '復元できませんでした。画面を再読み込みしてから再度お試しください。';
     return;
   }
   if (input.files && input.files[0]) {
@@ -582,8 +632,7 @@ const RECORD_TYPE_ICONS = {
     { tag: 'path', attrs: { d: 'M10.1 8.9l3.8 4.8' } }
   ],
   pain: [
-    { tag: 'circle', attrs: { cx: '12', cy: '12', r: '7.4' } },
-    { tag: 'path', attrs: { d: 'M8.4 9.9l2 1.2M15.6 9.9l-2 1.2M9.3 15.2c1.5-1.2 3.9-1.2 5.4 0' } }
+    { tag: 'path', attrs: { d: 'M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z' } }
   ],
   note: [
     { tag: 'path', attrs: { d: 'M7.5 4.8h6.9l3.1 3.2v9.2a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2V6.8a2 2 0 0 1 2-2z' } },
@@ -614,6 +663,32 @@ function createTypeIcon(type, className = 'event-type-icon') {
   return svg;
 }
 
+function createUseIcon(symbolId, className = 'ui-icon') {
+  const svg = createSvgElement('svg');
+  const use = createSvgElement('use');
+  svg.setAttribute('class', className);
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.8');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  use.setAttribute('href', `#${symbolId}`);
+  svg.appendChild(use);
+  return svg;
+}
+
+function createRecordActionButton(symbolId, ariaLabel, onClick, { danger = false } = {}) {
+  const button = document.createElement('button');
+  button.className = `button-base button-icon record-action-button ${danger ? 'danger delete-event-button' : 'edit-event-button'}`;
+  button.type = 'button';
+  button.setAttribute('aria-label', ariaLabel);
+  button.appendChild(createUseIcon(symbolId, 'record-action-icon'));
+  button.addEventListener('click', onClick);
+  return button;
+}
+
 function appendEventBodyText(body, info) {
   const summary = document.createElement('span');
   summary.className = 'event-summary';
@@ -631,7 +706,6 @@ function appendEventBodyText(body, info) {
 
 function setActionButtonIcon(buttonId, type) {
   const button = $(buttonId);
-  button.className = `${button.className || ''} ${type}-record-button`.trim();
   const labelText = button.textContent;
   button.textContent = '';
   const label = document.createElement('span');
@@ -651,17 +725,17 @@ function renderEventList(container, events, sortEvents = sortedEvents, options =
     return;
   }
   const showDate = options.showDate !== false;
-  const orderedEvents = sortEvents(events);
-  orderedEvents.forEach((event, index) => {
+  const renderedEvents = sortEvents(events);
+  renderedEvents.forEach((event, index) => {
     const info = eventDisplayInfo(event);
     const item = document.createElement('div');
-    item.className = `event${options.timeline !== false && index < orderedEvents.length - 1 ? ' timeline-continues' : ''}`;
+    item.className = `event event-${event.type === 'note' ? 'note-record' : event.type}`;
+    if (index < renderedEvents.length - 1) item.classList.add('timeline-has-next');
     const time = document.createElement('div');
     time.className = 'event-time';
     time.textContent = showDate ? `${event.localDate} ${event.localTime}` : event.localTime;
     const type = document.createElement('div');
     type.className = 'event-type';
-    type.setAttribute('data-record-type', event.type);
     const icon = createTypeIcon(event.type);
     const typeLabel = document.createElement('span');
     typeLabel.className = 'visually-hidden';
@@ -672,20 +746,19 @@ function renderEventList(container, events, sortEvents = sortedEvents, options =
     appendEventBodyText(body, info);
     const actions = document.createElement('div');
     actions.className = 'event-actions';
-    const editButton = document.createElement('button');
-    editButton.className = 'button-base button-icon secondary-button edit-event-button';
-    editButton.type = 'button';
-    editButton.textContent = '✎';
-    editButton.setAttribute('aria-label', '編集');
+    const editButton = createRecordActionButton(
+      'icon-edit',
+      '編集',
+      (eventObject) => openEditEventPanel(event.id, eventObject?.currentTarget || editButton)
+    );
     editButton.setAttribute('data-event-id', event.id);
-    editButton.addEventListener('click', (eventObject) => openEditEventPanel(event.id, eventObject?.currentTarget || editButton));
-    const button = document.createElement('button');
-    button.className = 'button-base button-icon danger delete-event-button';
-    button.type = 'button';
-    button.textContent = '×';
-    button.setAttribute('aria-label', '記録を削除');
-    button.addEventListener('click', () => deleteEvent(event.id));
-    actions.append(editButton, button);
+    const deleteButton = createRecordActionButton(
+      'icon-delete',
+      '記録を削除',
+      () => deleteEvent(event.id),
+      { danger: true }
+    );
+    actions.append(editButton, deleteButton);
     item.append(time, type, body, actions);
     container.appendChild(item);
   });
@@ -951,19 +1024,8 @@ function elapsedText(iso) {
   return `${Math.floor(minutes / 60)}時間${minutes % 60}分`;
 }
 
-function formatShortDate(dateText) {
-  const [, month, day] = dateText.split('-');
-  return `${Number(month)}/${Number(day)}`;
-}
-
 function formatFullDate(dateText) {
   return dateText.replaceAll('-', '/');
-}
-
-function lastMedicationText(option, last) {
-  if (!last) return `${option.label}：記録なし`;
-  if (elapsedMinutes(last.recordedAtUtc) >= 1440) return `${option.label}：1日以上`;
-  return `${option.label}：${elapsedText(last.recordedAtUtc)}`;
 }
 
 function addDays(dateText, days) {
@@ -1036,12 +1098,12 @@ function renderSummaryPeriodPicker() {
   if (!appData.periods.length) return;
   const label = document.createElement('label');
   label.setAttribute('for', 'summary-period-select');
-  label.className = 'form-field-label';
-  label.textContent = '体調比較用期間から選択';
+  label.className = 'visually-hidden';
+  label.textContent = '体調比較用期間';
   const select = document.createElement('select');
   select.id = 'summary-period-select';
-  select.className = 'form-control-base form-control';
-  select.innerHTML = '<option value="">選択してください</option>' + sortedPeriods().map((period) =>
+  select.className = 'form-control-base form-control summary-period-select';
+  select.innerHTML = '<option value="">体調比較用期間から選択する</option>' + sortedPeriods().map((period) =>
     `<option value="${escapeHtml(period.id)}">${escapeHtml(period.label)}（${escapeHtml(period.startDate)}〜${escapeHtml(period.endDate)}）</option>`
   ).join('');
   select.addEventListener('change', () => {
@@ -2143,19 +2205,18 @@ function renderPeriodList() {
     content.className = 'comparison-period-content';
     content.textContent = `${period.startDate}〜${period.endDate}　${period.label}`;
     const actions = document.createElement('div');
-    actions.className = 'event-actions';
-    const editButton = document.createElement('button');
-    editButton.className = 'button-base button-icon secondary-button edit-event-button';
-    editButton.type = 'button';
-    editButton.textContent = '✎';
-    editButton.setAttribute('aria-label', '体調比較用期間を編集');
-    editButton.addEventListener('click', () => editPeriod(period.id));
-    const deleteButton = document.createElement('button');
-    deleteButton.className = 'button-base button-icon danger delete-event-button';
-    deleteButton.type = 'button';
-    deleteButton.textContent = '×';
-    deleteButton.setAttribute('aria-label', '体調比較用期間を削除');
-    deleteButton.addEventListener('click', () => deletePeriod(period.id));
+    actions.className = 'settings-row-actions';
+    const editButton = createRecordActionButton(
+      'icon-edit',
+      '体調比較用期間を編集',
+      () => editPeriod(period.id)
+    );
+    const deleteButton = createRecordActionButton(
+      'icon-delete',
+      '体調比較用期間を削除',
+      () => deletePeriod(period.id),
+      { danger: true }
+    );
     actions.append(editButton, deleteButton);
     item.append(content, actions);
     list.appendChild(item);
@@ -2164,10 +2225,7 @@ function renderPeriodList() {
 
 
 function renderPainStateSettingsSummary() {
-  const options = appData.settings.painStateOptions;
-  const visibleCount = options.filter((option) => option.active).length;
-  const hiddenCount = options.length - visibleCount;
-  $('pain-state-settings-summary').textContent = `痛み状態設定　表示中${visibleCount}件 / 非表示${hiddenCount}件`;
+  $('pain-state-settings-summary').textContent = '痛み状態設定';
 }
 
 function resetPainStateOptionForm() {
@@ -2244,16 +2302,6 @@ function editPainStateOption(id) {
   $('pain-state-label').focus();
 }
 
-function togglePainStateOptionActive(id) {
-  const option = appData.settings.painStateOptions.find((item) => item.id === id);
-  if (!option) return;
-  option.active = !option.active;
-  saveData();
-  render();
-  showToast('痛み状態設定を更新しました。');
-  setPainStateSettingsMessage('痛み状態設定を更新しました。');
-}
-
 function renderPainStateSettingsList() {
   const list = $('pain-state-settings-list');
   list.innerHTML = '';
@@ -2269,13 +2317,12 @@ function renderPainStateSettingsList() {
     const status = option.active ? '表示中' : '非表示';
     content.textContent = `${option.label} / 表示順 ${option.sortOrder} / ${status}`;
     const actions = document.createElement('div');
-    actions.className = 'pain-state-settings-actions';
-    const editButton = document.createElement('button');
-    editButton.className = 'button-base button-icon secondary-button edit-event-button';
-    editButton.type = 'button';
-    editButton.textContent = '✎';
-    editButton.setAttribute('aria-label', '痛み状態設定を編集');
-    editButton.addEventListener('click', () => editPainStateOption(option.id));
+    actions.className = 'settings-row-actions';
+    const editButton = createRecordActionButton(
+      'icon-edit',
+      '痛み状態設定を編集',
+      () => editPainStateOption(option.id)
+    );
     actions.append(editButton);
     item.append(content, actions);
     list.appendChild(item);
@@ -2283,14 +2330,11 @@ function renderPainStateSettingsList() {
 }
 
 function renderMedicationSettingsSummary() {
-  const options = appData.settings.medicationOptions;
-  const visibleCount = options.filter((option) => option.active).length;
-  const hiddenCount = options.length - visibleCount;
-  $('medication-settings-summary').textContent = `薬設定　表示中${visibleCount}件 / 非表示${hiddenCount}件`;
+  $('medication-settings-summary').textContent = '薬設定';
 }
 
 function renderComparisonPeriodSummary() {
-  $('comparison-period-summary').textContent = `体調比較用期間の設定　登録済み${appData.periods.length}件`;
+  $('comparison-period-summary').textContent = '体調比較用期間の設定';
 }
 
 function resetMedicationOptionForm() {
@@ -2381,16 +2425,6 @@ function editMedicationOption(id) {
   $('medication-label').focus();
 }
 
-function toggleMedicationOptionActive(id) {
-  const option = appData.settings.medicationOptions.find((item) => item.id === id);
-  if (!option) return;
-  option.active = !option.active;
-  saveData();
-  render();
-  showToast(option.active ? '薬設定を更新しました。' : '薬設定を更新しました。');
-  setMedicationSettingsMessage('薬設定を更新しました。');
-}
-
 function renderMedicationSettingsList() {
   const list = $('medication-settings-list');
   list.innerHTML = '';
@@ -2406,14 +2440,13 @@ function renderMedicationSettingsList() {
     const status = option.active ? '表示中' : '非表示';
     content.textContent = `${option.label} / ${option.defaultAmount}${option.unit || ''} / 表示順 ${option.sortOrder} / ${status}`;
     const actions = document.createElement('div');
-    actions.className = 'medication-settings-actions';
-    const editButton = document.createElement('button');
-    editButton.className = 'button-base button-icon secondary-button edit-event-button';
-    editButton.type = 'button';
-    editButton.textContent = '✎';
-    editButton.setAttribute('aria-label', '薬設定を編集');
-    editButton.addEventListener('click', () => editMedicationOption(option.id));
-    actions.append(editButton);
+    actions.className = 'settings-row-actions';
+    const editButton = createRecordActionButton(
+      'icon-edit',
+      '薬設定を編集',
+      () => editMedicationOption(option.id)
+    );
+    actions.appendChild(editButton);
     item.append(content, actions);
     list.appendChild(item);
   });
@@ -2422,13 +2455,28 @@ function renderMedicationSettingsList() {
 function createMedicationRecordButton(option) {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'button-base button-full primary-button';
+  button.className = 'button-base button-full secondary-button medication-record-button';
   const label = document.createElement('span');
   label.textContent = option.label;
-  button.append(createTypeIcon('medication', 'button-type-icon'), label);
+  button.append(createUseIcon('icon-medication-settings', 'button-type-icon'), label);
   button.setAttribute('aria-label', `${option.label}を記録`);
   button.addEventListener('click', () => saveMedication(option.id));
   return button;
+}
+
+function lastMedicationElapsedText(last) {
+  if (!last) return '記録なし';
+  if (elapsedMinutes(last.recordedAtUtc) >= 1440) return '1日以上前';
+  return `${elapsedText(last.recordedAtUtc)}前`;
+}
+
+function updateLastMedicationOverflow() {
+  const shell = $('last-medication-shell');
+  const list = $('last-medication-list');
+  if (!shell || !list) return;
+  const overflowing = list.scrollWidth - list.clientWidth > 2;
+  const atEnd = list.scrollLeft + list.clientWidth >= list.scrollWidth - 2;
+  shell.classList.toggle('is-overflowing', overflowing && !atEnd);
 }
 
 function renderLastMedicationList() {
@@ -2436,10 +2484,44 @@ function renderLastMedicationList() {
   list.innerHTML = '';
   activeMedicationOptions().forEach((option) => {
     const last = sortedEvents(appData.events.filter((event) => event.type === 'medication' && event.medicationOptionId === option.id)).at(-1);
-    const item = document.createElement('div');
+    const item = document.createElement('button');
+    item.type = 'button';
     item.className = 'last-medication-item';
-    item.textContent = lastMedicationText(option, last);
+    item.setAttribute('aria-label', `${option.label}を記録。前回は${lastMedicationElapsedText(last)}`);
+    const copy = document.createElement('span');
+    copy.className = 'last-medication-copy';
+    const label = document.createElement('strong');
+    label.textContent = option.label;
+    const elapsed = document.createElement('span');
+    elapsed.textContent = lastMedicationElapsedText(last);
+    copy.append(label, elapsed);
+    item.append(copy, createUseIcon('icon-medication-settings', 'last-medication-action-icon'));
+    item.addEventListener('click', () => saveMedication(option.id));
     list.appendChild(item);
+  });
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateLastMedicationOverflow);
+  else updateLastMedicationOverflow();
+}
+
+function renderPainScoreButtons() {
+  const select = $('pain-score');
+  const container = $('pain-score-buttons');
+  if (!select || !container) return;
+  container.innerHTML = '';
+  Array.from({ length: 11 }, (_, value) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'pain-score-button';
+    button.textContent = String(value);
+    button.dataset.painScore = String(value);
+    button.setAttribute('aria-pressed', String(select.value === String(value)));
+    button.addEventListener('click', () => {
+      select.value = String(value);
+      container.querySelectorAll('[data-pain-score]').forEach((scoreButton) => {
+        scoreButton.setAttribute('aria-pressed', String(scoreButton === button));
+      });
+    });
+    container.appendChild(button);
   });
 }
 
@@ -2479,7 +2561,9 @@ function renderExportStatus() {
 function render() {
   const today = nowParts().localDate;
   $('pain-score').innerHTML = Array.from({ length: 11 }, (_, value) => `<option value="${value}">${value}</option>`).join('');
-  $('pain-state').innerHTML = activePainOptions().map((option) => `<option value="${option.id}">${escapeHtml(option.label)}</option>`).join('');
+  renderPainScoreButtons();
+  $('pain-state').innerHTML = '<option value="">状態を選んでください</option>' +
+    activePainOptions().map((option) => `<option value="${option.id}">${escapeHtml(option.label)}</option>`).join('');
   $('medication-buttons').innerHTML = '';
   const medicationOptions = activeMedicationOptions();
   medicationOptions.forEach((option) => {
@@ -2506,14 +2590,17 @@ function render() {
 
   renderEventList($('today-list'), appData.events.filter((event) => event.localDate === today), sortedEventsDescending, { showDate: false });
   renderHistory(today);
+  setRecordTab(activeRecordTab);
+  setSummaryTab(activeSummaryTab);
+  setRecordEntryExpanded(recordEntryExpanded);
 }
 
 
 function formatHistoryDateHeading(dateText) {
   const date = new Date(`${dateText}T00:00:00+09:00`);
-  const monthDay = new Intl.DateTimeFormat('ja-JP', { timeZone: TIMEZONE, month: 'numeric', day: 'numeric' }).format(date);
+  const [, month, day] = dateText.split('-').map(Number);
   const weekday = new Intl.DateTimeFormat('ja-JP', { timeZone: TIMEZONE, weekday: 'short' }).format(date);
-  return `${monthDay} ${weekday}`;
+  return `${month}月${day}日（${weekday}）`;
 }
 
 function buildDailySummary(events) {
@@ -2566,9 +2653,9 @@ function dailySummaryNoteText(summary) {
 }
 
 function appendDailySummaryRow(container, type, label, text) {
-  if (!text) return;
+  if (!text) return null;
   const row = document.createElement('p');
-  row.className = 'history-summary-row';
+  row.className = `history-summary-row history-summary-${type}`;
   const hiddenLabel = document.createElement('span');
   hiddenLabel.className = 'visually-hidden';
   hiddenLabel.textContent = label;
@@ -2577,6 +2664,7 @@ function appendDailySummaryRow(container, type, label, text) {
   content.textContent = text;
   row.append(createTypeIcon(type, 'history-summary-icon'), hiddenLabel, content);
   container.appendChild(row);
+  return row;
 }
 
 function appendDailySummaryRows(container, summary) {
@@ -2672,12 +2760,7 @@ function datesInRangeDescending(startDate, endDate) {
 }
 
 function renderHistory(today) {
-  const details = $('history-details');
   const list = $('history-list');
-  if (!details.open) {
-    list.innerHTML = '';
-    return;
-  }
   if (!historyRange) historyRange = recentHistoryRange(today);
   list.innerHTML = '';
   renderHistoryNavigation(today, list, { showCopy: true });
@@ -2718,7 +2801,7 @@ function renderHistory(today) {
     empty.textContent = 'この期間に記録はありません。';
     list.appendChild(empty);
   }
-  renderHistoryNavigation(today, list, { showCopy: false });
+  renderHistoryNavigation(today, list, { showCopy: false, showRange: false });
 }
 
 function scrollHistoryToStart() {
@@ -2731,10 +2814,12 @@ function renderHistoryNavigation(today, list, options = {}) {
   const nav = document.createElement('div');
   nav.className = 'history-navigation';
 
-  const rangeLabel = document.createElement('p');
-  rangeLabel.className = 'history-range-label';
-  rangeLabel.textContent = `表示範囲：${formatHistoryRangeLabel(historyRange)}`;
-  nav.appendChild(rangeLabel);
+  if (options.showRange !== false) {
+    const rangeLabel = document.createElement('p');
+    rangeLabel.className = 'history-range-label';
+    rangeLabel.textContent = formatHistoryRangeLabel(historyRange);
+    nav.appendChild(rangeLabel);
+  }
 
   if (options.showCopy && historyEventsInRange(historyRange).length) {
     const copyRow = document.createElement('div');
@@ -2742,7 +2827,9 @@ function renderHistoryNavigation(today, list, options = {}) {
     const copyButton = document.createElement('button');
     copyButton.className = 'button-base button-compact secondary-button history-copy-button';
     copyButton.type = 'button';
-    copyButton.textContent = 'コピー';
+    const copyLabel = document.createElement('span');
+    copyLabel.textContent = 'コピー';
+    copyButton.append(createUseIcon('icon-copy', 'history-copy-icon'), copyLabel);
     copyButton.addEventListener('click', copyVisibleHistorySummary);
     copyRow.appendChild(copyButton);
     nav.appendChild(copyRow);
@@ -2978,36 +3065,42 @@ function saveMedication(medicationOptionId) {
     note
   }), note ? `${option.label}をメモ付きで記録しました` : `${option.label}を記録しました`);
   clearRecordNote();
-  $('app-message').textContent = '';
+  $('record-message').textContent = '';
 }
 
 function wireEvents() {
   decorateRecordActionButtons();
-  document.querySelectorAll('.bottom-navigation-button').forEach((button) => {
-    button.addEventListener('click', () => switchAppScreen(button.dataset.screen));
+  document.querySelectorAll('[data-app-screen-target]').forEach((button) => {
+    button.addEventListener('click', () => setAppScreen(button.dataset.appScreenTarget));
   });
-  document.querySelectorAll('.record-input-tab').forEach((button) => {
-    button.addEventListener('click', () => switchRecordInput(button.dataset.recordInput, { focus: true }));
+  document.querySelectorAll('[data-record-tab]').forEach((tab) => {
+    tab.addEventListener('click', () => setRecordTab(tab.dataset.recordTab));
   });
+  document.querySelectorAll('[data-summary-tab]').forEach((tab) => {
+    tab.addEventListener('click', () => setSummaryTab(tab.dataset.summaryTab));
+  });
+  $('record-entry-toggle').addEventListener('click', () => setRecordEntryExpanded(!recordEntryExpanded));
+  $('last-medication-list').addEventListener('scroll', updateLastMedicationOverflow, { passive: true });
+  if (typeof window !== 'undefined') window.addEventListener('resize', updateLastMedicationOverflow);
   $('complete-initial-setup').addEventListener('click', completeInitialSetup);
   $('restore-initial-backup').addEventListener('click', requestInitialBackupRestore);
   $('setup-import-file').addEventListener('change', handleInitialBackupFileSelected);
   $('save-pain').addEventListener('click', () => {
     const stateOptionId = $('pain-state').value;
-    if (!stateOptionId) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }
+    if (!stateOptionId) { $('record-message').textContent = '痛みの状態を選択してください。'; return; }
     const option = appData.settings.painStateOptions.find((item) => item.id === stateOptionId && item.active);
-    if (!option) { $('app-message').textContent = '痛みの状態を選択してください。'; return; }
+    if (!option) { $('record-message').textContent = '痛みの状態を選択してください。'; return; }
     const note = recordNoteValue();
     addEvent(createEvent({ type: 'pain', painScore: Number($('pain-score').value), stateOptionId: option.id, stateLabel: option.label, note }), note ? '痛みをメモ付きで記録しました' : '痛みを記録しました');
     clearRecordNote();
-    $('app-message').textContent = '';
+    $('record-message').textContent = '';
   });
   $('save-note').addEventListener('click', () => {
     const note = recordNoteValue();
-    if (!note) { $('app-message').textContent = 'メモを入力すると保存できます。'; return; }
+    if (!note) { $('record-message').textContent = 'メモを入力すると保存できます。'; return; }
     addEvent(createEvent({ type: 'note', note }), 'メモを保存しました');
     clearRecordNote();
-    $('app-message').textContent = '';
+    $('record-message').textContent = '';
   });
   $('open-medication-option-form').addEventListener('click', openMedicationOptionForm);
   $('open-pain-state-option-form').addEventListener('click', openPainStateOptionForm);
@@ -3036,13 +3129,6 @@ function wireEvents() {
   $('show-health-history-print').addEventListener('click', showHealthHistoryPrint);
   $('health-history-columns-editor').addEventListener('click', handleHealthHistoryColumnEditorClick);
   $('health-history-columns-panel').addEventListener('toggle', () => { if ($('health-history-columns-panel').open) { healthHistoryColumnDraft = normalizeHealthReviewColumns(appData.settings).map((item) => ({ ...item })); renderHealthHistoryColumnEditor(); } });
-  $('history-details').addEventListener('toggle', () => {
-    if ($('history-details').open) {
-      historyRange = recentHistoryRange(nowParts().localDate);
-      expandedHistoryDate = null;
-    }
-    renderHistory(nowParts().localDate);
-  });
   $('cancel-medication-edit').addEventListener('click', () => {
     closeMedicationOptionForm();
     setMedicationSettingsMessage('');
