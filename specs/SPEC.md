@@ -42,6 +42,10 @@ Setup requires at least one medication option and at least one pain-state option
 
 ### Daily recording and review
 
+The main app is organized into four screens: `記録`, `履歴`, `集計`, and `管理`. A fixed bottom navigation bar switches between these screens. The record screen opens on the medication tab; medication, pain, and note input are selected with tabs. Individual event rows in today’s records and expanded past-record details use a vertical timeline connector within the same date only. Daily summary rows are not part of that timeline.
+
+The management screen uses the same filled teal treatment for available backup, restore, and CSV export actions. CSV export remains disabled until the user selects an export target. Medication and pain-state visibility is changed in each edit form; the settings lists provide only an edit action. Medication, pain-state, and comparison-period edit and deletion controls use the same icon-button treatment as record actions.
+
 After setup, the app shows:
 
 - Time since the last record for each active medication option.

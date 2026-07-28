@@ -2493,8 +2493,6 @@ def test_button_role_classification_regression() -> None:
         "editButton.className = 'button-base button-icon secondary-button edit-event-button';",
         "button.className = 'button-base button-icon danger delete-event-button';",
         "deleteButton.className = 'button-base button-icon danger delete-event-button';",
-        "toggleButton.className = 'button-base button-compact secondary-button pain-state-toggle-button';",
-        "toggleButton.className = 'button-base button-compact secondary-button medication-toggle-button';",
         "button.className = 'button-base button-full primary-button';",
         "button.className = 'button-base button-compact secondary-button history-detail-button';",
         "recentButton.className = 'button-base button-compact secondary-button history-nav-button';",
@@ -2995,3 +2993,19 @@ def test_settings_forms_share_css_classes() -> None:
     assert ".settings-form-panel" in css
     assert ".settings-add-button" in css
     assert ".settings-form-actions" in css
+
+
+def test_adopted_mobile_ui_has_four_screens_and_preserves_storage_contract() -> None:
+    html = (Path(__file__).parents[1] / "docs" / "index.html").read_text()
+    source = APP_JS.read_text()
+    css = (Path(__file__).parents[1] / "docs" / "styles.css").read_text()
+
+    for screen in ("record-screen", "history-screen", "summary-screen", "manage-screen"):
+        assert f'id="{screen}"' in html
+    assert 'id="app-navigation"' in html
+    assert 'function switchAppScreen(screenId, options = {})' in source
+    assert 'function switchRecordInput(inputId, options = {})' in source
+    assert 'const STORAGE_KEY = \'tideTrace.data.v1\';' in source
+    assert ".app-screen[hidden]" in css
+    assert ".bottom-navigation" in css
+    assert ".event-item.timeline-continues::after" in css
