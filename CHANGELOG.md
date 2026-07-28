@@ -7,6 +7,7 @@ All notable changes to TideTrace will be documented in this file.
 ### Changed
 - Changed CSV export to require an explicit export target selection before creating a file.
 - Moved the initial backup restore action before the first-use setup form and updated the initial pain-state labels.
+- Reorganized the app into record, history, summary, and management screens with a fixed mobile navigation bar; added record-type tabs, timeline connectors for individual records, and consistent action controls in settings.
 
 ### Fixed
 - Fixed the edit dialog opening focus so pressing edit does not immediately focus the date input and open the date picker.

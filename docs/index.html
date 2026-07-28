@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Tide Trace</title>
+  <title>TideTrace</title>
   <meta name="theme-color" content="#66b8d4">
   <link rel="icon" href="./favicon.ico" sizes="any">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
@@ -59,8 +59,7 @@
       <img class="brand-logo-mark" src="icon.svg" alt="" width="72" height="72">
     </div>
     <div class="brand-copy">
-      <h1>Tide Trace</h1>
-      <p>Local-first pain and medication log</p>
+      <h1>TideTrace</h1>
     </div>
   </header>
 
@@ -113,19 +112,25 @@
         </form>
       </div>
 
+      <section id="record-screen" class="app-screen" aria-label="記録">
       <section class="card last-medication-card" aria-labelledby="last-med-title">
         <h2 id="last-med-title">前回の服薬から</h2>
         <div id="last-medication-list"></div>
       </section>
 
-      <section class="card" aria-labelledby="input-title">
+      <section class="card record-card" aria-labelledby="input-title">
         <h2 id="input-title" class="visually-hidden">記録</h2>
-        <div class="record-input-section">
+        <div class="record-input-tabs" role="tablist" aria-label="記録の種類">
+          <button class="button-base record-input-tab" type="button" role="tab" aria-selected="true" aria-controls="medication-input-panel" data-record-input="medication">服薬</button>
+          <button class="button-base record-input-tab" type="button" role="tab" aria-selected="false" aria-controls="pain-input-panel" data-record-input="pain">痛み</button>
+          <button class="button-base record-input-tab" type="button" role="tab" aria-selected="false" aria-controls="note-input-panel" data-record-input="note">メモ</button>
+        </div>
+        <div id="medication-input-panel" class="record-input-section record-input-panel" role="tabpanel">
           <h3 class="record-input-heading visually-hidden">薬</h3>
           <div id="medication-buttons" class="button-list"></div>
         </div>
 
-        <div class="record-input-section">
+        <div id="pain-input-panel" class="record-input-section record-input-panel" role="tabpanel" hidden>
           <h3 class="record-input-heading visually-hidden">痛み</h3>
           <div class="pain-input-grid">
             <div class="field-row pain-score-field">
@@ -140,7 +145,7 @@
           <button id="save-pain" class="button-base button-full primary-button" type="button">痛みを記録</button>
         </div>
 
-        <div class="record-input-section">
+        <div id="note-input-panel" class="record-input-section record-input-panel" role="tabpanel" hidden>
           <label for="record-note-input" class="form-field-label visually-hidden">メモ（任意）</label>
           <textarea id="record-note-input" class="form-control-base form-control-full" rows="4" placeholder="薬や痛みの補足、または単独メモ"></textarea>
           <button id="save-note" class="button-base button-compact secondary-button note-save-button" type="button">メモだけ保存</button>
@@ -152,6 +157,9 @@
         <div id="today-list"></div>
       </section>
 
+      </section>
+
+      <section id="history-screen" class="app-screen" aria-label="履歴" hidden>
       <section class="card history-card" aria-labelledby="history-title">
         <details id="history-details" class="section-disclosure">
           <summary id="history-title"><span class="section-title-label"><svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-record-history"></use></svg>過去の記録</span></summary>
@@ -159,6 +167,9 @@
         </details>
       </section>
 
+      </section>
+
+      <section id="summary-screen" class="app-screen" aria-label="集計" hidden>
       <section class="card visit-summary-card" aria-labelledby="visit-summary-title">
         <details id="visit-summary-details" class="section-disclosure">
           <summary id="visit-summary-title"><span class="section-title-label"><svg class="section-title-icon" aria-hidden="true" focusable="false"><use href="#icon-record-summary"></use></svg>記録の集計</span></summary>
@@ -215,6 +226,9 @@
         </details>
       </section>
 
+      </section>
+
+      <section id="manage-screen" class="app-screen" aria-label="管理" hidden>
       <section class="notice card">
         <p>このアプリの記録は、お使いのブラウザ内に保存されます。端末やブラウザの状態によっては、記録が消えることがあります。必要に応じて、バックアップを保存してください。</p>
         <p>プライベートブラウズでは、記録が保持されない場合があります。通常のブラウザ画面でご利用ください。</p>
@@ -328,6 +342,14 @@
         <button id="delete-all" class="button-base button-full danger" type="button">全データ削除</button>
         <p id="app-message" class="message" role="status"></p>
       </section>
+      </section>
+
+      <nav id="app-navigation" class="bottom-navigation" aria-label="画面移動">
+        <button class="button-base bottom-navigation-button" type="button" aria-current="page" data-screen="record-screen"><svg aria-hidden="true" focusable="false"><use href="#icon-record-today"></use></svg><span>記録</span></button>
+        <button class="button-base bottom-navigation-button" type="button" data-screen="history-screen"><svg aria-hidden="true" focusable="false"><use href="#icon-record-history"></use></svg><span>履歴</span></button>
+        <button class="button-base bottom-navigation-button" type="button" data-screen="summary-screen"><svg aria-hidden="true" focusable="false"><use href="#icon-record-summary"></use></svg><span>集計</span></button>
+        <button class="button-base bottom-navigation-button" type="button" data-screen="manage-screen"><svg aria-hidden="true" focusable="false"><use href="#icon-management"></use></svg><span>管理</span></button>
+      </nav>
     </div>
   </main>
 

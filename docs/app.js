@@ -19,6 +19,8 @@ let expandedHistoryDate = null;
 let historyRange = null;
 let currentVisitSummaryData = null;
 let currentVisitSummaryText = '';
+let activeAppScreenId = 'record-screen';
+let activeRecordInputId = 'medication';
 
 const $ = (id) => document.getElementById(id);
 
@@ -255,6 +257,39 @@ function showApp() {
   ensureHealthReviewColumns(appData.settings);
   renderHealthHistoryColumnEditor();
   render();
+  switchAppScreen(activeAppScreenId, { focus: false });
+  switchRecordInput(activeRecordInputId, { focus: false });
+}
+
+function switchAppScreen(screenId, options = {}) {
+  if (typeof document.querySelectorAll !== 'function') return;
+  const screens = Array.from(document.querySelectorAll('.app-screen'));
+  if (!screens.some((screen) => screen.id === screenId)) return;
+  activeAppScreenId = screenId;
+  screens.forEach((screen) => { screen.hidden = screen.id !== screenId; });
+  document.querySelectorAll('.bottom-navigation-button').forEach((button) => {
+    const selected = button.dataset.screen === screenId;
+    if (selected) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
+  });
+  if (screenId === 'history-screen') {
+    $('history-details').open = true;
+    renderHistory(nowParts().localDate);
+  }
+  if (options.focus) $(screenId).scrollIntoView({ block: 'start' });
+}
+
+function switchRecordInput(inputId, options = {}) {
+  if (typeof document.querySelectorAll !== 'function') return;
+  const panelId = `${inputId}-input-panel`;
+  const panel = $(panelId);
+  if (!panel) return;
+  activeRecordInputId = inputId;
+  document.querySelectorAll('.record-input-panel').forEach((item) => { item.hidden = item.id !== panelId; });
+  document.querySelectorAll('.record-input-tab').forEach((tab) => {
+    tab.setAttribute('aria-selected', String(tab.dataset.recordInput === inputId));
+  });
+  if (options.focus) panel.querySelector('button, select, textarea, input')?.focus();
 }
 
 function renderInitialSetupOptions() {
@@ -596,6 +631,7 @@ function appendEventBodyText(body, info) {
 
 function setActionButtonIcon(buttonId, type) {
   const button = $(buttonId);
+  button.className = `${button.className || ''} ${type}-record-button`.trim();
   const labelText = button.textContent;
   button.textContent = '';
   const label = document.createElement('span');
@@ -615,15 +651,17 @@ function renderEventList(container, events, sortEvents = sortedEvents, options =
     return;
   }
   const showDate = options.showDate !== false;
-  sortEvents(events).forEach((event) => {
+  const orderedEvents = sortEvents(events);
+  orderedEvents.forEach((event, index) => {
     const info = eventDisplayInfo(event);
     const item = document.createElement('div');
-    item.className = 'event';
+    item.className = `event${options.timeline !== false && index < orderedEvents.length - 1 ? ' timeline-continues' : ''}`;
     const time = document.createElement('div');
     time.className = 'event-time';
     time.textContent = showDate ? `${event.localDate} ${event.localTime}` : event.localTime;
     const type = document.createElement('div');
     type.className = 'event-type';
+    type.setAttribute('data-record-type', event.type);
     const icon = createTypeIcon(event.type);
     const typeLabel = document.createElement('span');
     typeLabel.className = 'visually-hidden';
@@ -2238,12 +2276,7 @@ function renderPainStateSettingsList() {
     editButton.textContent = '✎';
     editButton.setAttribute('aria-label', '痛み状態設定を編集');
     editButton.addEventListener('click', () => editPainStateOption(option.id));
-    const toggleButton = document.createElement('button');
-    toggleButton.className = 'button-base button-compact secondary-button pain-state-toggle-button';
-    toggleButton.type = 'button';
-    toggleButton.textContent = option.active ? '非表示' : '表示';
-    toggleButton.addEventListener('click', () => togglePainStateOptionActive(option.id));
-    actions.append(editButton, toggleButton);
+    actions.append(editButton);
     item.append(content, actions);
     list.appendChild(item);
   });
@@ -2380,12 +2413,7 @@ function renderMedicationSettingsList() {
     editButton.textContent = '✎';
     editButton.setAttribute('aria-label', '薬設定を編集');
     editButton.addEventListener('click', () => editMedicationOption(option.id));
-    const toggleButton = document.createElement('button');
-    toggleButton.className = 'button-base button-compact secondary-button medication-toggle-button';
-    toggleButton.type = 'button';
-    toggleButton.textContent = option.active ? '非表示' : '表示';
-    toggleButton.addEventListener('click', () => toggleMedicationOptionActive(option.id));
-    actions.append(editButton, toggleButton);
+    actions.append(editButton);
     item.append(content, actions);
     list.appendChild(item);
   });
@@ -2955,6 +2983,12 @@ function saveMedication(medicationOptionId) {
 
 function wireEvents() {
   decorateRecordActionButtons();
+  document.querySelectorAll('.bottom-navigation-button').forEach((button) => {
+    button.addEventListener('click', () => switchAppScreen(button.dataset.screen));
+  });
+  document.querySelectorAll('.record-input-tab').forEach((button) => {
+    button.addEventListener('click', () => switchRecordInput(button.dataset.recordInput, { focus: true }));
+  });
   $('complete-initial-setup').addEventListener('click', completeInitialSetup);
   $('restore-initial-backup').addEventListener('click', requestInitialBackupRestore);
   $('setup-import-file').addEventListener('change', handleInitialBackupFileSelected);
