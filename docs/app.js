@@ -2455,10 +2455,10 @@ function renderMedicationSettingsList() {
 function createMedicationRecordButton(option) {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'button-base button-full secondary-button medication-record-button';
+  button.className = 'button-base button-full medication-record-button';
   const label = document.createElement('span');
   label.textContent = option.label;
-  button.append(createUseIcon('icon-medication-settings', 'button-type-icon'), label);
+  button.append(createUseIcon('icon-medication-record', 'button-type-icon'), label);
   button.setAttribute('aria-label', `${option.label}を記録`);
   button.addEventListener('click', () => saveMedication(option.id));
   return button;
@@ -2495,7 +2495,7 @@ function renderLastMedicationList() {
     const elapsed = document.createElement('span');
     elapsed.textContent = lastMedicationElapsedText(last);
     copy.append(label, elapsed);
-    item.append(copy, createUseIcon('icon-medication-settings', 'last-medication-action-icon'));
+    item.append(copy, createUseIcon('icon-medication-record', 'last-medication-action-icon'));
     item.addEventListener('click', () => saveMedication(option.id));
     list.appendChild(item);
   });
