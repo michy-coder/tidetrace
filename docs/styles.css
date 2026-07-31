@@ -1,49 +1,105 @@
 :root {
   color-scheme: light;
-  --bg: #f4f6f8;
-  --surface: #ffffff;
-  --surface-muted: #f0f3f4;
-  --text: #1f2937;
-  --text-muted: #6b7280;
-  --border: #d9e1e5;
-  --input-bg: #fcfdfd;
-  --input-border: #c9d4da;
-  --button-bg: #5e858e;
-  --button-hover-bg: #537981;
-  --button-active-bg: #486a71;
-  --button-text: #ffffff;
-  --danger-bg: #b63a3a;
-  --danger-active-bg: #8f3030;
-  --danger-text: #ffffff;
-  --divider: #d9e1e5;
-  --focus-ring: #6fa5ad;
-  --health-history-column-bg: rgba(94, 133, 142, 0.06);
-  --health-history-column-header-bg: rgba(94, 133, 142, 0.1);
-  --shadow: rgba(31, 41, 51, 0.06);
+  --symptom: #008f93;
+  --symptom-strong: #006b70;
+  --symptom-soft: #edf9f8;
+  --symptom-action: var(--symptom);
+  --symptom-action-active: var(--symptom-strong);
+  --on-symptom: #fff;
+  --medication: #6657a8;
+  --medication-strong: #514484;
+  --medication-soft: #f2eff8;
+  --medication-action: var(--medication);
+  --medication-action-active: var(--medication-strong);
+  --on-medication: #fff;
+  --ink: #121820;
+  --ink-soft: #586172;
+  --line: #d6dbe3;
+  --paper: #fffefa;
+  --paper-transparent: rgb(255 254 250 / 0%);
+  --paper-muted: #f4f6f8;
+  --surface: var(--paper);
+  --surface-muted: var(--paper-muted);
+  --input-bg: #fff;
+  --input-border: #c7ccd7;
+  --control-border-strong: #bcc4d0;
+  --segmented-border: #bfc6d2;
+  --segmented-divider: #c8ced8;
+  --score-divider: #d5d9e1;
+  --note-accent: #33405a;
+  --note-strong: #26324e;
+  --note-soft: #f3f5f8;
+  --note-border: #37405a;
+  --note-action: #53657a;
+  --history-note: #385d9b;
+  --nav-bg: rgb(255 255 255 / 96%);
+  --danger-bg: #e62932;
+  --danger-active-bg: #c91f29;
+  --danger-soft: #fff5f5;
+  --danger-text: #fff;
+  --button-bg: var(--symptom-action);
+  --button-hover-bg: #007e82;
+  --button-active-bg: var(--symptom-strong);
+  --button-text: #fff;
+  --divider: var(--line);
+  --focus-ring: #5ab9bb;
+  --csv-disabled-border: #8bcfcf;
+  --health-history-column-bg: rgb(0 143 147 / 5%);
+  --health-history-column-header-bg: rgb(0 143 147 / 10%);
+  --shadow: rgb(18 24 32 / 6%);
+  --bg: var(--paper);
+  --text: var(--ink);
+  --text-muted: var(--ink-soft);
+  --border: var(--line);
+  --tap-size: 44px;
+  --bottom-nav-height: 64px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg: #05080a;
+    --paper: #0b0f12;
+    --paper-transparent: rgb(11 15 18 / 0%);
     --surface: #171d20;
     --surface-muted: #20282c;
-    --text: #e7ecef;
-    --text-muted: #a7b0b7;
-    --border: #344047;
+    --ink: #e7ecef;
+    --ink-soft: #a7b0b7;
+    --line: #344047;
+    --symptom: #55c5c7;
+    --symptom-strong: #8adadd;
+    --symptom-soft: #0e2b2e;
+    --symptom-action: #006b70;
+    --symptom-action-active: #004f53;
+    --medication: #b7a9ec;
+    --medication-strong: #d5ccf5;
+    --medication-soft: #28223c;
+    --medication-action: #6657a8;
+    --medication-action-active: #514484;
+    --nav-bg: rgb(11 15 18 / 96%);
     --input-bg: #111719;
-    --input-border: #3b474f;
-    --button-bg: #4f7f86;
-    --button-active-bg: #416970;
-    --button-text: #ffffff;
-    --danger-bg: #9f3a3a;
-    --danger-active-bg: #7f3030;
-    --danger-text: #ffffff;
-    --divider: #344047;
-    --focus-ring: #7da9af;
-    --health-history-column-bg: rgba(125, 169, 175, 0.08);
-    --health-history-column-header-bg: rgba(125, 169, 175, 0.12);
-    --shadow: rgba(0, 0, 0, 0.3);
+    --input-border: #46535b;
+    --control-border-strong: #56646d;
+    --segmented-border: #56646d;
+    --segmented-divider: #46535b;
+    --score-divider: #3b474f;
+    --note-accent: #afc2e1;
+    --note-strong: #d6e0f0;
+    --note-soft: #1d2530;
+    --note-border: #8da0c1;
+    --note-action: #53657a;
+    --history-note: #9bb8e8;
+    --danger-bg: #e46b70;
+    --danger-active-bg: #f08287;
+    --danger-soft: #2d1719;
+    --danger-text: #0b0f12;
+    --button-bg: var(--symptom-action);
+    --button-hover-bg: #005f64;
+    --button-active-bg: #004f53;
+    --focus-ring: #72d3d5;
+    --csv-disabled-border: #4a8f91;
+    --health-history-column-bg: rgb(85 197 199 / 8%);
+    --health-history-column-header-bg: rgb(85 197 199 / 12%);
+    --shadow: rgb(0 0 0 / 30%);
   }
 }
 
@@ -1469,41 +1525,6 @@ hr {
 }
 
 /* Four-screen redesign */
-:root {
-  color-scheme: light;
-  --teal: #008f93;
-  --teal-dark: #006b70;
-  --teal-soft: #edf9f8;
-  --pain: #95576a;
-  --pain-soft: #f7ecef;
-  --ink: #121820;
-  --ink-soft: #586172;
-  --line: #d6dbe3;
-  --paper: #fffefa;
-  --paper-muted: #f4f6f8;
-  --tap-size: 44px;
-  --bottom-nav-height: 72px;
-  --bg: var(--paper);
-  --surface: var(--paper);
-  --surface-muted: var(--paper-muted);
-  --text: var(--ink);
-  --text-muted: var(--ink-soft);
-  --border: var(--line);
-  --divider: var(--line);
-  --input-bg: #fff;
-  --input-border: #c7ccd7;
-  --button-bg: var(--teal);
-  --button-hover-bg: #007e82;
-  --button-active-bg: var(--teal-dark);
-  --button-text: #fff;
-  --danger-bg: #e62932;
-  --danger-active-bg: #c91f29;
-  --danger-text: #fff;
-  --focus-ring: #5ab9bb;
-  --health-history-column-bg: rgb(0 143 147 / 5%);
-  --health-history-column-header-bg: rgb(0 143 147 / 10%);
-  --shadow: rgb(18 24 32 / 6%);
-}
 
 html {
   background: var(--paper);
@@ -1553,7 +1574,7 @@ main {
 }
 
 .brand-wordmark {
-  color: var(--teal-dark);
+  color: var(--symptom-strong);
   font-size: 1.28rem;
   font-weight: 800;
   letter-spacing: -0.035em;
@@ -1593,7 +1614,7 @@ main {
 }
 
 .screen-title-icon {
-  color: var(--teal);
+  color: var(--symptom);
   fill: none;
   flex: 0 0 auto;
   height: 32px;
@@ -1681,7 +1702,7 @@ main {
 }
 
 .last-medication-item:active {
-  background: var(--teal-soft);
+  background: var(--medication-soft);
 }
 
 .last-medication-copy {
@@ -1706,16 +1727,17 @@ main {
 }
 
 .last-medication-action-icon {
-  border: 1px solid var(--teal);
+  background: var(--medication-action);
+  border: 1px solid var(--medication-action);
   border-radius: 5px;
-  color: var(--teal);
+  color: var(--on-medication);
   height: 36px;
   padding: 6px;
   width: 36px;
 }
 
 .last-medication-fade {
-  background: linear-gradient(90deg, rgb(255 254 250 / 0%), var(--paper) 78%);
+  background: linear-gradient(90deg, var(--paper-transparent), var(--paper) 78%);
   bottom: 0;
   opacity: 0;
   pointer-events: none;
@@ -1737,9 +1759,9 @@ main {
 .record-entry-toggle {
   align-items: center;
   background: var(--paper);
-  border: 1px solid #bcc4d0;
+  border: 1px solid var(--control-border-strong);
   border-radius: 5px;
-  color: #2d3651;
+  color: var(--note-strong);
   display: inline-flex;
   height: var(--tap-size);
   justify-content: center;
@@ -1757,7 +1779,7 @@ main {
 }
 
 .segmented-tabs {
-  border: 1px solid #bfc6d2;
+  border: 1px solid var(--segmented-border);
   border-radius: 5px;
   display: grid;
   overflow: hidden;
@@ -1776,7 +1798,7 @@ main {
   align-items: center;
   background: var(--paper);
   border: 0;
-  border-left: 1px solid #c8ced8;
+  border-left: 1px solid var(--segmented-divider);
   color: var(--ink);
   display: inline-flex;
   font-weight: 500;
@@ -1802,22 +1824,28 @@ main {
 }
 
 .segmented-tab[aria-selected="true"] {
-  background: var(--teal-soft);
-  box-shadow: inset 0 0 0 1px var(--teal);
-  color: var(--teal-dark);
+  background: var(--symptom-soft);
+  box-shadow: inset 0 0 0 1px var(--symptom);
+  color: var(--symptom-strong);
   font-weight: 700;
 }
 
 .record-tabs .pain-tab[aria-selected="true"] {
-  background: var(--pain-soft);
-  box-shadow: inset 0 0 0 1px var(--pain);
-  color: var(--pain);
+  background: var(--symptom-soft);
+  box-shadow: inset 0 0 0 1px var(--symptom);
+  color: var(--symptom-strong);
+}
+
+.record-tabs [data-record-tab="medication"][aria-selected="true"] {
+  background: var(--medication-soft);
+  box-shadow: inset 0 0 0 1px var(--medication);
+  color: var(--medication-strong);
 }
 
 .record-tabs [data-record-tab="note"][aria-selected="true"] {
-  background: #f3f5f8;
-  box-shadow: inset 0 0 0 1px #37405a;
-  color: #26324e;
+  background: var(--note-soft);
+  box-shadow: inset 0 0 0 1px var(--note-border);
+  color: var(--note-strong);
 }
 
 .record-form-layout {
@@ -1857,8 +1885,8 @@ main {
 }
 
 .form-control-base {
-  background: #fff;
-  border-color: #c7ccd7;
+  background: var(--input-bg);
+  border-color: var(--input-border);
   border-radius: 5px;
   min-height: 48px;
   padding: 11px 12px;
@@ -1878,7 +1906,7 @@ main {
 }
 
 .pain-score-buttons {
-  border: 1px solid #c7ccd7;
+  border: 1px solid var(--input-border);
   border-radius: 5px;
   display: grid;
   grid-template-columns: repeat(11, minmax(0, 1fr));
@@ -1886,9 +1914,9 @@ main {
 }
 
 .pain-score-button {
-  background: #fff;
+  background: var(--input-bg);
   border: 0;
-  border-left: 1px solid #d5d9e1;
+  border-left: 1px solid var(--score-divider);
   color: var(--ink);
   font-size: 0.9rem;
   min-height: 44px;
@@ -1901,8 +1929,8 @@ main {
 }
 
 .pain-score-button[aria-pressed="true"] {
-  background: var(--pain);
-  color: #fff;
+  background: var(--symptom-action);
+  color: var(--on-symptom);
   font-weight: 700;
 }
 
@@ -1917,34 +1945,34 @@ main {
 }
 
 .primary-button {
-  background: var(--teal);
+  background: var(--symptom-action);
 }
 
 .pain-primary-button {
-  background: var(--pain);
+  background: var(--symptom-action);
   min-height: 52px;
 }
 
 .pain-primary-button:hover,
 .pain-primary-button:active {
-  background: #7c4356;
+  background: var(--symptom-action-active);
 }
 
 #export-csv:disabled {
-  background: var(--teal-soft);
-  border: 1px solid #8bcfcf;
-  color: var(--teal-dark);
+  background: var(--symptom-soft);
+  border: 1px solid var(--csv-disabled-border);
+  color: var(--symptom-strong);
 }
 
 #export-csv:disabled:hover,
 #export-csv:disabled:active {
-  background: var(--teal-soft);
+  background: var(--symptom-soft);
 }
 
 .note-primary-button {
-  background: #53657a;
+  background: var(--note-action);
   border: 0;
-  color: #fff;
+  color: var(--button-text);
   min-height: 52px;
 }
 
@@ -1955,11 +1983,17 @@ main {
 }
 
 .medication-record-buttons button {
-  border-color: var(--teal);
-  color: var(--teal-dark);
+  background: var(--medication-action);
+  border: 1px solid transparent;
+  border-color: var(--medication-action);
+  color: var(--on-medication);
   margin: 0;
   min-height: 58px;
   padding: 8px;
+}
+
+.medication-record-buttons button:active {
+  background: var(--medication-action-active);
 }
 
 .medication-record-buttons .button-type-icon {
@@ -2032,7 +2066,7 @@ main {
 }
 
 .event-time {
-  color: #33405a;
+  color: var(--note-accent);
   font-size: 0.9rem;
   grid-column: 2;
   grid-row: 1 / span 2;
@@ -2068,15 +2102,15 @@ main {
 }
 
 .event-pain .event-type-icon {
-  color: var(--pain);
+  color: var(--symptom);
 }
 
 .event-medication .event-type-icon {
-  color: var(--teal);
+  color: var(--medication);
 }
 
 .event-note-record .event-type-icon {
-  color: #33405a;
+  color: var(--note-accent);
 }
 
 .event-actions {
@@ -2100,7 +2134,7 @@ main {
 }
 
 .record-action-button:active {
-  background: var(--teal-soft);
+  background: var(--symptom-soft);
 }
 
 .record-action-icon {
@@ -2113,8 +2147,8 @@ main {
 }
 
 .bottom-nav {
-  background: rgb(255 255 255 / 96%);
-  border-top: 1px solid #cfd5df;
+  background: var(--nav-bg);
+  border-top: 1px solid var(--line);
   bottom: 0;
   left: 0;
   min-height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
@@ -2136,34 +2170,34 @@ main {
   align-items: center;
   background: transparent;
   border: 0;
-  color: #182038;
+  color: var(--ink);
   display: flex;
   flex-direction: column;
   font-size: 0.78rem;
-  gap: 3px;
-  justify-content: center;
+  gap: 2px;
+  justify-content: flex-end;
   min-height: var(--bottom-nav-height);
   min-width: var(--tap-size);
-  padding: 7px 4px 5px;
+  padding: 6px 4px 6px;
   position: relative;
 }
 
 .bottom-nav-item svg {
   fill: none;
-  height: 27px;
+  height: 26px;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.55;
-  width: 27px;
+  width: 26px;
 }
 
 .bottom-nav-item[aria-current="page"] {
-  color: var(--teal);
+  color: var(--symptom-strong);
 }
 
 .bottom-nav-item[aria-current="page"]::before {
-  background: var(--teal);
+  background: var(--symptom);
   content: "";
   height: 3px;
   left: 10%;
@@ -2206,7 +2240,7 @@ main {
 .text-action-button {
   background: transparent;
   border: 0;
-  color: var(--teal);
+  color: var(--symptom-strong);
   font-weight: 500;
   min-height: var(--tap-size);
   padding: 6px 4px;
@@ -2264,15 +2298,15 @@ main {
 }
 
 .history-summary-pain .history-summary-icon {
-  color: var(--pain);
+  color: var(--symptom);
 }
 
 .history-summary-medication .history-summary-icon {
-  color: var(--teal);
+  color: var(--medication);
 }
 
 .history-summary-note .history-summary-icon {
-  color: #385d9b;
+  color: var(--history-note);
 }
 
 .summary-tab-panel > p:first-of-type {
@@ -2411,7 +2445,7 @@ main {
 }
 
 .settings-summary-icon {
-  color: var(--teal);
+  color: var(--symptom);
   height: 24px;
   width: 24px;
 }
@@ -2432,7 +2466,7 @@ main {
 }
 
 .management-link-row svg {
-  color: var(--teal);
+  color: var(--symptom);
   fill: none;
   height: 24px;
   stroke: currentColor;
@@ -2443,14 +2477,14 @@ main {
 }
 
 .danger-outline {
-  background: #fff;
+  background: var(--paper);
   border: 1px solid var(--danger-bg);
   color: var(--danger-bg);
   margin-top: 18px;
 }
 
 .danger-outline:active {
-  background: #fff5f5;
+  background: var(--danger-soft);
 }
 
 .setup-screen {

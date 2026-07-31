@@ -266,3 +266,128 @@ def test_valid_backup_replaces_stored_data_without_changing_its_schema() -> None
         assert.equal(JSON.parse(stored[0][1]).events[0].id, 'note-1');
         """
     )
+
+
+def test_medication_record_actions_share_the_record_icon() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        function makeElement(tagName = 'div') {
+          const attributes = {};
+          const element = {
+            tagName,
+            children: [],
+            listeners: {},
+            textContent: '',
+            type: '',
+            append(...children) { this.children.push(...children); },
+            appendChild(child) { this.children.push(child); return child; },
+            addEventListener(name, listener) { this.listeners[name] = listener; },
+            setAttribute(name, value) { attributes[name] = String(value); },
+            getAttribute(name) { return attributes[name]; }
+          };
+          Object.defineProperty(element, 'className', {
+            get() { return attributes.class || ''; },
+            set(value) { attributes.class = String(value); }
+          });
+          Object.defineProperty(element, 'innerHTML', {
+            get() { return ''; },
+            set() { element.children = []; }
+          });
+          return element;
+        }
+
+        const lastMedicationList = makeElement('div');
+        global.document = {
+          createElement: makeElement,
+          createElementNS(_namespace, tagName) { return makeElement(tagName); },
+          getElementById(id) { return id === 'last-medication-list' ? lastMedicationList : null; }
+        };
+        global.requestAnimationFrame = () => 0;
+        appData = {
+          events: [],
+          settings: {
+            medicationOptions: [
+              { id: 'med_001', label: '薬A', active: true, defaultAmount: 1, unit: '錠', sortOrder: 1 }
+            ]
+          }
+        };
+
+        const formButton = createMedicationRecordButton(appData.settings.medicationOptions[0]);
+        renderLastMedicationList();
+        const quickButton = lastMedicationList.children[0];
+
+        assert.equal(formButton.children[0]?.children[0]?.getAttribute('href'), '#icon-medication-record');
+        assert.equal(quickButton.children[1]?.children[0]?.getAttribute('href'), '#icon-medication-record');
+        assert.equal(formButton.getAttribute('aria-label'), '薬Aを記録');
+        assert.equal(quickButton.getAttribute('aria-label'), '薬Aを記録。前回は記録なし');
+        """
+    )
+
+
+def test_symptom_and_medication_actions_use_distinct_semantic_colors() -> None:
+    css = (ROOT / "docs" / "styles.css").read_text()
+
+    for declaration in (
+        "--symptom: #008f93;",
+        "--symptom-strong: #006b70;",
+        "--symptom-soft: #edf9f8;",
+        "--medication: #6657a8;",
+        "--medication-strong: #514484;",
+        "--medication-soft: #f2eff8;",
+    ):
+        assert declaration in css
+
+    assert not re.search(r"--(?:teal|pain)(?:-|:)", css)
+    assert not re.search(r"#95576a|#f7ecef|#7c4356", css, re.IGNORECASE)
+    assert re.search(
+        r'\.record-tabs \.pain-tab\[aria-selected="true"\]\s*\{[^}]*'
+        r'background:\s*var\(--symptom-soft\);[^}]*color:\s*var\(--symptom-strong\);',
+        css,
+    )
+    assert re.search(
+        r'\.record-tabs \[data-record-tab="medication"\]\[aria-selected="true"\]\s*\{[^}]*'
+        r'background:\s*var\(--medication-soft\);[^}]*color:\s*var\(--medication-strong\);',
+        css,
+    )
+    assert re.search(
+        r"\.medication-record-buttons button\s*\{[^}]*"
+        r"background:\s*var\(--medication-action\);[^}]*color:\s*var\(--on-medication\);",
+        css,
+    )
+
+
+def test_dark_mode_follows_the_os_from_one_semantic_token_set() -> None:
+    html = (ROOT / "docs" / "index.html").read_text()
+    css = (ROOT / "docs" / "styles.css").read_text()
+
+    assert '<meta name="color-scheme" content="light dark">' in html
+    assert len(re.findall(r"^:root\s*\{", css, re.MULTILINE)) == 1
+    assert re.search(
+        r"@media \(prefers-color-scheme:\s*dark\)\s*\{[\s\S]*?"
+        r"--paper:\s*#0b0f12;[\s\S]*?"
+        r"--ink:\s*#e7ecef;[\s\S]*?"
+        r"--symptom-strong:\s*#8adadd;[\s\S]*?"
+        r"--medication-strong:\s*#d5ccf5;[\s\S]*?"
+        r"--nav-bg:\s*rgb\(11 15 18 / 96%\);",
+        css,
+    )
+    assert re.search(
+        r'\.bottom-nav-item\[aria-current="page"\]\s*\{\s*'
+        r"color:\s*var\(--symptom-strong\);",
+        css,
+    )
+
+
+def test_bottom_navigation_uses_the_approved_compact_geometry() -> None:
+    css = (ROOT / "docs" / "styles.css").read_text()
+
+    assert "--bottom-nav-height: 64px;" in css
+    item = re.search(r"\.bottom-nav-item\s*\{(?P<body>[^}]*)\}", css)
+    icon = re.search(r"\.bottom-nav-item svg\s*\{(?P<body>[^}]*)\}", css)
+    assert item and icon
+    assert "gap: 2px;" in item.group("body")
+    assert "justify-content: flex-end;" in item.group("body")
+    assert "padding: 6px 4px 6px;" in item.group("body")
+    assert "height: 26px;" in icon.group("body")
+    assert "width: 26px;" in icon.group("body")
