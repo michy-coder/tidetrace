@@ -67,11 +67,9 @@ function updateRecordMemoPresentation() {
 function updatePainRecordButtonState() {
   const state = $('pain-state');
   const button = $('save-pain');
-  const guidance = $('pain-record-help');
   if (!state || !button) return;
   const hasState = Boolean(state.value);
   button.disabled = !hasState;
-  if (guidance) guidance.hidden = hasState;
 }
 
 function setRecordTab(tabName) {
