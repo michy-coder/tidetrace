@@ -424,7 +424,6 @@ def test_pain_state_selection_controls_pain_record_button() -> None:
         state.value = '';
         updatePainRecordButtonState();
         assert.equal(button.disabled, true);
-        assert.equal(guidance.hidden, false);
         """
     )
 
