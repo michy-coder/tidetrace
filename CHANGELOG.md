@@ -10,6 +10,7 @@ All notable changes to TideTrace will be documented in this file.
 - Reorganized the app into record, history, summary, and management screens with a fixed mobile navigation bar; added record-type tabs, timeline connectors for individual records, and consistent action controls in settings.
 
 ### Fixed
+- Fixed pain recording so the pain record button stays disabled until a pain state is selected and explains why recording is unavailable.
 - Fixed the edit dialog opening focus so pressing edit does not immediately focus the date input and open the date picker.
 
 ## v0.2.0 - 2026-07-22

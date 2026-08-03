@@ -1905,6 +1905,13 @@ main {
   margin-bottom: 0;
 }
 
+.pain-record-help {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+  margin: 6px 0 0;
+}
+
 .pain-score-buttons {
   border: 1px solid var(--input-border);
   border-radius: 5px;
@@ -1956,6 +1963,15 @@ main {
 .pain-primary-button:hover,
 .pain-primary-button:active {
   background: var(--symptom-action-active);
+}
+
+.pain-primary-button:disabled,
+.pain-primary-button:disabled:hover,
+.pain-primary-button:disabled:active {
+  background: var(--surface-muted);
+  border: 1px solid var(--control-border-strong);
+  color: var(--text-muted);
+  cursor: not-allowed;
 }
 
 #export-csv:disabled {

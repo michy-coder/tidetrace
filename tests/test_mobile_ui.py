@@ -391,3 +391,62 @@ def test_bottom_navigation_uses_the_approved_compact_geometry() -> None:
     assert "padding: 6px 4px 6px;" in item.group("body")
     assert "height: 26px;" in icon.group("body")
     assert "width: 26px;" in icon.group("body")
+
+def test_pain_state_selection_controls_pain_record_button_and_guidance() -> None:
+    run_app_js(
+        """
+        const assert = require('node:assert/strict');
+        const state = { value: '' };
+        const button = { disabled: false };
+        const guidance = { hidden: true };
+        global.document = {
+          getElementById(id) {
+            return {
+              'pain-state': state,
+              'save-pain': button,
+              'pain-record-help': guidance
+            }[id] || null;
+          }
+        };
+        appData = {
+          settings: {
+            painStateOptions: [
+              { id: 'ps_001', label: '安静時', active: true, sortOrder: 1 }
+            ]
+          }
+        };
+
+        updatePainRecordButtonState();
+        assert.equal(button.disabled, true);
+        assert.equal(guidance.hidden, false);
+
+        state.value = 'ps_001';
+        updatePainRecordButtonState();
+        assert.equal(button.disabled, false);
+        assert.equal(guidance.hidden, true);
+
+        state.value = '';
+        updatePainRecordButtonState();
+        assert.equal(button.disabled, true);
+        assert.equal(guidance.hidden, false);
+        """
+    )
+
+
+def test_pain_record_ui_has_explicit_label_help_and_initially_disabled_button() -> None:
+    html = (ROOT / "docs" / "index.html").read_text()
+
+    assert re.search(
+        r'<label for="pain-state" class="form-field-label">痛みの状態</label>',
+        html,
+    )
+    assert 'id="pain-state" class="form-control-base form-control-full" aria-describedby="pain-record-help"' in html
+    assert 'id="pain-record-help" class="pain-record-help" role="status">痛みの状態を選択すると記録できます。</p>' in html
+    assert 'id="save-pain" class="button-base button-full primary-button pain-primary-button" type="button" data-record-action="pain" disabled' in html
+
+
+def test_pain_record_state_change_is_wired_to_the_button_state_update() -> None:
+    source = (ROOT / "docs" / "app.js").read_text()
+
+    assert "updatePainRecordButtonState();" in source
+    assert "$('pain-state').addEventListener('change', updatePainRecordButtonState);" in source

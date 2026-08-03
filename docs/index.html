@@ -177,10 +177,11 @@
                   <div id="pain-score-buttons" class="pain-score-buttons" role="group" aria-label="痛みスコア"></div>
                 </div>
                 <div class="field-row pain-state-field">
-                  <label for="pain-state" class="visually-hidden">痛みの状態</label>
-                  <select id="pain-state" class="form-control-base form-control-full">
+                  <label for="pain-state" class="form-field-label">痛みの状態</label>
+                  <select id="pain-state" class="form-control-base form-control-full" aria-describedby="pain-record-help">
                     <option value="">状態を選んでください</option>
                   </select>
+                  <p id="pain-record-help" class="pain-record-help" role="status">痛みの状態を選択すると記録できます。</p>
                 </div>
               </div>
 
@@ -196,7 +197,7 @@
               </div>
 
               <div class="record-submit-actions">
-                <button id="save-pain" class="button-base button-full primary-button pain-primary-button" type="button" data-record-action="pain">痛みを記録</button>
+                <button id="save-pain" class="button-base button-full primary-button pain-primary-button" type="button" data-record-action="pain" disabled>痛みを記録</button>
                 <button id="save-note" class="button-base button-full note-primary-button" type="button" data-record-action="note" hidden>メモを記録</button>
               </div>
             </div>

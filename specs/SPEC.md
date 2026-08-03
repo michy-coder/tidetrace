@@ -50,7 +50,7 @@ After setup, the app shows:
 
 - Time since the last record for each active medication option.
 - Medication buttons. The medication subsection heading remains in the markup for assistive technologies but is visually hidden.
-- Pain score and pain-state controls. The pain subsection heading remains in the markup for assistive technologies but is visually hidden. The pain score field is labeled `痛みスコア`, and the pain-state field is labeled `状態`.
+- Pain score and pain-state controls. The pain subsection heading remains in the markup for assistive technologies but is visually hidden. The pain score field is labeled `痛みスコア`, and the pain-state field is labeled `痛みの状態`. The pain record button is disabled until a pain state is selected; while it is disabled, the record form shows `痛みの状態を選択すると記録できます。`.
 - A shared optional memo field for medication, pain, or note records. Its `メモ（任意）` label remains associated with the memo textarea for assistive technologies but is visually hidden.
 - Today's records.
 - A collapsed past-records section.
@@ -63,6 +63,8 @@ Today's records and expanded past-record details use the same record-row display
 
 - Pain score is selected from integers `0` through `10`.
 - Pain state is selected from active pain-state options.
+- The pain record button remains disabled while the pain state is unselected, and the form shows `痛みの状態を選択すると記録できます。` near the state selector.
+- Selecting a pain state enables the pain record button and hides the guidance. After a pain record is saved and the input is reset, the button is disabled again.
 - The optional memo field is trimmed and saved as the event note.
 - A pain record stores the selected pain-state option ID and snapshots the current state label.
 - After saving, the shared memo field is cleared.
