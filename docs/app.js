@@ -64,6 +64,16 @@ function updateRecordMemoPresentation() {
   memo.placeholder = placeholders[activeRecordTab];
 }
 
+function updatePainRecordButtonState() {
+  const state = $('pain-state');
+  const button = $('save-pain');
+  const guidance = $('pain-record-help');
+  if (!state || !button) return;
+  const hasState = Boolean(state.value);
+  button.disabled = !hasState;
+  if (guidance) guidance.hidden = hasState;
+}
+
 function setRecordTab(tabName) {
   if (!RECORD_TABS.includes(tabName)) return;
   activeRecordTab = tabName;
@@ -2564,6 +2574,7 @@ function render() {
   renderPainScoreButtons();
   $('pain-state').innerHTML = '<option value="">状態を選んでください</option>' +
     activePainOptions().map((option) => `<option value="${option.id}">${escapeHtml(option.label)}</option>`).join('');
+  updatePainRecordButtonState();
   $('medication-buttons').innerHTML = '';
   const medicationOptions = activeMedicationOptions();
   medicationOptions.forEach((option) => {
@@ -3085,6 +3096,7 @@ function wireEvents() {
   $('complete-initial-setup').addEventListener('click', completeInitialSetup);
   $('restore-initial-backup').addEventListener('click', requestInitialBackupRestore);
   $('setup-import-file').addEventListener('change', handleInitialBackupFileSelected);
+  $('pain-state').addEventListener('change', updatePainRecordButtonState);
   $('save-pain').addEventListener('click', () => {
     const stateOptionId = $('pain-state').value;
     if (!stateOptionId) { $('record-message').textContent = '痛みの状態を選択してください。'; return; }
